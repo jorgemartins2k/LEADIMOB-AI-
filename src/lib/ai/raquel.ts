@@ -5,7 +5,13 @@ import { eq, and, asc } from "drizzle-orm";
 import { sendWhatsAppMessage } from "@/lib/zapi";
 import { notifyBrokerByWhatsApp } from "./notify";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const getOpenAI = () => {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+        throw new Error("Missing OPENAI_API_KEY environment variable");
+    }
+    return new OpenAI({ apiKey });
+};
 
 interface ProcessMessageParams {
     phone: string;
@@ -92,7 +98,7 @@ EVENTOS: ${JSON.stringify(brokerEvents.map(e => ({ name: e.name, date: e.eventDa
     });
 
     // 7. Call GPT-4o
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
         model: "gpt-4o",
         messages: [
             { role: "system", content: systemPrompt },
