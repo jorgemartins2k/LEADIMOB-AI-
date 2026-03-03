@@ -5,7 +5,22 @@ import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Save, Building2, MapPin, DollarSign, Plus, Trash2, Layout } from "lucide-react";
+import {
+    X,
+    Loader2,
+    Save,
+    Building2,
+    MapPin,
+    Plus,
+    Trash2,
+    Layout,
+    Calendar,
+    Sparkles,
+    CheckCircle2,
+    Zap,
+    Hammer,
+    Home
+} from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -27,8 +42,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import { createLaunch } from "@/lib/actions/launches";
 
 const launchSchema = z.object({
@@ -96,127 +110,67 @@ export default function NewLaunchPage() {
             router.push("/lancamentos");
         } catch (error) {
             console.error(error);
-            alert("Erro ao criar lançamento. Verifique os campos.");
         } finally {
             setIsSaving(false);
         }
     }
 
-    return (
-        <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-top-4 duration-700 pb-20">
-            <div className="flex items-center gap-4 border-b border-surface-2 pb-6">
-                <Link href="/lancamentos">
-                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-surface-2 transition-colors">
-                        <ArrowLeft className="h-5 w-5" />
-                    </Button>
-                </Link>
-                <div className="space-y-1">
-                    <h1 className="text-3xl font-display font-bold text-text">Novo Lançamento</h1>
-                    <p className="text-text-muted text-sm italic opacity-80 underline underline-offset-4 decoration-primary/30 decoration-2">Cadastre um novo empreendimento e suas plantas.</p>
-                </div>
-            </div>
+    const statuses = [
+        { id: "pre_launch", label: "Pré-Lançamento", icon: Zap, color: "text-purple-500", bg: "bg-purple-500/10" },
+        { id: "launch", label: "Lançamento", icon: Sparkles, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+        { id: "under_construction", label: "Em Obras", icon: Hammer, color: "text-amber-500", bg: "bg-amber-500/10" },
+    ];
 
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Informações do Empreendimento */}
-                        <Card className="bg-surface border-surface-2 shadow-xl shadow-black/20 overflow-hidden h-fit">
-                            <CardHeader className="bg-bg/20 border-b border-surface-2">
-                                <CardTitle className="flex items-center gap-2 text-xl font-display">
-                                    <Building2 className="h-6 w-6 text-primary" /> Dados do Empreendimento
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-8 space-y-6">
+    const standards = [
+        { id: "economico", label: "Econômico", icon: Building2 },
+        { id: "medio", label: "Médio", icon: Home },
+        { id: "alto", label: "Alto / Luxo", icon: Sparkles },
+    ];
+
+    const audiences = ["Investidor", "Primeiro Imóvel", "Família", "Aposentado", "Jovem Profissional"];
+
+    return (
+        <div className="min-h-screen bg-muted/30 py-12 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-700">
+            <div className="max-w-3xl mx-auto">
+                <div className="bg-card border border-border rounded-[40px] shadow-2xl overflow-hidden relative">
+                    {/* Modal Header */}
+                    <div className="px-10 py-8 border-b border-border flex items-center justify-between bg-bg/20">
+                        <div>
+                            <h1 className="text-2xl font-bold text-foreground">Novo Lançamento</h1>
+                            <p className="text-sm text-muted-foreground mt-1">Cadastre um novo empreendimento e suas plantas.</p>
+                        </div>
+                        <Link href="/lancamentos">
+                            <Button variant="ghost" size="icon" className="rounded-full hover:bg-muted transition-colors">
+                                <X className="h-6 w-6 text-muted-foreground" />
+                            </Button>
+                        </Link>
+                    </div>
+
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="p-10 space-y-12">
+                            {/* Dados Básicos */}
+                            <div className="space-y-8">
                                 <FormField
                                     name="name"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Nome do Empreendimento</FormLabel>
+                                        <FormItem className="space-y-3">
+                                            <FormLabel className="text-sm font-bold text-foreground">Nome do Empreendimento</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Ex: Reserva Imperial" {...field} className="bg-surface-2 border-transparent focus:border-primary/50 transition-all h-11" />
+                                                <Input placeholder="Ex: Reserva Imperial" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-bold text-lg focus-visible:ring-primary/20 transition-all" />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-6">
                                     <FormField
                                         name="developer"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Incorporadora</FormLabel>
+                                            <FormItem className="space-y-3">
+                                                <FormLabel className="text-sm font-bold text-foreground">Incorporadora</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Ex: Gafisa" {...field} className="bg-surface-2 border-transparent" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        name="status"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Status</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger className="bg-surface-2 border-transparent">
-                                                            <SelectValue placeholder="Selecione o status" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent className="bg-surface border-surface-2">
-                                                        <SelectItem value="pre_launch">Pré-lançamento</SelectItem>
-                                                        <SelectItem value="launch">Lançamento</SelectItem>
-                                                        <SelectItem value="under_construction">Em obras</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <FormField
-                                        name="city"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="flex items-center gap-2 font-semibold">
-                                                    <MapPin className="h-4 w-4 text-secondary" /> Cidade
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Ex: São Paulo" {...field} className="bg-surface-2 border-transparent" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        name="neighborhood"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="flex items-center gap-2 font-semibold">
-                                                    <MapPin className="h-4 w-4 text-emerald-400" /> Bairro
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Ex: Pinheiros" {...field} className="bg-surface-2 border-transparent" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <FormField
-                                        name="priceFrom"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="flex items-center gap-2 font-semibold font-display italic">
-                                                    <DollarSign className="h-4 w-4 text-emerald-500" /> Preço Inicial
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Ex: 450000" {...field} className="bg-surface-2 border-transparent" />
+                                                    <Input placeholder="Ex: Gafisa" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium" />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -225,142 +179,168 @@ export default function NewLaunchPage() {
                                     <FormField
                                         name="deliveryDate"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="flex items-center gap-2 font-semibold font-display italic">
-                                                    Data de Entrega
+                                            <FormItem className="space-y-3">
+                                                <FormLabel className="text-sm font-bold text-foreground flex items-center gap-2">
+                                                    <Calendar className="h-4 w-4 text-primary" /> Data de Entrega
                                                 </FormLabel>
                                                 <FormControl>
-                                                    <Input type="date" {...field} className="bg-surface-2 border-transparent" />
+                                                    <Input type="date" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium" />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
                                 </div>
+                            </div>
 
+                            {/* Status do Lançamento */}
+                            <FormField
+                                name="status"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-4">
+                                        <FormLabel className="text-sm font-bold text-foreground uppercase tracking-widest opacity-70">Status Atual</FormLabel>
+                                        <div className="grid grid-cols-3 gap-4">
+                                            {statuses.map((stat) => (
+                                                <button
+                                                    key={stat.id}
+                                                    type="button"
+                                                    onClick={() => field.onChange(stat.id)}
+                                                    className={cn(
+                                                        "flex flex-col items-center justify-center p-6 rounded-[24px] border-2 transition-all duration-300 group",
+                                                        field.value === stat.id
+                                                            ? "bg-primary/5 border-primary shadow-lg shadow-primary/5"
+                                                            : "bg-muted/10 border-transparent hover:border-border hover:bg-muted/20"
+                                                    )}
+                                                >
+                                                    <div className={cn(
+                                                        "w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300",
+                                                        field.value === stat.id ? cn(stat.bg, stat.color, "scale-110") : "bg-muted/30 text-muted-foreground group-hover:scale-105"
+                                                    )}>
+                                                        <stat.icon className="w-6 h-6" />
+                                                    </div>
+                                                    <span className={cn("text-sm font-bold", field.value === stat.id ? "text-primary" : "text-foreground")}>{stat.label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Padrão */}
+                            <FormField
+                                name="standard"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-4">
+                                        <FormLabel className="text-sm font-bold text-foreground uppercase tracking-widest opacity-70">Padrão Construtivo</FormLabel>
+                                        <div className="grid grid-cols-3 gap-4">
+                                            {standards.map((std) => (
+                                                <button
+                                                    key={std.id}
+                                                    type="button"
+                                                    onClick={() => field.onChange(std.id)}
+                                                    className={cn(
+                                                        "flex flex-col items-center justify-center p-6 rounded-[24px] border-2 transition-all duration-300 group",
+                                                        field.value === std.id
+                                                            ? "bg-primary/5 border-primary shadow-lg shadow-primary/5"
+                                                            : "bg-muted/10 border-transparent hover:border-border hover:bg-muted/20"
+                                                    )}
+                                                >
+                                                    <div className={cn(
+                                                        "w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300",
+                                                        field.value === std.id ? "bg-primary text-white scale-110" : "bg-muted/30 text-muted-foreground group-hover:scale-105"
+                                                    )}>
+                                                        <std.icon className="w-6 h-6" />
+                                                    </div>
+                                                    <span className={cn("text-sm font-bold", field.value === std.id ? "text-primary" : "text-foreground")}>{std.label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Localização e Preço */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-border">
+                                <div className="md:col-span-2">
+                                    <FormField
+                                        name="city"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-3">
+                                                <FormLabel className="text-sm font-bold text-foreground flex items-center gap-2">
+                                                    <MapPin className="h-4 w-4 text-primary" /> Cidade
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="São Paulo" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                                 <FormField
-                                    name="description"
+                                    name="priceFrom"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Descrição (para treinamento da Raquel)</FormLabel>
+                                        <FormItem className="space-y-3">
+                                            <FormLabel className="text-sm font-bold text-foreground">Preço Inicial</FormLabel>
                                             <FormControl>
-                                                <Textarea
-                                                    placeholder="Fale tudo que a Raquel precisa saber para convencer o cliente sobre este empreendimento..."
-                                                    className="min-h-[150px] bg-surface-2 border-transparent focus:border-primary/50"
-                                                    {...field}
-                                                />
+                                                <Input placeholder="450000" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium" />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
+                            </div>
 
-                                <FormField
-                                    name="targetAudience"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Público-Alvo</FormLabel>
-                                            <div className="flex flex-wrap gap-2 pt-2">
-                                                {["Investidores", "Primeiro Imóvel", "Família", "Alto Padrão", "Aposentados"].map((audience) => (
-                                                    <Button
-                                                        key={audience}
-                                                        type="button"
-                                                        variant={field.value?.includes(audience) ? "default" : "outline"}
-                                                        className={`h-8 rounded-full text-xs ${field.value?.includes(audience) ? "bg-primary text-white" : "border-surface-2 bg-surface-2/50 text-text-muted hover:bg-surface-2"}`}
-                                                        onClick={() => {
-                                                            const current = field.value || [];
-                                                            if (current.includes(audience)) {
-                                                                field.onChange(current.filter((a: string) => a !== audience));
-                                                            } else {
-                                                                field.onChange([...current, audience]);
-                                                            }
-                                                        }}
-                                                    >
-                                                        {audience}
-                                                    </Button>
-                                                ))}
-                                            </div>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <Separator className="bg-surface-2" />
-
-                                <FormField
-                                    name="photos"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="text-lg font-display flex items-center gap-2">
-                                                <Layout className="h-5 w-5 text-primary" /> Fotos do Empreendimento
-                                            </FormLabel>
-                                            <FormControl>
-                                                <ImageUpload
-                                                    value={field.value}
-                                                    onChange={field.onChange}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </CardContent>
-                        </Card>
-
-                        {/* Plantas (Units) */}
-                        <div className="space-y-6">
-                            <Card className="bg-surface border-surface-2 shadow-xl shadow-black/20">
-                                <CardHeader className="bg-bg/20 border-b border-surface-2 flex flex-row items-center justify-between">
-                                    <div className="space-y-1">
-                                        <CardTitle className="flex items-center gap-2 text-xl font-display">
-                                            <Layout className="h-6 w-6 text-accent" /> Plantas Disponíveis
-                                        </CardTitle>
-                                        <CardDescription>Cadastre as variações de metragem e quartos.</CardDescription>
-                                    </div>
+                            {/* Plantas */}
+                            <div className="space-y-6 pt-6 border-t border-border">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                                        <Layout className="h-5 w-5 text-accent" /> Plantas (Unidades)
+                                    </h3>
                                     <Button
                                         type="button"
-                                        variant="ghost"
+                                        variant="outline"
                                         size="sm"
                                         onClick={() => append({ name: "", areaSqm: "", bedrooms: "", parkingSpots: "", price: "" })}
-                                        className="h-8 hover:bg-primary/10 hover:text-primary transition-colors border border-transparent hover:border-primary/20"
+                                        className="rounded-full border-primary/30 text-primary hover:bg-primary/5 h-10 px-6 gap-2"
                                     >
-                                        <Plus className="h-4 w-4 mr-1" /> Add Planta
+                                        <Plus className="h-4 w-4" /> Add Planta
                                     </Button>
-                                </CardHeader>
-                                <CardContent className="pt-6 space-y-4">
+                                </div>
+
+                                <div className="space-y-4">
                                     {fields.map((field, index) => (
-                                        <div key={field.id} className="p-4 rounded-2xl bg-bg/30 border border-surface-2 space-y-4 relative group animate-in zoom-in-95 duration-200 shadow-sm border-l-4 border-l-primary/30">
+                                        <div key={field.id} className="p-8 rounded-[32px] bg-muted/10 border border-border/50 space-y-6 relative group animate-in slide-in-from-right-4">
                                             {fields.length > 1 && (
-                                                <Button
+                                                <button
                                                     type="button"
-                                                    variant="ghost"
-                                                    size="icon"
                                                     onClick={() => remove(index)}
-                                                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-danger text-white hover:bg-danger-dark opacity-0 group-hover:opacity-100 transition-all shadow-md active:scale-95"
+                                                    className="absolute top-6 right-6 h-10 w-10 rounded-full bg-hot/10 text-hot hover:bg-hot hover:text-white transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 shadow-lg"
                                                 >
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </Button>
+                                                    <Trash2 className="h-5 w-5" />
+                                                </button>
                                             )}
+
                                             <FormField
                                                 name={`units.${index}.name`}
                                                 render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className="text-xs">Nome da Planta</FormLabel>
+                                                    <FormItem className="space-y-3">
+                                                        <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Nome da Planta / Modelo</FormLabel>
                                                         <FormControl>
-                                                            <Input placeholder="Ex: Studio 28m²" {...field} className="bg-surface-2 border-transparent h-9 text-sm" />
+                                                            <Input placeholder="Ex: Loft Concept - 45m²" {...field} className="bg-white/5 border-border h-12 rounded-xl font-bold" />
                                                         </FormControl>
-                                                        <FormMessage />
                                                     </FormItem>
                                                 )}
                                             />
-                                            <div className="grid grid-cols-3 gap-3">
+
+                                            <div className="grid grid-cols-3 gap-6">
                                                 <FormField
                                                     name={`units.${index}.areaSqm`}
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-[10px] uppercase font-bold text-text-muted">Área (m²)</FormLabel>
+                                                            <FormLabel className="text-[10px] font-black text-muted-foreground uppercase text-center block">M²</FormLabel>
                                                             <FormControl>
-                                                                <Input {...field} className="bg-surface-2 border-transparent h-8 text-center" />
+                                                                <Input {...field} className="bg-white/5 border-border h-12 rounded-xl text-center font-bold" />
                                                             </FormControl>
                                                         </FormItem>
                                                     )}
@@ -369,9 +349,9 @@ export default function NewLaunchPage() {
                                                     name={`units.${index}.bedrooms`}
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-[10px] uppercase font-bold text-text-muted">Quartos</FormLabel>
+                                                            <FormLabel className="text-[10px] font-black text-muted-foreground uppercase text-center block">Quartos</FormLabel>
                                                             <FormControl>
-                                                                <Input type="number" {...field} className="bg-surface-2 border-transparent h-8 text-center" />
+                                                                <Input type="number" {...field} className="bg-white/5 border-border h-12 rounded-xl text-center font-bold" />
                                                             </FormControl>
                                                         </FormItem>
                                                     )}
@@ -380,9 +360,9 @@ export default function NewLaunchPage() {
                                                     name={`units.${index}.parkingSpots`}
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-[10px] uppercase font-bold text-text-muted">Vagas</FormLabel>
+                                                            <FormLabel className="text-[10px] font-black text-muted-foreground uppercase text-center block">Vagas</FormLabel>
                                                             <FormControl>
-                                                                <Input type="number" {...field} className="bg-surface-2 border-transparent h-8 text-center" />
+                                                                <Input type="number" {...field} className="bg-white/5 border-border h-12 rounded-xl text-center font-bold" />
                                                             </FormControl>
                                                         </FormItem>
                                                     )}
@@ -390,33 +370,87 @@ export default function NewLaunchPage() {
                                             </div>
                                         </div>
                                     ))}
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
+                                </div>
+                            </div>
 
-                    <div className="flex justify-end gap-3 pt-6 border-t border-surface-2 sticky bottom-0 bg-bg/80 backdrop-blur-md pb-6">
-                        <Link href="/lancamentos">
-                            <Button type="button" variant="ghost" className="h-12 px-8 font-semibold">Cancelar</Button>
-                        </Link>
-                        <Button
-                            type="submit"
-                            className="bg-primary hover:bg-primary-dark text-white px-12 h-12 shadow-[0_10px_30px_-10px_rgba(79,70,229,0.5)] transition-all hover:-translate-y-1 active:translate-y-0"
-                            disabled={isSaving}
-                        >
-                            {isSaving ? (
-                                <>
-                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Salvando...
-                                </>
-                            ) : (
-                                <>
-                                    <Save className="mr-2 h-5 w-5" /> Salvar Lançamento
-                                </>
-                            )}
-                        </Button>
-                    </div>
-                </form>
-            </Form>
+                            {/* Descrição e IA */}
+                            <FormField
+                                name="description"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-3 pt-6 border-t border-border">
+                                        <FormLabel className="text-sm font-bold text-foreground">Notas para Treinamento da Raquel (IA)</FormLabel>
+                                        <FormControl>
+                                            <Textarea
+                                                placeholder="Descreva pontos fortes do empreendimento para a IA utilizar nos argumentos de venda..."
+                                                {...field}
+                                                className="bg-muted/20 border-border/50 min-h-[150px] rounded-2xl p-6 font-medium text-sm resize-none focus-visible:ring-primary/20"
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Fotos */}
+                            <FormField
+                                name="photos"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-4">
+                                        <FormLabel className="text-sm font-bold text-foreground">Fotos do Empreendimento</FormLabel>
+                                        <FormControl>
+                                            <div className="flex flex-col gap-4">
+                                                <div className="grid grid-cols-4 gap-4">
+                                                    {field.value.map((url, i) => (
+                                                        <div key={i} className="aspect-video rounded-2xl border border-border overflow-hidden relative group">
+                                                            <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                                                            <button
+                                                                onClick={() => field.onChange(field.value.filter((_, idx) => idx !== i))}
+                                                                className="absolute top-2 right-2 bg-hot text-white rounded-lg p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            >
+                                                                <X className="w-3 h-3" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                    <button
+                                                        type="button"
+                                                        className="aspect-video rounded-2xl border-2 border-dashed border-border/50 flex flex-col items-center justify-center gap-2 hover:bg-muted/20 hover:border-primary/30 transition-all group"
+                                                    >
+                                                        <div className="w-10 h-10 rounded-xl bg-muted/30 flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all">
+                                                            <Plus className="w-5 h-5" />
+                                                        </div>
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Galeria</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-4 pt-10 border-t border-border">
+                                <Link href="/lancamentos" className="flex-1">
+                                    <Button type="button" variant="outline" className="w-full h-16 rounded-[24px] border-border/50 font-bold text-muted-foreground hover:bg-muted">
+                                        Cancelar
+                                    </Button>
+                                </Link>
+                                <Button
+                                    type="submit"
+                                    className="flex-[2] h-16 rounded-[24px] bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold transition-all shadow-xl shadow-black/10 active:scale-95 disabled:opacity-50"
+                                    disabled={isSaving}
+                                >
+                                    {isSaving ? (
+                                        <Loader2 className="w-6 h-6 animate-spin" />
+                                    ) : (
+                                        "Salvar Empreendimento"
+                                    )}
+                                </Button>
+                            </div>
+                        </form>
+                    </Form>
+                </div>
+            </div>
         </div>
     );
 }
