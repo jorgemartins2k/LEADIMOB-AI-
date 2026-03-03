@@ -1,65 +1,48 @@
-import { Plus, Search, Filter } from "lucide-react";
-import Link from "next/link";
+"use client";
+
+import { Plus, Search, Filter, Home, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getProperties } from "@/lib/actions/properties";
-import { PropertyCard } from "@/components/property-card";
+import { cn } from "@/lib/utils";
 
-export default async function PropertiesPage() {
-    const properties = await getProperties().catch(() => []);
-
+export default function PropertiesPage() {
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                    <h1 className="text-3xl font-display font-bold text-text">Meus Imóveis</h1>
-                    <p className="text-text-muted">Gerencie seu portfólio para a Raquel oferecer aos leads.</p>
+        <div className="space-y-12 animate-in fade-in slide-in-from-top-4 duration-700">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2">
+                    <h1 className="heading-hero text-foreground">Imóveis</h1>
+                    <p className="text-body text-lg">Gerencie seu portfólio para a Raquel oferecer aos leads.</p>
                 </div>
-                <Link href="/imoveis/novo">
-                    <Button className="bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95">
-                        <Plus className="h-4 w-4 mr-2" /> Adicionar Imóvel
-                    </Button>
-                </Link>
-            </div>
-
-            {/* Filters section */}
-            <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1 group">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted group-focus-within:text-primary transition-colors" />
-                    <Input
-                        placeholder="Buscar por título, bairro ou cidade..."
-                        className="pl-10 bg-surface border-surface-2 focus:border-primary/50 transition-all rounded-xl"
-                    />
-                </div>
-                <Button variant="outline" className="border-surface-2 hover:bg-surface-2 transition-colors rounded-xl">
-                    <Filter className="h-4 w-4 mr-2" /> Filtros
+                <Button className="bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest px-8 h-16 rounded-[24px] shadow-primary/20 shadow-xl transition-all hover:scale-105 active:scale-95 text-xs">
+                    <Plus className="h-5 w-5 mr-3" /> Adicionar Imóvel
                 </Button>
             </div>
 
-            {/* Grid section */}
-            {properties.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-surface-2 rounded-3xl bg-surface/30">
-                    <div className="h-16 w-16 bg-surface-2 rounded-full flex items-center justify-center mb-4">
-                        <Search className="h-8 w-8 text-text-muted opacity-30" />
-                    </div>
-                    <h3 className="text-xl font-display font-semibold text-text">Nenhum imóvel encontrado</h3>
-                    <p className="text-text-muted mt-2 max-w-sm text-center">
-                        Comece adicionando seu primeiro imóvel para que a IA possa começar a trabalhar.
-                    </p>
-                    <Link href="/imoveis/novo" className="mt-6">
-                        <Button variant="link" className="text-primary font-bold">
-                            Cadastrar imóvel agora
-                        </Button>
-                    </Link>
+            {/* Search Section */}
+            <div className="bg-card border border-border p-4 rounded-[32px] shadow-soft">
+                <div className="relative max-w-xl">
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground opacity-50" />
+                    <Input
+                        placeholder="Buscar leads, imóveis..."
+                        className="pl-14 h-16 bg-muted/30 border-none rounded-2xl font-bold text-sm tracking-tight placeholder:text-muted-foreground/40 focus-visible:ring-primary/20"
+                    />
                 </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {properties.map((property) => (
-                        <PropertyCard key={property.id} property={property as any} />
-                    ))}
+            </div>
+
+            {/* Empty State Area */}
+            <div className="flex flex-col items-center justify-center py-32 border-4 border-dashed border-muted/50 rounded-[48px] bg-muted/5 group hover:border-primary/20 transition-all duration-500">
+                <div className="w-24 h-24 rounded-full bg-success/10 flex items-center justify-center mb-10 group-hover:scale-110 transition-transform">
+                    <Home className="h-12 w-12 text-success opacity-80" />
                 </div>
-            )}
+                <h3 className="text-2xl font-black text-foreground uppercase tracking-tight mb-4 text-center">Nenhum imóvel cadastrado</h3>
+                <p className="text-muted-foreground font-bold max-w-sm text-center text-sm mb-12 opacity-60">
+                    Adicione suas primeiras propriedades para que a IA tenha o que oferecer aos seus leads.
+                </p>
+                <Button className="bg-foreground text-background font-black uppercase tracking-widest px-10 h-16 rounded-[24px] shadow-soft transition-all hover:scale-105 active:scale-95 text-xs">
+                    <Plus className="h-5 w-5 mr-3" /> Adicionar Primeiro Imóvel
+                </Button>
+            </div>
         </div>
     );
 }

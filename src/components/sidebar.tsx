@@ -13,24 +13,25 @@ import {
     ChevronRight,
     LogOut,
     Clock,
+    Rocket,
+    Bell,
 } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 
 const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Meus Imóveis", href: "/imoveis", icon: Home },
-    { name: "Lançamentos", href: "/lancamentos", icon: Megaphone },
-    { name: "Agenda", href: "/agenda", icon: Calendar },
-    { name: "Meus Leads", href: "/leads", icon: Users },
-    { name: "Perfil", href: "/configuracoes/perfil", icon: Settings },
-    { name: "Expediente", href: "/configuracoes/expediente", icon: Clock },
+    { name: "Visão Geral", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Leads", href: "/leads", icon: Users },
+    { name: "Imóveis", href: "/imoveis", icon: Home },
+    { name: "Lançamentos", href: "/lancamentos", icon: Rocket },
+    { name: "Eventos", href: "/eventos", icon: Calendar },
+    { name: "Campanhas", href: "/campanhas", icon: Megaphone },
+    { name: "Calendário", href: "/agenda", icon: Clock },
+    { name: "Notificações", href: "/notificacoes", icon: Bell },
+    { name: "Configurações", href: "/configuracoes", icon: Settings },
 ];
 
 export function Sidebar() {
     const pathname = usePathname();
-
-    // Hide sidebar on dashboard because it has its own internal navigation/tabs
-    if (pathname === '/dashboard') return null;
 
     return (
         <div className="flex h-full w-64 flex-col bg-background border-r border-border transition-all duration-300 ease-in-out">
@@ -48,22 +49,22 @@ export function Sidebar() {
                             key={item.name}
                             href={item.href}
                             className={cn(
-                                "group flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200",
+                                "group flex items-center justify-between rounded-2xl px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300",
                                 isActive
-                                    ? "bg-primary text-primary-foreground shadow-primary/20 shadow-lg"
-                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    ? "bg-primary text-white shadow-primary scale-[1.02]"
+                                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                             )}
                         >
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-4">
                                 <item.icon
                                     className={cn(
                                         "h-5 w-5 shrink-0 transition-colors",
-                                        isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"
+                                        isActive ? "text-white" : "text-muted-foreground group-hover:text-foreground"
                                     )}
                                 />
                                 {item.name}
                             </div>
-                            {isActive && <ChevronRight className="h-4 w-4 text-primary-foreground animate-in fade-in slide-in-from-left-2" />}
+                            {isActive && <ChevronRight className="h-4 w-4 text-white/50" />}
                         </Link>
                     );
                 })}

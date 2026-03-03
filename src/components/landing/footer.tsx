@@ -1,3 +1,5 @@
+"use client";
+
 import { LeadImobLogo } from '@/components/LeadImobLogo';
 import Link from 'next/link';
 

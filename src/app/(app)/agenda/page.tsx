@@ -1,155 +1,108 @@
-import { Plus, Calendar as CalendarIcon, Clock, MapPin, User, Building2, Trash2, Info } from "lucide-react";
-import { cn } from "@/lib/utils";
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
+import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight, User, Bell, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getAppointments } from "@/lib/actions/appointments";
-import { getEvents } from "@/lib/actions/events";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
-export default async function AgendaPage() {
-    const [appointments, events] = await Promise.all([
-        getAppointments().catch(() => []),
-        getEvents().catch(() => []),
-    ]);
+export default function AgendaPage() {
+    const stats = [
+        { label: "Hoje", value: "0" },
+        { label: "Esta Semana", value: "0" },
+        { label: "Confirmadas", value: "0", color: "text-success" },
+        { label: "Pendentes", value: "0", color: "text-warm" },
+    ];
 
-    // Combine and sort by date
-    const allItems = [
-        ...appointments.map(a => ({ ...a, type: 'appointment' as const, location: null })),
-        ...events.map(e => ({ ...e, type: 'event' as const, appointmentDate: e.eventDate, appointmentTime: e.eventTime, title: e.name })),
-    ].sort((a, b) => new Date(a.appointmentDate).getTime() - new Date(b.appointmentDate).getTime());
+    const days = [
+        { day: 1, active: false }, { day: 2, active: false }, { day: 3, active: true },
+        { day: 4, active: false }, { day: 5, active: false }, { day: 6, active: false },
+        { day: 7, active: false }, { day: 8, active: false }, { day: 9, active: false },
+        { day: 10, active: false }, { day: 11, active: false }, { day: 12, active: false },
+        { day: 13, active: false }, { day: 14, active: false }, { day: 15, active: false },
+        { day: 16, active: false }, { day: 17, active: false }, { day: 18, active: false },
+        { day: 19, active: false }, { day: 20, active: false }, { day: 21, active: false },
+        { day: 22, active: false }, { day: 23, active: false }, { day: 24, active: false },
+        { day: 25, active: false }, { day: 26, active: false }, { day: 27, active: false },
+        { day: 28, active: false }
+    ];
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-surface-2 pb-6">
-                <div className="space-y-1">
-                    <h1 className="text-3xl font-display font-bold text-text">Agenda</h1>
-                    <p className="text-text-muted text-sm italic opacity-80 underline underline-offset-4 decoration-primary/30 decoration-2">Seus compromissos e eventos em um só lugar.</p>
+        <div className="space-y-12 animate-in fade-in slide-in-from-top-4 duration-700">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2">
+                    <h1 className="heading-hero text-foreground">Calendário</h1>
+                    <p className="text-body text-lg text-muted-foreground">Gerencie suas visitas e compromissos.</p>
                 </div>
-                <div className="flex gap-2">
-                    <Link href="/agenda/novo">
-                        <Button variant="outline" className="border-surface-2 bg-surface/50 hover:bg-surface text-xs font-bold uppercase tracking-wider">
-                            <Plus className="h-4 w-4 mr-2 text-primary" /> Agendamento
-                        </Button>
-                    </Link>
-                    <Link href="/eventos/novo">
-                        <Button className="bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 px-6 h-11 text-xs font-bold uppercase tracking-wider">
-                            <Plus className="h-4 w-4 mr-2" /> Novo Evento
-                        </Button>
-                    </Link>
-                </div>
+                <Button className="bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest px-8 h-16 rounded-[24px] shadow-primary/20 shadow-xl transition-all hover:scale-105 active:scale-95 text-xs">
+                    <Plus className="h-5 w-5 mr-3" /> Agendar Visita
+                </Button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Calendar Sidebar (Mock for now) */}
-                <div className="lg:col-span-1 space-y-6">
-                    <Card className="bg-surface border-surface-2 p-4">
-                        <div className="flex items-center justify-between mb-4 px-2">
-                            <h2 className="font-display font-bold">Março 2026</h2>
-                            <div className="flex gap-2">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">{"<"}</Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">{">"}</Button>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-text-muted uppercase mb-2">
-                            {["D", "S", "T", "Q", "Q", "S", "S"].map(d => <div key={d}>{d}</div>)}
-                        </div>
-                        <div className="grid grid-cols-7 gap-1">
-                            {Array.from({ length: 31 }).map((_, i) => (
-                                <Button
-                                    key={i}
-                                    variant="ghost"
-                                    className={cn(
-                                        "h-9 w-full p-0 font-medium rounded-lg hover:bg-primary/10 hover:text-primary transition-all",
-                                        i + 1 === 2 ? "bg-primary text-white hover:bg-primary-dark" : "text-text"
-                                    )}
-                                >
-                                    {i + 1}
-                                </Button>
-                            ))}
-                        </div>
-                    </Card>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {stats.map((stat) => (
+                    <div key={stat.label} className="bg-card border border-border p-8 rounded-[32px] shadow-soft">
+                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest block mb-4">{stat.label}</span>
+                        <div className={cn("text-4xl font-black text-foreground", stat.color)}>{stat.value}</div>
+                    </div>
+                ))}
+            </div>
 
-                    <Card className="bg-surface border-surface-2 overflow-hidden shadow-xl shadow-black/10">
-                        <CardHeader className="bg-accent/5 border-b border-surface-2">
-                            <CardTitle className="text-sm font-display uppercase tracking-widest text-accent flex items-center gap-2">
-                                <Info className="h-4 w-4" /> Legenda
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-4 space-y-3">
-                            <div className="flex items-center gap-2 text-xs text-text-muted">
-                                <div className="h-2 w-2 rounded-full bg-primary" />
-                                <span>Agendamentos (Visitas/Calls)</span>
+            <div className="grid gap-12 lg:grid-cols-3">
+                {/* Calendar Grid */}
+                <div className="lg:col-span-2 bg-card border border-border rounded-[48px] p-10 shadow-soft">
+                    <div className="flex items-center justify-between mb-10">
+                        <h3 className="font-display font-black text-2xl text-foreground uppercase tracking-tight">Março 2026</h3>
+                        <div className="flex gap-4">
+                            <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl bg-muted/30">
+                                <ChevronLeft className="h-5 w-5" />
+                            </Button>
+                            <Button variant="ghost" className="h-12 rounded-2xl bg-muted/30 font-black text-[10px] uppercase tracking-widest px-6">
+                                Hoje
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl bg-muted/30">
+                                <ChevronRight className="h-5 w-5" />
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-4 mb-6 text-center">
+                        {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((d) => (
+                            <div key={d} className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{d}</div>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-4">
+                        {days.map((d, i) => (
+                            <div
+                                key={i}
+                                className={cn(
+                                    "aspect-square rounded-[24px] flex items-center justify-center text-sm font-bold transition-all cursor-pointer",
+                                    d.active
+                                        ? "ring-2 ring-primary bg-primary/5 text-primary scale-105"
+                                        : "bg-muted/5 border border-transparent hover:bg-muted/20 hover:border-border text-foreground/70"
+                                )}
+                            >
+                                {d.day}
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-text-muted">
-                                <div className="h-2 w-2 rounded-full bg-accent" />
-                                <span>Eventos (Workshops/Lançamentos)</span>
-                            </div>
-                        </CardContent>
-                    </Card>
+                        ))}
+                    </div>
                 </div>
 
-                {/* Timeline / List View */}
-                <div className="lg:col-span-2 space-y-4">
-                    {allItems.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-surface-2 rounded-3xl bg-surface/30">
-                            <CalendarIcon className="h-12 w-12 text-text-muted opacity-20 mb-4" />
-                            <h3 className="text-lg font-display font-semibold text-text opacity-40">Tudo limpo por aqui!</h3>
-                            <p className="text-xs text-text-muted mt-1 uppercase tracking-tighter">Nenhum compromisso para os próximos dias.</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-6">
-                            {allItems.map((item, idx) => (
-                                <div key={item.id} className="relative pl-8 animate-in slide-in-from-left-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
-                                    {/* Timeline line */}
-                                    {idx !== allItems.length - 1 && (
-                                        <div className="absolute left-[11px] top-6 bottom-[-24px] w-[2px] bg-surface-2" />
-                                    )}
-                                    <div className={cn(
-                                        "absolute left-0 top-1.5 h-6 w-6 rounded-full border-4 border-bg flex items-center justify-center shadow-lg",
-                                        item.type === 'appointment' ? "bg-primary" : "bg-accent"
-                                    )}>
-                                        {item.type === 'appointment' ? <Clock className="h-2.5 w-2.5 text-white" /> : <CalendarIcon className="h-2.5 w-2.5 text-white" />}
-                                    </div>
+                {/* Upcoming Visits */}
+                <div className="bg-card border border-border rounded-[48px] p-10 shadow-soft">
+                    <div className="flex items-center gap-3 mb-10">
+                        <CalendarIcon className="w-5 h-5 text-muted-foreground" />
+                        <h3 className="font-display font-black text-xl text-foreground uppercase tracking-tight">Próximas Visitas</h3>
+                    </div>
 
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-3xl bg-surface border border-surface-2 hover:border-primary/30 transition-all group shadow-sm">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                <Badge variant="outline" className={cn(
-                                                    "text-[9px] uppercase font-black tracking-tighter px-1.5 py-0 border-transparent",
-                                                    item.type === 'appointment' ? "bg-primary/10 text-primary" : "bg-accent/10 text-accent"
-                                                )}>
-                                                    {item.type === 'appointment' ? "Agendamento" : "Evento"}
-                                                </Badge>
-                                                <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest opacity-60">
-                                                    {new Date(item.appointmentDate).toLocaleDateString("pt-BR", { day: '2-digit', month: 'short' })}
-                                                    {item.appointmentTime && ` • ${item.appointmentTime}`}
-                                                </span>
-                                            </div>
-                                            <h3 className="text-lg font-display font-bold text-text group-hover:text-primary transition-colors">{item.title}</h3>
-                                            {item.location && (
-                                                <div className="flex items-center gap-1.5 text-xs text-text-muted">
-                                                    <MapPin className="h-3 w-3" />
-                                                    <span>{item.location}</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <Button variant="ghost" size="sm" className="h-10 w-10 rounded-full hover:bg-primary/10 hover:text-primary transition-all">
-                                                <User className="h-4 w-4" />
-                                            </Button>
-                                            <Button variant="ghost" size="sm" className="h-10 w-10 rounded-full hover:bg-danger/10 hover:text-danger transition-all">
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    <div className="flex flex-col items-center justify-center py-20 bg-muted/10 rounded-[40px] border-2 border-dashed border-muted">
+                        <p className="text-muted-foreground font-black text-xs uppercase tracking-widest text-center px-10">Nenhuma visita agendada</p>
+                        <Button variant="link" className="mt-4 text-primary font-black uppercase tracking-widest text-[10px] hover:no-underline hover:scale-105 transition-all">
+                            Agendar primeira visita →
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>

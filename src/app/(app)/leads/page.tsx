@@ -1,105 +1,87 @@
-import { Plus, Search, Filter, User, Phone, Calendar, ArrowUpRight, MessageSquare } from "lucide-react";
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
+import { Plus, Search, Filter, User, Bell, MessageSquare, Flame, Snowflake, Thermometer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getLeads } from "@/lib/actions/leads";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-export default async function LeadsPage() {
-    const leads = await getLeads().catch(() => []);
+export default function LeadsPage() {
+    const [activeTab, setActiveTab] = useState("todos");
 
-    const statusColors: Record<string, string> = {
-        waiting: "bg-surface-2 text-text-muted border-transparent",
-        in_progress: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-        warm: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-        transferred: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-        discarded: "bg-danger/10 text-danger border-danger/20",
-    };
-
-    const statusLabels: Record<string, string> = {
-        waiting: "Aguardando",
-        in_progress: "Em Atendimento",
-        warm: "Aquecido",
-        transferred: "Transferido",
-        discarded: "Descartado",
-    };
+    const tabs = [
+        { id: "todos", label: "Todos", count: 0 },
+        { id: "quentes", label: "Quentes", count: 0, icon: Flame, color: "text-hot" },
+        { id: "mornos", label: "Mornos", count: 0, icon: Thermometer, color: "text-warm" },
+        { id: "frios", label: "Frios", count: 0, icon: Snowflake, color: "text-blue-400" },
+    ];
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-surface-2 pb-6">
-                <div className="space-y-1">
-                    <h1 className="text-3xl font-display font-bold text-text">Meus Leads</h1>
-                    <p className="text-text-muted text-sm">Gerencie os contatos que a Raquel está atendendo para você.</p>
+        <div className="space-y-10 animate-in fade-in slide-in-from-top-4 duration-700">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2">
+                    <h1 className="heading-hero text-foreground">Leads</h1>
+                    <p className="text-body text-lg flex items-center gap-2">
+                        Atendimento em tempo real por IA
+                        <span className="flex h-2 w-2 rounded-full bg-success animate-pulse" />
+                    </p>
                 </div>
-                <Link href="/leads/novo">
-                    <Button className="bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 px-6 h-11">
-                        <Plus className="h-4 w-4 mr-2" /> Adicionar Lead
-                    </Button>
-                </Link>
+                <Button className="bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest px-8 h-16 rounded-[24px] shadow-primary/20 shadow-xl transition-all hover:scale-105 active:scale-95 text-xs">
+                    <Plus className="h-5 w-5 mr-3" /> Adicionar Lead
+                </Button>
             </div>
 
-            {/* Grid section */}
-            {leads.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed border-surface-2 rounded-3xl bg-surface/30">
-                    <div className="h-20 w-20 bg-surface-2 rounded-full flex items-center justify-center mb-6">
-                        <User className="h-10 w-10 text-text-muted opacity-30" />
-                    </div>
-                    <h3 className="text-xl font-display font-semibold text-text">Sua lista de leads está vazia</h3>
-                    <p className="text-text-muted mt-2 max-w-sm text-center text-sm">
-                        Adicione leads manualmente ou importe sua planilha para que a Raquel comece a trabalhar imediatamente.
-                    </p>
-                    <Link href="/leads/novo" className="mt-8">
-                        <Button variant="outline" className="border-primary/20 hover:bg-primary/10 text-primary font-bold px-8 rounded-xl h-12">
-                            Começar agora
-                        </Button>
-                    </Link>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {leads.map((lead) => (
-                        <Card key={lead.id} className="bg-surface border-surface-2 overflow-hidden hover:border-primary/30 transition-all rounded-[1.5rem] group shadow-sm">
-                            <CardHeader className="p-5 pb-2">
-                                <div className="flex justify-between items-start mb-3">
-                                    <Badge variant="outline" className={cn("text-[9px] uppercase font-black border tracking-wider px-2 py-0.5", statusColors[lead.status])}>
-                                        {statusLabels[lead.status]}
-                                    </Badge>
-                                    <span className="text-[10px] font-bold text-text-muted opacity-60 flex items-center gap-1 uppercase tracking-widest">
-                                        <Calendar className="h-3 w-3" /> {new Date(lead.createdAt!).toLocaleDateString()}
-                                    </span>
-                                </div>
-                                <CardTitle className="text-xl font-display font-bold text-text flex items-center gap-2 group-hover:text-primary transition-colors">
-                                    {lead.name}
-                                </CardTitle>
-                                <CardDescription className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
-                                    <Phone className="h-3 w-3 text-secondary" /> {lead.phone}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-5 pt-3 space-y-4">
-                                <div className="bg-bg/40 p-3 rounded-2xl border border-surface-2">
-                                    <span className="text-[9px] text-text-muted font-bold uppercase tracking-widest block mb-1">Origem</span>
-                                    <span className="text-xs font-semibold text-text italic">{lead.source || "Manual"}</span>
-                                </div>
-                                {lead.notes && (
-                                    <div className="border-l-2 border-primary/20 pl-3">
-                                        <p className="text-[11px] text-text-muted line-clamp-2 italic leading-relaxed">&quot;{lead.notes}&quot;</p>
-                                    </div>
-                                )}
-                            </CardContent>
-                            <CardFooter className="p-5 pt-0 flex gap-2">
-                                <Button variant="ghost" size="sm" className="flex-1 bg-surface-2/30 border-surface-2 hover:bg-surface-2 text-[10px] font-bold uppercase tracking-wider h-10 rounded-xl transition-all">
-                                    Conversa <MessageSquare className="h-3.5 w-3.5 ml-2 opacity-60" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="h-10 w-10 rounded-xl hover:bg-primary/10 hover:text-primary transition-all">
-                                    <ArrowUpRight className="h-4 w-4" />
-                                </Button>
-                            </CardFooter>
-                        </Card>
+            {/* Tabs & Search */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card border border-border p-3 rounded-[32px] shadow-soft">
+                <div className="flex items-center gap-2 p-1 overflow-x-auto no-scrollbar">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={cn(
+                                "flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap",
+                                activeTab === tab.id
+                                    ? "bg-muted text-foreground shadow-sm"
+                                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                            )}
+                        >
+                            {tab.icon && <tab.icon className={cn("h-4 w-4", tab.color)} />}
+                            {tab.label}
+                            <Badge variant="secondary" className="bg-white/10 text-[9px] font-bold px-2 py-0">
+                                {tab.count}
+                            </Badge>
+                        </button>
                     ))}
                 </div>
-            )}
+                <div className="flex items-center gap-3 px-4 flex-1 max-w-md">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar por nome ou telefone..."
+                            className="pl-12 h-14 bg-muted/30 border-none rounded-2xl font-bold text-xs tracking-tight placeholder:text-muted-foreground/50 focus-visible:ring-primary/20"
+                        />
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-14 w-14 rounded-2xl bg-muted/30 hover:bg-muted/50 transition-all">
+                        <Filter className="h-4 w-4 text-foreground" />
+                    </Button>
+                </div>
+            </div>
+
+            {/* Content Area */}
+            <div className="flex flex-col items-center justify-center py-32 border-4 border-dashed border-muted/50 rounded-[48px] bg-muted/5 group hover:border-primary/20 transition-all duration-500">
+                <div className="w-24 h-24 rounded-full bg-primary/5 flex items-center justify-center mb-10 group-hover:scale-110 transition-transform">
+                    <User className="h-12 w-12 text-primary opacity-30" />
+                </div>
+                <h3 className="text-2xl font-black text-foreground uppercase tracking-tight mb-4">Nenhum lead encontrado</h3>
+                <p className="text-muted-foreground font-bold max-w-sm text-center text-sm mb-12 opacity-60">
+                    Adicione seus primeiros leads para que a Raquel comece a trabalhar imediatamente.
+                </p>
+                <Button className="bg-foreground text-background font-black uppercase tracking-widest px-10 h-16 rounded-[24px] shadow-soft transition-all hover:scale-105 active:scale-95 text-xs">
+                    <Plus className="h-5 w-5 mr-3" /> Adicionar Primeiro Lead
+                </Button>
+            </div>
         </div>
     );
 }
