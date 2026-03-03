@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { User, Phone, Building2, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Form,
@@ -13,10 +12,22 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-    FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+    User,
+    Phone,
+    Building2,
+    Save,
+    Loader2,
+    X,
+    Camera,
+    ShieldCheck,
+    Sparkles,
+    Briefcase
+} from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { updateProfile, getProfile } from "@/lib/actions/profile";
 
 const profileSchema = z.object({
@@ -62,10 +73,9 @@ export default function ProfilePage() {
         setIsSaving(true);
         try {
             await updateProfile(data);
-            alert("Perfil atualizado com sucesso!");
+            // In a real app, use a toast here
         } catch (error) {
             console.error(error);
-            alert("Erro ao atualizar perfil.");
         } finally {
             setIsSaving(false);
         }
@@ -74,94 +84,135 @@ export default function ProfilePage() {
     if (isLoading) {
         return (
             <div className="flex h-[400px] items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <Loader2 className="h-10 w-10 animate-spin text-accent" />
             </div>
         );
     }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-top-4 duration-700">
-            <div className="space-y-1">
-                <h1 className="text-3xl font-display font-bold text-text">Meu Perfil</h1>
-                <p className="text-text-muted text-sm italic opacity-80 underline underline-offset-4 decoration-primary/30 decoration-2">Gerencie suas informações profissionais.</p>
-            </div>
+        <div className="min-h-screen bg-transparent py-12 animate-fade-up">
+            <div className="max-w-3xl mx-auto">
+                <div className="card-premium border-none shadow-2xl relative overflow-visible">
+                    {/* Modal Header */}
+                    <div className="px-10 py-8 border-b border-border/50 flex items-center justify-between bg-white/[0.02]">
+                        <div className="space-y-1">
+                            <h1 className="heading-xl text-foreground">Meu Perfil</h1>
+                            <p className="text-body text-sm font-medium">Gerencie suas informações profissionais.</p>
+                        </div>
+                        <Link href="/configuracoes">
+                            <Button variant="ghost" size="icon" className="rounded-full hover:bg-muted btn-interactive">
+                                <X className="h-6 w-6 text-muted-foreground" />
+                            </Button>
+                        </Link>
+                    </div>
 
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                    <Card className="bg-surface border-surface-2 shadow-xl shadow-black/20 overflow-hidden">
-                        <CardHeader className="bg-bg/20 border-b border-surface-2">
-                            <CardTitle className="text-xl font-display">Dados Gerais</CardTitle>
-                            <CardDescription>Suas informações básicas de contato.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-6 space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="p-10 space-y-10">
+
+                            {/* Profile Header Interior */}
+                            <div className="flex items-center gap-10 p-8 rounded-[40px] bg-muted/10 border border-border/30 group">
+                                <div className="relative group/avatar">
+                                    <div className="w-24 h-24 rounded-[32px] bg-gradient-to-br from-accent to-accent/60 flex items-center justify-center shadow-lg shadow-accent/20 transition-all duration-500 group-hover/avatar:scale-105 group-hover/avatar:rotate-3">
+                                        <User className="w-12 h-12 text-white" />
+                                    </div>
+                                    <Button size="icon" className="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl bg-foreground text-background shadow-xl hover:scale-110 active:scale-95 transition-all border-4 border-[#0F172A]">
+                                        <Camera className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                                <div className="space-y-2">
+                                    <h3 className="text-2xl font-black text-foreground tracking-tighter">Jorge Martins</h3>
+                                    <div className="flex items-center gap-3">
+                                        <span className="px-3 py-1 bg-accent/10 text-accent rounded-full text-[9px] font-black uppercase tracking-widest border border-accent/20">Consultor Premium</span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Ativo</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-8">
                                 <FormField
                                     name="name"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="flex items-center gap-2">
-                                                <User className="h-4 w-4 text-primary" /> Nome Completo
+                                        <FormItem className="space-y-4">
+                                            <FormLabel className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4 flex items-center gap-2">
+                                                <User className="w-3.5 h-3.5" /> Nome Profissional
                                             </FormLabel>
                                             <FormControl>
-                                                <Input {...field} className="bg-bg/50 border-surface-2" placeholder="Seu nome" />
+                                                <div className="relative group">
+                                                    <Input {...field} className="h-16 pl-14 bg-muted/20 border-border/50 rounded-[24px] font-bold text-base focus-visible:ring-accent/20 focus-visible:border-accent transition-all" placeholder="Como você quer ser chamado?" />
+                                                    <User className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-accent transition-colors" />
+                                                </div>
                                             </FormControl>
-                                            <FormMessage />
+                                            <FormMessage className="ml-4" />
                                         </FormItem>
                                     )}
                                 />
 
-                                <FormField
-                                    name="whatsapp"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="flex items-center gap-2">
-                                                <Phone className="h-4 w-4 text-primary" /> WhatsApp
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Input {...field} className="bg-bg/50 border-surface-2" placeholder="DDD + Número" />
-                                            </FormControl>
-                                            <FormDescription className="text-[10px] uppercase tracking-tighter">
-                                                Número usado para notificações do sistema.
-                                            </FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <FormField
+                                        name="whatsapp"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-4">
+                                                <FormLabel className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4 flex items-center gap-2">
+                                                    <Phone className="w-3.5 h-3.5" /> WhatsApp Business
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <div className="relative group">
+                                                        <Input {...field} className="h-16 pl-14 bg-muted/20 border-border/50 rounded-[24px] font-bold text-base focus-visible:ring-accent/20 focus-visible:border-accent transition-all" placeholder="(11) 99999-9999" />
+                                                        <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-accent transition-colors" />
+                                                    </div>
+                                                </FormControl>
+                                                <FormMessage className="ml-4" />
+                                            </FormItem>
+                                        )}
+                                    />
 
-                                <FormField
-                                    name="realEstateAgency"
-                                    render={({ field }) => (
-                                        <FormItem className="md:col-span-2">
-                                            <FormLabel className="flex items-center gap-2">
-                                                <Building2 className="h-4 w-4 text-primary" /> Imobiliária / Empresa
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Input {...field} className="bg-bg/50 border-surface-2" placeholder="Nome da sua imobiliária" />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                    <FormField
+                                        name="realEstateAgency"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-4">
+                                                <FormLabel className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4 flex items-center gap-2">
+                                                    <Briefcase className="w-3.5 h-3.5" /> Imobiliária / CRECI
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <div className="relative group">
+                                                        <Input {...field} className="h-16 pl-14 bg-muted/20 border-border/50 rounded-[24px] font-bold text-base focus-visible:ring-accent/20 focus-visible:border-accent transition-all" placeholder="Sua empresa ou registro" />
+                                                        <Building2 className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-accent transition-colors" />
+                                                    </div>
+                                                </FormControl>
+                                                <FormMessage className="ml-4" />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                             </div>
-                        </CardContent>
-                    </Card>
 
-                    <div className="flex justify-end pb-10">
-                        <Button
-                            type="submit"
-                            disabled={isSaving}
-                            className="bg-primary hover:bg-primary-dark text-white font-bold uppercase tracking-widest px-8 h-12 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-primary/20"
-                        >
-                            {isSaving ? (
-                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            ) : (
-                                <Save className="h-4 w-4 mr-2" />
-                            )}
-                            Salvar Alterações
-                        </Button>
-                    </div>
-                </form>
-            </Form>
+                            {/* Action Force */}
+                            <div className="flex items-center gap-4 pt-10 border-t border-border/50">
+                                <Link href="/configuracoes" className="flex-1">
+                                    <Button type="button" variant="outline" className="w-full h-16 rounded-[24px] border-border/50 font-black uppercase text-[10px] tracking-widest text-muted-foreground hover:bg-muted btn-interactive">
+                                        Cancelar
+                                    </Button>
+                                </Link>
+                                <Button
+                                    type="submit"
+                                    disabled={isSaving}
+                                    className="flex-[2] h-16 rounded-[24px] bg-primary hover:bg-slate-900 text-white font-black uppercase text-[10px] tracking-[0.2em] transition-all shadow-xl shadow-black/20 hover:shadow-accent/20 btn-interactive"
+                                >
+                                    {isSaving ? (
+                                        <Loader2 className="w-6 h-6 animate-spin" />
+                                    ) : (
+                                        <>
+                                            <Save className="w-5 h-5 mr-3" />
+                                            Atualizar Perfil
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </form>
+                    </Form>
+                </div>
+            </div>
         </div>
     );
 }

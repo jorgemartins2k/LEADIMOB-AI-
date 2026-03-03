@@ -5,27 +5,31 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { saveWorkSchedules } from "@/lib/actions/schedule";
-import { Loader2 } from "lucide-react";
+import {
+    X,
+    Loader2,
+    Save,
+    Clock,
+    Calendar,
+    Sparkles,
+    ShieldCheck,
+    Zap
+} from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 const daysOfWeek = [
-    { id: 1, label: "Segunda-feira" },
-    { id: 2, label: "Terça-feira" },
-    { id: 3, label: "Quarta-feira" },
-    { id: 4, label: "Quinta-feira" },
-    { id: 5, label: "Sexta-feira" },
-    { id: 6, label: "Sábado" },
-    { id: 0, label: "Domingo" },
+    { id: 1, label: "Segunda", icon: Zap },
+    { id: 2, label: "Terça", icon: Zap },
+    { id: 3, label: "Quarta", icon: Zap },
+    { id: 4, label: "Quinta", icon: Zap },
+    { id: 5, label: "Sexta", icon: Zap },
+    { id: 6, label: "Sábado", icon: Clock },
+    { id: 0, label: "Domingo", icon: Clock },
 ];
 
 const scheduleSchema = z.object({
@@ -56,61 +60,83 @@ export default function WorkSchedulePage() {
         setIsSaving(true);
         try {
             await saveWorkSchedules(data.schedules);
-            alert("Configurações salvas com sucesso!");
+            // In a real app, use a toast here
         } catch (error) {
             console.error("Error saving schedule:", error);
-            alert("Erro ao salvar o expediente. Certifique-se de configurar as chaves do Supabase no .env.local.");
         } finally {
             setIsSaving(false);
         }
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-display font-bold text-text">Expediente da Raquel</h1>
-                <p className="text-text-muted">Defina em quais horários a IA deve responder seus leads automaticamente.</p>
-            </div>
+        <div className="min-h-screen bg-transparent py-12 animate-fade-up">
+            <div className="max-w-3xl mx-auto">
+                <div className="card-premium border-none shadow-2xl relative">
+                    {/* Modal Header */}
+                    <div className="px-10 py-8 border-b border-border/50 flex items-center justify-between bg-white/[0.02]">
+                        <div className="space-y-1">
+                            <h1 className="heading-xl text-foreground">Expediente</h1>
+                            <p className="text-body text-sm font-medium">Defina quando a Raquel deve atuar.</p>
+                        </div>
+                        <Link href="/configuracoes">
+                            <Button variant="ghost" size="icon" className="rounded-full hover:bg-muted btn-interactive">
+                                <X className="h-6 w-6 text-muted-foreground" />
+                            </Button>
+                        </Link>
+                    </div>
 
-            <Card className="bg-surface border-surface-2">
-                <CardHeader>
-                    <CardTitle className="font-display text-xl text-text">Configuração Semanal</CardTitle>
-                    <CardDescription>
-                        A Raquel só iniciará atendimentos dentro destes intervalos.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="p-10 space-y-10">
+                        {/* Info Highlight */}
+                        <div className="p-6 rounded-[32px] bg-accent/5 border border-accent/20 flex items-center gap-6 group">
+                            <div className="w-14 h-14 rounded-2xl bg-accent text-white flex items-center justify-center shrink-0 shadow-lg shadow-accent/20 group-hover:scale-110 transition-transform">
+                                <Sparkles className="w-7 h-7" />
+                            </div>
+                            <p className="text-sm font-bold text-foreground leading-relaxed">
+                                Fora destes horários, a Raquel irá sinalizar ao lead que o atendimento humano retornará em breve.
+                            </p>
+                        </div>
+
                         <div className="space-y-4">
                             {daysOfWeek.map((day, index) => (
                                 <div
                                     key={day.id}
-                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-bg/30 border border-surface-2 hover:border-surface-2/60 transition-colors"
+                                    className={cn(
+                                        "flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-8 rounded-[32px] border transition-all duration-500",
+                                        form.watch(`schedules.${index}.isActive`)
+                                            ? "bg-white/[0.03] border-border/50 shadow-sm"
+                                            : "bg-muted/5 border-transparent opacity-60"
+                                    )}
                                 >
-                                    <div className="flex items-center gap-4 min-w-[140px]">
+                                    <div className="flex items-center gap-6">
                                         <Switch
                                             checked={form.watch(`schedules.${index}.isActive`)}
                                             onCheckedChange={(val) => form.setValue(`schedules.${index}.isActive`, val)}
+                                            className="scale-110 data-[state=checked]:bg-accent"
                                         />
-                                        <Label className="font-semibold text-text">{day.label}</Label>
+                                        <div className="flex flex-col">
+                                            <Label className="text-lg font-black text-foreground uppercase tracking-tight">{day.label}</Label>
+                                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{form.watch(`schedules.${index}.isActive`) ? "Ativo" : "Pausado"}</span>
+                                        </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative group">
+                                            <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-accent transition-colors" />
                                             <Input
                                                 type="time"
                                                 {...form.register(`schedules.${index}.startTime`)}
                                                 disabled={!form.watch(`schedules.${index}.isActive`)}
-                                                className="h-9 w-24 bg-surface-2 border-transparent focus:border-primary transition-all text-text"
+                                                className="h-14 w-32 pl-12 bg-muted/20 border-border/30 rounded-2xl font-bold text-base focus-visible:ring-accent/20 transition-all text-center"
                                             />
                                         </div>
-                                        <span className="text-text-muted text-sm px-2">até</span>
-                                        <div className="flex flex-col gap-1">
+                                        <span className="text-muted-foreground font-black text-xs uppercase tracking-widest">até</span>
+                                        <div className="relative group">
+                                            <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-accent transition-colors" />
                                             <Input
                                                 type="time"
                                                 {...form.register(`schedules.${index}.endTime`)}
                                                 disabled={!form.watch(`schedules.${index}.isActive`)}
-                                                className="h-9 w-24 bg-surface-2 border-transparent focus:border-primary transition-all text-text"
+                                                className="h-14 w-32 pl-12 bg-muted/20 border-border/30 rounded-2xl font-bold text-base focus-visible:ring-accent/20 transition-all text-center"
                                             />
                                         </div>
                                     </div>
@@ -118,25 +144,31 @@ export default function WorkSchedulePage() {
                             ))}
                         </div>
 
-                        <div className="flex justify-end pt-4">
+                        {/* Action Force */}
+                        <div className="flex items-center gap-4 pt-10 border-t border-border/50">
+                            <Link href="/configuracoes" className="flex-1">
+                                <Button type="button" variant="outline" className="w-full h-16 rounded-[24px] border-border/50 font-black uppercase text-[10px] tracking-widest text-muted-foreground hover:bg-muted btn-interactive">
+                                    Cancelar
+                                </Button>
+                            </Link>
                             <Button
                                 type="submit"
                                 disabled={isSaving}
-                                className="bg-primary hover:bg-primary-dark text-white px-8 h-11"
+                                className="flex-[2] h-16 rounded-[24px] bg-primary hover:bg-slate-900 text-white font-black uppercase text-[10px] tracking-[0.2em] transition-all shadow-xl shadow-black/20 hover:shadow-accent/20 btn-interactive"
                             >
                                 {isSaving ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Salvando...
-                                    </>
+                                    <Loader2 className="w-6 h-6 animate-spin" />
                                 ) : (
-                                    "Salvar Expediente"
+                                    <>
+                                        <Save className="w-5 h-5 mr-3" />
+                                        Salvar Expediente
+                                    </>
                                 )}
                             </Button>
                         </div>
                     </form>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </div>
     );
 }
