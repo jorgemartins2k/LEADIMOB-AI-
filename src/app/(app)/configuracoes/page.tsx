@@ -29,23 +29,29 @@ export default function ConfiguraçõesPage() {
     ];
 
     return (
-        <div className="space-y-12 animate-in fade-in slide-in-from-top-4 duration-700 pb-20">
+        <div className="space-y-12 animate-in fade-in slide-in-from-top-4 duration-1000 pb-20">
             {/* Header Section */}
-            <div className="flex flex-col gap-2">
-                <h1 className="heading-hero text-foreground">Configurações</h1>
-                <p className="text-body text-lg text-muted-foreground">Gerencie suas preferências e dados da conta.</p>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+                <div className="space-y-3">
+                    <h1 className="heading-xl text-foreground">Configurações do <span className="text-gradient-accent">Sistema</span></h1>
+                    <p className="text-body font-medium leading-relaxed">Personalize sua experiência e os parâmetros de atuação da <span className="text-foreground font-black">Raquel</span>.</p>
+                </div>
+                <div className="px-5 py-2 bg-success/10 text-success rounded-full text-[10px] font-black uppercase tracking-widest border border-success/20 flex items-center gap-2">
+                    <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
+                    Sincronizado com WhatsApp
+                </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex items-center gap-4 bg-muted/20 p-2 rounded-[28px] w-fit overflow-x-auto no-scrollbar">
+            {/* Tabs Design v2 */}
+            <div className="flex items-center gap-4 bg-muted/20 p-2.5 rounded-[32px] w-fit overflow-x-auto no-scrollbar border border-border/50">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={cn(
-                            "flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap",
+                            "flex items-center gap-3 px-10 py-4 rounded-[24px] font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap btn-interactive",
                             activeTab === tab.id
-                                ? "bg-foreground text-background shadow-lg"
+                                ? "bg-foreground text-background shadow-2xl shadow-black/20"
                                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         )}
                     >
@@ -55,144 +61,151 @@ export default function ConfiguraçõesPage() {
                 ))}
             </div>
 
-            {/* Tab: Horários de Atendimento */}
-            {activeTab === "horarios" && (
-                <div className="bg-card border border-border rounded-[48px] p-12 shadow-soft space-y-10">
-                    <div className="flex flex-col gap-2">
-                        <h3 className="font-display font-black text-2xl text-foreground uppercase tracking-tight">Expediente</h3>
-                        <p className="text-sm font-bold text-muted-foreground">Defina os horários em que você está disponível para atendimento.</p>
-                    </div>
+            {/* Tab Content with card-premium */}
+            <div className="card-premium p-10 md:p-14">
+                {/* Tab: Horários de Atendimento */}
+                {activeTab === "horarios" && (
+                    <div className="space-y-12">
+                        <div className="flex flex-col gap-3">
+                            <h3 className="font-display font-black text-3xl text-foreground uppercase tracking-tight">Expediente da IA</h3>
+                            <p className="text-body font-medium max-w-xl">Defina em quais janelas a Raquel iniciará novas conversas para garantir que você esteja disponível para assumir.</p>
+                        </div>
 
-                    <div className="space-y-6">
-                        {days.map((day) => (
-                            <div key={day.name} className="flex flex-wrap items-center justify-between gap-6 p-6 rounded-[32px] bg-muted/10 border border-transparent hover:border-border transition-all group">
-                                <div className="flex items-center gap-6 min-w-[200px]">
-                                    <Switch checked={day.active} />
-                                    <span className={cn("text-base font-black uppercase tracking-tight", day.active ? "text-foreground" : "text-muted-foreground opacity-50")}>
-                                        {day.name}
-                                    </span>
-                                </div>
-
-                                {day.active ? (
-                                    <div className="flex items-center gap-4 bg-card border border-border p-2 rounded-2xl shadow-sm">
-                                        <div className="px-6 py-2 rounded-xl bg-muted/30 font-black text-sm text-foreground">09:00</div>
-                                        <span className="text-muted-foreground font-black opacity-20">—</span>
-                                        <div className="px-6 py-2 rounded-xl bg-muted/30 font-black text-sm text-foreground">18:00</div>
+                        <div className="grid gap-6">
+                            {days.map((day) => (
+                                <div key={day.name} className="flex flex-wrap items-center justify-between gap-8 p-8 rounded-[32px] bg-muted/20 border border-transparent hover:border-border/50 transition-all group">
+                                    <div className="flex items-center gap-8 min-w-[240px]">
+                                        <Switch checked={day.active} className="data-[state=checked]:bg-primary" />
+                                        <span className={cn("text-lg font-black uppercase tracking-tight transition-all", day.active ? "text-foreground" : "text-muted-foreground opacity-30")}>
+                                            {day.name}
+                                        </span>
                                     </div>
-                                ) : (
-                                    <Badge variant="outline" className="px-6 py-2 rounded-full border-muted text-[10px] font-black uppercase tracking-widest opacity-40">Fechado</Badge>
-                                )}
-                            </div>
-                        ))}
-                    </div>
 
-                    <div className="flex justify-end pt-6">
-                        <Button className="bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest px-12 h-16 rounded-[24px] shadow-primary/20 shadow-xl transition-all">
-                            <Save className="w-5 h-5 mr-3" /> Salvar Alterações
-                        </Button>
-                    </div>
-                </div>
-            )}
-
-            {/* Tab: Notificações */}
-            {activeTab === "notificacoes" && (
-                <div className="bg-card border border-border rounded-[48px] p-12 shadow-soft space-y-10">
-                    <div className="flex flex-col gap-2">
-                        <h3 className="font-display font-black text-2xl text-foreground uppercase tracking-tight">Preferências de Notificação</h3>
-                        <p className="text-sm font-bold text-muted-foreground">Escolha como você quer ser avisado sobre novos leads e atividades.</p>
-                    </div>
-
-                    <div className="grid gap-6 md:grid-cols-2">
-                        {[
-                            { title: "Email", desc: "Novos leads e relatórios diários", checked: true },
-                            { title: "WhatsApp", desc: "Alertas urgentes de novos contatos", checked: true },
-                            { title: "Push (App)", desc: "Notificações em tempo real no navegador", checked: false },
-                            { title: "Relatório Semanal", desc: "Resumo de desempenho por email", checked: true },
-                        ].map((item) => (
-                            <div key={item.title} className="p-8 rounded-[40px] bg-muted/10 border border-transparent hover:border-border transition-all flex items-start justify-between cursor-pointer group">
-                                <div className="space-y-1">
-                                    <h4 className="text-base font-black text-foreground uppercase tracking-tight">{item.title}</h4>
-                                    <p className="text-xs font-bold text-muted-foreground">{item.desc}</p>
+                                    {day.active ? (
+                                        <div className="flex items-center gap-4 bg-card border border-border/50 p-2.5 rounded-2xl shadow-sm group-hover:shadow-md transition-all">
+                                            <div className="px-8 py-3 rounded-xl bg-muted/40 font-black text-base text-foreground tracking-tighter">09:00</div>
+                                            <span className="text-muted-foreground font-black opacity-10 text-xl">—</span>
+                                            <div className="px-8 py-3 rounded-xl bg-muted/40 font-black text-base text-foreground tracking-tighter">18:00</div>
+                                        </div>
+                                    ) : (
+                                        <div className="px-8 py-3 rounded-full bg-muted/10 border border-border/20 text-[10px] font-black uppercase tracking-widest opacity-40">Folga da IA</div>
+                                    )}
                                 </div>
-                                <Switch checked={item.checked} />
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
 
-                    <div className="flex justify-end pt-6">
-                        <Button className="bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest px-12 h-16 rounded-[24px] shadow-primary/20 shadow-xl transition-all">
-                            <Save className="w-5 h-5 mr-3" /> Salvar Preferências
-                        </Button>
-                    </div>
-                </div>
-            )}
-
-            {/* Tab: Dados Pessoais */}
-            {activeTab === "dados" && (
-                <div className="bg-card border border-border rounded-[48px] p-12 shadow-soft space-y-12">
-                    {/* Profile Header */}
-                    <div className="flex flex-col md:flex-row items-center gap-10">
-                        <div className="relative group">
-                            <div className="w-40 h-40 rounded-[56px] bg-gradient-to-br from-primary to-accent p-1">
-                                <div className="w-full h-full rounded-[55px] bg-card flex items-center justify-center overflow-hidden border-4 border-card">
-                                    <User className="w-20 h-20 text-muted-foreground opacity-20" />
-                                </div>
-                            </div>
-                            <Button size="icon" className="absolute -bottom-2 -right-2 w-12 h-12 rounded-2xl bg-foreground text-background shadow-xl hover:scale-110 transition-transform">
-                                <Camera className="w-5 h-5" />
+                        <div className="flex justify-end pt-8">
+                            <Button className="btn-primary px-16 h-18 text-xs font-black uppercase tracking-[0.2em] rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all">
+                                <Save className="w-5 h-5 mr-3" /> Atualizar Expediente
                             </Button>
                         </div>
-                        <div className="flex-1 space-y-4 text-center md:text-left">
-                            <h3 className="font-display font-black text-3xl text-foreground uppercase tracking-tight">Jorge Martins</h3>
-                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-                                <Badge variant="secondary" className="bg-muted px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">Plano Pro</Badge>
-                                <span className="text-xs font-bold text-muted-foreground">ID: #45920</span>
+                    </div>
+                )}
+
+                {/* Tab: Notificações */}
+                {activeTab === "notificacoes" && (
+                    <div className="space-y-12">
+                        <div className="flex flex-col gap-3">
+                            <h3 className="font-display font-black text-3xl text-foreground uppercase tracking-tight">Fluxo de Alertas</h3>
+                            <p className="text-body font-medium">Configure como quer ser avisado sobre o progresso dos seus leads.</p>
+                        </div>
+
+                        <div className="grid gap-8 md:grid-cols-2">
+                            {[
+                                { title: "Relatório de Atendimento", desc: "Resumo diário por E-mail", checked: true },
+                                { title: "Urgência (Hot Leads)", desc: "Alerta imediato via WhatsApp", checked: true },
+                                { title: "Browser Push", desc: "Notificações na área de trabalho", checked: false },
+                                { title: "Performance Semanal", desc: "Insights comparativos no Sábado", checked: true },
+                            ].map((item) => (
+                                <div key={item.title} className="p-10 rounded-[40px] bg-muted/20 border border-transparent hover:border-border/50 transition-all flex items-start justify-between cursor-pointer group shadow-sm hover:shadow-md">
+                                    <div className="space-y-3">
+                                        <h4 className="text-lg font-black text-foreground uppercase tracking-tight">{item.title}</h4>
+                                        <p className="text-sm font-bold text-muted-foreground opacity-60 leading-relaxed">{item.desc}</p>
+                                    </div>
+                                    <Switch checked={item.checked} className="data-[state=checked]:bg-accent" />
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex justify-end pt-8">
+                            <Button className="btn-primary px-16 h-18 text-xs font-black uppercase tracking-[0.2em] rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all bg-accent hover:bg-accent/90">
+                                <Save className="w-5 h-5 mr-3" /> Salvar Preferências
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab: Dados Pessoais */}
+                {activeTab === "dados" && (
+                    <div className="space-y-16">
+                        {/* Profile Design v2 */}
+                        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+                            <div className="relative group">
+                                <div className="w-48 h-48 rounded-[64px] bg-gradient-to-br from-primary via-accent to-purple p-1.5 rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                                    <div className="w-full h-full rounded-[60px] bg-card flex items-center justify-center overflow-hidden border-8 border-card">
+                                        <User className="w-24 h-24 text-muted-foreground opacity-10" />
+                                    </div>
+                                </div>
+                                <Button size="icon" className="absolute -bottom-4 -right-4 w-16 h-16 rounded-[24px] bg-foreground text-background shadow-2xl hover:scale-110 active:scale-90 transition-all border-4 border-card">
+                                    <Camera className="w-6 h-6" />
+                                </Button>
+                            </div>
+                            <div className="flex-1 space-y-6 text-center lg:text-left">
+                                <div className="space-y-2">
+                                    <h3 className="font-display font-black text-5xl text-foreground uppercase tracking-tight leading-none">Jorge Martins</h3>
+                                    <p className="text-body font-medium opacity-60">Consultor Imobiliário de Luxo</p>
+                                </div>
+                                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
+                                    <Badge variant="secondary" className="bg-primary/10 text-primary px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/20">Membro PRO</Badge>
+                                    <Badge variant="outline" className="px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border-border text-muted-foreground">ID: #45920-A</Badge>
+                                </div>
+                            </div>
+                            <Button variant="ghost" className="rounded-2xl text-hot font-black uppercase tracking-widest text-[10px] h-14 px-10 border border-hot/10 hover:bg-hot/5 transition-all hover:scale-105 btn-interactive">
+                                Sair da Conta
+                            </Button>
+                        </div>
+
+                        <Separator className="bg-border opacity-30" />
+
+                        {/* Advanced Form Grid */}
+                        <div className="grid gap-12 md:grid-cols-2">
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4">Nome Profissional</label>
+                                <Input defaultValue="Jorge Martins" className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all" />
+                            </div>
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4">WhatsApp Business</label>
+                                <Input defaultValue="(11) 98765-4321" className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all" />
+                            </div>
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4">E-mail Corporativo</label>
+                                <Input defaultValue="jorge@imobiliaria.com" className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all" />
+                            </div>
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4">CRECI Ativo</label>
+                                <Input defaultValue="123456-F" className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all" />
+                            </div>
+                            <div className="space-y-4 md:col-span-2">
+                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4">Texto de Apresentação (IA)</label>
+                                <textarea
+                                    className="w-full min-h-[180px] bg-muted/20 border border-border/50 rounded-[40px] p-8 font-bold text-base focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all leading-relaxed"
+                                    defaultValue="Corretor especializado em imóveis de luxo com mais de 10 anos de experiência..."
+                                />
+                                <p className="text-[10px] font-bold text-muted-foreground opacity-40 ml-4 italic">*Este texto auxilia a Raquel a entender seu perfil profissional ao falar com os leads.</p>
                             </div>
                         </div>
-                        <Button variant="outline" className="rounded-2xl border-hot/20 text-hot font-black uppercase tracking-widest text-[10px] h-12 px-8 hover:bg-hot/5 transition-all">
-                            Sair da Conta
-                        </Button>
-                    </div>
 
-                    <Separator className="bg-border opacity-50" />
-
-                    {/* Form Grid */}
-                    <div className="grid gap-10 md:grid-cols-2">
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">Nome Completo</label>
-                            <Input defaultValue="Jorge Martins" className="h-16 bg-muted/20 border-border rounded-2xl font-bold focus-visible:ring-primary/20" />
-                        </div>
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">WhatsApp</label>
-                            <Input defaultValue="(11) 98765-4321" className="h-16 bg-muted/20 border-border rounded-2xl font-bold focus-visible:ring-primary/20" />
-                        </div>
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">E-mail</label>
-                            <Input defaultValue="jorge@imobiliaria.com" className="h-16 bg-muted/20 border-border rounded-2xl font-bold focus-visible:ring-primary/20" />
-                        </div>
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">CRECI / Registro</label>
-                            <Input defaultValue="123456-F" className="h-16 bg-muted/20 border-border rounded-2xl font-bold focus-visible:ring-primary/20" />
-                        </div>
-                        <div className="space-y-4 md:col-span-2">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">Bio / Descrição Profissional</label>
-                            <textarea
-                                className="w-full min-h-[150px] bg-muted/20 border border-border rounded-[32px] p-6 font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                                defaultValue="Corretor especializado em imóveis de luxo com mais de 10 anos de experiência..."
-                            />
+                        <div className="flex flex-col md:flex-row justify-end pt-12 gap-6">
+                            <Button variant="ghost" className="font-black uppercase tracking-widest text-[10px] h-18 px-12 rounded-3xl hover:bg-muted btn-interactive">
+                                Redefinir Senha de Acesso
+                            </Button>
+                            <Button className="btn-primary px-20 h-18 text-xs font-black uppercase tracking-[0.2em] rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all">
+                                <Save className="w-5 h-5 mr-3" /> Salvar Perfil Profissional
+                            </Button>
                         </div>
                     </div>
-
-                    <div className="flex justify-end pt-6 gap-6">
-                        <Button variant="ghost" className="font-black uppercase tracking-widest text-[10px] h-16 px-10 rounded-2xl hover:bg-muted transition-all">
-                            Redefinir Senha
-                        </Button>
-                        <Button className="bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest px-12 h-16 rounded-[24px] shadow-primary/20 shadow-xl transition-all">
-                            <Save className="w-5 h-5 mr-3" /> Salvar Perfil
-                        </Button>
-                    </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 }

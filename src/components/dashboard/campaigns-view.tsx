@@ -69,111 +69,132 @@ export function CampaignsView() {
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="heading-xl text-foreground">Campanhas Inteligentes</h1>
-                    <p className="text-body mt-1">Crie links rastreáveis e descubra quais canais trazem os melhores leads.</p>
+        <div className="space-y-12 animate-in fade-in duration-1000 pb-20">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+                <div className="space-y-3">
+                    <h1 className="heading-xl text-foreground">Campanhas <span className="text-gradient-accent">Inteligentes</span></h1>
+                    <p className="text-body font-medium leading-relaxed">Links rastreáveis que conectam seus anúncios diretamente à <span className="text-foreground font-black">Raquel</span>.</p>
                 </div>
-                <Button className="btn-primary h-12 px-8 font-bold uppercase text-xs tracking-widest gap-2">
-                    <Rocket className="w-4 h-4" /> Criar Nova Campanha
+                <Button className="btn-primary h-16 px-10 font-black uppercase text-[10px] tracking-[0.2em] gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all">
+                    <Rocket className="w-5 h-5" /> Nova Campanha
                 </Button>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat) => (
-                    <Card key={stat.label} className="bg-card border-border shadow-soft">
-                        <CardContent className="p-6">
-                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">{stat.label}</p>
-                            <p className={cn("text-3xl font-black", stat.color)}>{stat.value}</p>
-                        </CardContent>
-                    </Card>
+                    <div key={stat.label} className="card-premium p-8 flex flex-col gap-3">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">{stat.label}</p>
+                        <p className={cn("text-4xl font-black tracking-tighter", stat.color)}>{stat.value}</p>
+                    </div>
                 ))}
             </div>
 
-            {/* Tutorial */}
-            <div className="bg-primary/5 border border-primary/20 rounded-[32px] p-8 relative overflow-hidden">
-                <div className="relative z-10 flex gap-6">
-                    <div className="w-16 h-16 rounded-[24px] bg-primary/10 flex items-center justify-center shrink-0">
-                        <Lightbulb className="w-8 h-8 text-primary" />
+            {/* Tutorial / Insight */}
+            <div className="card-premium p-10 bg-accent/5 border-accent/20 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 blur-3xl rounded-full -z-10 group-hover:bg-accent/20 transition-all" />
+
+                <div className="relative z-10 flex flex-col md:flex-row gap-10 items-center">
+                    <div className="w-20 h-20 rounded-3xl bg-accent text-white flex items-center justify-center shrink-0 shadow-lg shadow-accent/20 group-hover:scale-110 group-hover:rotate-3 transition-all">
+                        <Lightbulb className="w-10 h-10" />
                     </div>
-                    <div>
-                        <h3 className="text-lg font-black text-foreground uppercase tracking-tight mb-2">Como aumentar suas vendas?</h3>
-                        <ol className="grid gap-3 md:grid-cols-2 text-sm text-muted-foreground font-medium list-decimal list-inside">
-                            <li>Crie uma campanha vinculada a um imóvel</li>
-                            <li>Divulgue o link rastreável na sua Bio ou Stories</li>
-                            <li>A Raquel atende quem clicar automaticamente</li>
-                            <li>Analise quais posts geram leads reais</li>
-                        </ol>
+                    <div className="space-y-4 flex-1">
+                        <h3 className="text-xl font-black text-foreground uppercase tracking-tight">Otimize seu Investimento em Tráfego</h3>
+                        <p className="text-muted-foreground font-medium leading-relaxed max-w-2xl">
+                            Use links únicos para cada plataforma (Instagram, Facebook, Google) e descubra exatamente de onde vêm seus clientes mais lucrativos. A <span className="text-foreground font-black">Raquel</span> identifica a origem e adapta a abordagem.
+                        </p>
                     </div>
+                    <Button variant="outline" className="h-14 px-8 rounded-2xl border-accent/20 text-accent font-black uppercase text-[10px] tracking-widest btn-interactive">
+                        Ver Tutorial Completo
+                    </Button>
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="space-y-4">
-                <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] flex items-center gap-2">
-                    <Megaphone className="w-4 h-4" /> Campanhas Ativas
-                </h3>
+            {/* Campaigns Grid */}
+            <div className="space-y-8">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] flex items-center gap-3">
+                        <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
+                        Campanhas Rodando
+                    </h3>
+                    <Button variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground">
+                        Arquivadas
+                    </Button>
+                </div>
 
-                <div className="grid gap-4">
+                <div className="grid gap-6">
                     {campaigns.map((camp) => {
                         const style = getTypeStyle(camp.type);
                         return (
-                            <Card key={camp.id} className="bg-card border-border shadow-soft group hover:border-primary/40 transition-all rounded-[32px] overflow-hidden">
-                                <CardContent className="p-8">
-                                    <div className="flex flex-col lg:flex-row gap-8 items-start lg:items-center">
-                                        <div className={cn("w-16 h-16 rounded-[24px] flex items-center justify-center shrink-0", style.bg)}>
-                                            <style.icon className={cn("w-8 h-8", style.color)} />
+                            <div key={camp.id} className="card-premium p-8 hover:border-primary/40 transition-all group relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-2xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                                <div className="flex flex-col lg:flex-row gap-8 items-start lg:items-center">
+                                    <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform", style.bg)}>
+                                        <style.icon className={cn("w-8 h-8", style.color)} />
+                                    </div>
+
+                                    <div className="flex-1 space-y-5">
+                                        <div className="flex items-center gap-4">
+                                            <h4 className="text-2xl font-black text-foreground tracking-tighter group-hover:text-primary transition-colors">{camp.title}</h4>
+                                            <span className="bg-success/10 text-success text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest border border-success/20">Ativa</span>
                                         </div>
 
-                                        <div className="flex-1 space-y-4">
-                                            <div className="flex items-center gap-3">
-                                                <h4 className="text-xl font-black text-foreground tracking-tight">{camp.title}</h4>
-                                                <span className="bg-success/10 text-success text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Ativa</span>
-                                            </div>
-
-                                            <div className="flex items-center gap-2 bg-muted/30 p-2 rounded-2xl group-hover:bg-muted/50 transition-colors">
-                                                <code className="text-[11px] font-bold text-muted-foreground truncate flex-1 px-4">{camp.link}</code>
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => handleCopy(camp.link, camp.id)}
-                                                    className={cn(
-                                                        "rounded-xl h-10 px-6 font-black text-[10px] uppercase tracking-widest transition-all",
-                                                        copiedLink === camp.id ? "bg-success hover:bg-success" : "bg-primary"
-                                                    )}
-                                                >
-                                                    {copiedLink === camp.id ? <Check className="w-4 h-4" /> : <><Copy className="w-3 h-3 mr-2" /> Copiar</>}
-                                                </Button>
-                                            </div>
-
-                                            <div className="flex flex-wrap gap-8 pt-2">
-                                                <div className="flex items-center gap-3">
-                                                    <Eye className="w-4 h-4 text-muted-foreground" />
-                                                    <span className="text-sm font-black text-foreground">{camp.clicks}<span className="text-muted-foreground font-bold ml-1">Cliques</span></span>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <Users className="w-4 h-4 text-primary" />
-                                                    <span className="text-sm font-black text-foreground">{camp.leads}<span className="text-muted-foreground font-bold ml-1">Leads</span></span>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <Target className="w-4 h-4 text-accent" />
-                                                    <span className="text-sm font-black text-foreground">{camp.conversions}<span className="text-muted-foreground font-bold ml-1">Vendas</span></span>
-                                                </div>
-                                            </div>
+                                        <div className="flex items-center gap-3 bg-muted/20 p-2.5 rounded-2xl group-hover:bg-muted/40 transition-colors border border-border/50">
+                                            <code className="text-[11px] font-bold text-muted-foreground truncate flex-1 px-4">{camp.link}</code>
+                                            <Button
+                                                size="sm"
+                                                onClick={() => handleCopy(camp.link, camp.id)}
+                                                className={cn(
+                                                    "rounded-xl h-11 px-8 font-black text-[10px] uppercase tracking-widest transition-all shadow-lg",
+                                                    copiedLink === camp.id ? "bg-success hover:bg-success scale-105" : "bg-primary hover:scale-105 active:scale-95"
+                                                )}
+                                            >
+                                                {copiedLink === camp.id ? <Check className="w-5 h-5" /> : <><Copy className="w-4 h-4 mr-2" /> Copiar Link</>}
+                                            </Button>
                                         </div>
 
-                                        <div className="flex gap-2">
-                                            <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl">
-                                                <Share2 className="w-4 h-4" />
-                                            </Button>
-                                            <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl hover:text-hot">
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
+                                        <div className="flex flex-wrap gap-10 pt-2">
+                                            <div className="flex items-center gap-4">
+                                                <div className="p-2.5 bg-muted/30 rounded-xl">
+                                                    <Eye className="w-5 h-5 text-muted-foreground" />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-lg font-black text-foreground leading-none">{camp.clicks}</span>
+                                                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">Cliques</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="p-2.5 bg-primary/10 rounded-xl">
+                                                    <Users className="w-5 h-5 text-primary" />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-lg font-black text-foreground leading-none">{camp.leads}</span>
+                                                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">Leads</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="p-2.5 bg-accent/10 rounded-xl">
+                                                    <Target className="w-5 h-5 text-accent" />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-lg font-black text-foreground leading-none">{camp.conversions}</span>
+                                                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">Visitas</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </CardContent>
-                            </Card>
+
+                                    <div className="flex gap-3">
+                                        <Button variant="ghost" size="icon" className="h-14 w-14 rounded-2xl hover:bg-muted btn-interactive border border-transparent hover:border-border/50">
+                                            <Share2 className="w-5 h-5 text-muted-foreground" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="h-14 w-14 rounded-2xl hover:bg-hot/10 hover:text-hot btn-interactive border border-transparent hover:border-hot/20">
+                                            <Trash2 className="w-5 h-5" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
                         );
                     })}
                 </div>

@@ -49,22 +49,31 @@ export function Sidebar() {
                             key={item.name}
                             href={item.href}
                             className={cn(
-                                "group flex items-center justify-between rounded-2xl px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300",
+                                "group relative flex items-center justify-between rounded-2xl px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 active:scale-95",
                                 isActive
                                     ? "bg-primary text-white shadow-primary scale-[1.02]"
                                     : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                             )}
                         >
+                            {/* Sliding Active Indicator (Optional visual flair) */}
+                            {isActive && (
+                                <div className="absolute left-1 top-1/4 bottom-1/4 w-1 bg-accent rounded-full animate-in fade-in slide-in-from-left-2 duration-500" />
+                            )}
+
                             <div className="flex items-center gap-4">
                                 <item.icon
                                     className={cn(
-                                        "h-5 w-5 shrink-0 transition-colors",
+                                        "h-5 w-5 shrink-0 transition-all duration-300 group-hover:scale-110",
                                         isActive ? "text-white" : "text-muted-foreground group-hover:text-foreground"
                                     )}
                                 />
                                 {item.name}
                             </div>
-                            {isActive && <ChevronRight className="h-4 w-4 text-white/50" />}
+                            {isActive ? (
+                                <ChevronRight className="h-4 w-4 text-white/50 animate-in slide-in-from-left-4 duration-500" />
+                            ) : (
+                                <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                            )}
                         </Link>
                     );
                 })}

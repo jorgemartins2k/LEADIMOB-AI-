@@ -29,28 +29,31 @@ export function Hero() {
                             </span>
                         </h1>
 
-                        <p className="text-xl text-muted-foreground mb-10 max-w-xl mx-auto lg:mx-0 font-medium leading-relaxed">
+                        <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-xl mx-auto lg:mx-0 font-medium leading-relaxed">
                             A Raquel é a sua assistente de IA que prospecta, qualifica e entrega o lead quente direto no seu WhatsApp.
                             <span className="text-foreground font-bold"> Você só se preocupa em fechar.</span>
                         </p>
 
-                        <div className="flex flex-col sm:flex-row gap-4 mb-12 justify-center lg:justify-start">
+                        <div className="flex flex-col sm:flex-row gap-6 mb-16 justify-center lg:justify-start">
                             <Button
                                 size="lg"
-                                className="btn-primary group h-14 px-8 text-lg font-bold"
+                                className="btn-primary group h-16 px-10 text-lg font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
                                 asChild
                             >
                                 <Link href="/sign-up">
                                     Começar agora
-                                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
                                 </Link>
                             </Button>
                             <Button
                                 variant="outline"
                                 size="lg"
-                                className="h-14 px-8 text-lg font-bold border-2 hover:bg-secondary/50 transition-all rounded-2xl"
+                                className="h-16 px-10 text-lg font-black uppercase tracking-widest border-2 border-border/50 hover:bg-muted/50 hover:border-accent transition-all rounded-[24px] btn-interactive"
+                                onClick={() => {
+                                    document.getElementById('calculadora')?.scrollIntoView({ behavior: 'smooth' });
+                                }}
                             >
-                                Agende uma Demonstração
+                                Agendar Demo
                             </Button>
                         </div>
 

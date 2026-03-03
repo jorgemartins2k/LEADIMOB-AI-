@@ -31,30 +31,33 @@ export function ROICalculator() {
     const roi = ((receita - preco) / preco) * 100;
 
     return (
-        <section id="calculadora" className="py-24 bg-muted/30 relative overflow-hidden">
+        <section id="calculadora" className="py-32 bg-muted/30 relative overflow-hidden">
             <div className="container mx-auto px-6">
                 <div className="max-w-6xl mx-auto">
-                    <div className="text-center mb-16">
-                        <div className="inline-flex items-center gap-2 bg-purple/10 text-purple px-4 py-1.5 rounded-full text-sm font-black mb-6 border border-purple/20">
+                    <div className="text-center mb-24">
+                        <div className="inline-flex items-center gap-2 bg-purple/10 text-purple px-5 py-2 rounded-full text-xs font-black mb-8 border border-purple/20 tracking-widest uppercase">
                             <Calculator className="w-4 h-4" />
-                            SIMULADOR DE RESULTADOS
+                            Simular Faturamento
                         </div>
-                        <h2 className="heading-xl mb-4">Calculadora de ROI Automática</h2>
-                        <p className="text-muted-foreground text-xl max-w-2xl mx-auto font-medium">
-                            Ajuste o volume de leads e veja como a Raquel transforma seu faturamento.
+                        <h2 className="heading-xl mb-6">Sua Fábrica de Vendas Automática</h2>
+                        <p className="text-muted-foreground text-xl md:text-2xl max-w-2xl mx-auto font-medium leading-relaxed">
+                            Ajuste o volume de leads e veja em segundos como a Raquel transforma <span className="text-foreground font-black">conversas em comissões.</span>
                         </p>
                     </div>
 
-                    <div className="grid lg:grid-cols-5 gap-0 items-stretch bg-card rounded-[40px] border border-border shadow-2xl overflow-hidden">
+                    <div className="grid lg:grid-cols-5 gap-0 items-stretch bg-card rounded-[48px] border border-border shadow-2xl overflow-hidden shadow-primary/5">
                         {/* Input Section */}
-                        <div className="lg:col-span-3 p-10 md:p-14 space-y-12">
-                            <div className="space-y-6">
-                                <div className="flex justify-between items-end">
+                        <div className="lg:col-span-3 p-10 md:p-16 space-y-16">
+                            <div className="space-y-8">
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                                     <div className="space-y-1">
-                                        <label className="text-lg font-black uppercase tracking-wider">Volume de Leads/Mês</label>
-                                        <p className="text-sm text-muted-foreground font-medium">Quantos novos leads você recebe mensalmente?</p>
+                                        <label className="text-xl font-black uppercase tracking-tighter">Volume de Leads/Mês</label>
+                                        <p className="text-sm text-muted-foreground font-medium">Quantidade que você recebe mensalmente</p>
                                     </div>
-                                    <span className="text-3xl font-black text-foreground">{leads.toLocaleString()}<span className="text-accent ml-1">leads</span></span>
+                                    <span className="text-4xl font-black text-foreground tracking-tighter">
+                                        {leads.toLocaleString()}
+                                        <span className="text-accent ml-2 text-xl tracking-normal uppercase">leads</span>
+                                    </span>
                                 </div>
 
                                 <Slider
@@ -63,76 +66,78 @@ export function ROICalculator() {
                                     max={10000}
                                     step={500}
                                     min={500}
-                                    className="py-6"
+                                    className="py-10"
                                 />
 
-                                <div className="flex justify-between text-xs font-black text-muted-foreground uppercase opacity-50 tracking-tighter">
-                                    <span>500 Leads</span>
-                                    <span>5.000 Leads</span>
-                                    <span>10.000 Leads</span>
+                                <div className="flex justify-between text-[10px] font-black text-muted-foreground uppercase opacity-40 tracking-widest">
+                                    <span>Pequeno Porte</span>
+                                    <span>Escala Média</span>
+                                    <span>Alta Performance</span>
                                 </div>
                             </div>
 
-                            <div className="grid md:grid-cols-2 gap-6">
-                                <div className="flex flex-col gap-4 p-6 bg-muted/50 rounded-3xl border border-border/50 transition-all hover:bg-muted/80">
+                            <div className="grid md:grid-cols-2 gap-8">
+                                <div className="group flex flex-col gap-6 p-8 bg-muted/20 rounded-[32px] border border-border/50 transition-all hover:bg-muted/40 card-hover">
                                     <div className="flex justify-between items-start">
-                                        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Qualificados pela IA</span>
-                                        <Flame className="w-5 h-5 text-hot" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Qualificados pela IA</span>
+                                        <Flame className="w-6 h-6 text-hot group-hover:scale-120 transition-transform" />
                                     </div>
-                                    <span className="text-4xl font-black text-foreground">{quentes}</span>
-                                    <p className="text-xs text-muted-foreground font-bold">Leads prontos para agendar</p>
+                                    <span className="text-5xl font-black text-foreground tracking-tighter">{quentes}</span>
+                                    <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest opacity-60">Prontos para fechamento</p>
                                 </div>
 
-                                <div className="flex flex-col gap-4 p-6 bg-muted/50 rounded-3xl border border-border/50 transition-all hover:bg-muted/80">
+                                <div className="group flex flex-col gap-6 p-8 bg-muted/20 rounded-[32px] border border-border/50 transition-all hover:bg-muted/40 card-hover">
                                     <div className="flex justify-between items-start">
-                                        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Visitas Reais</span>
-                                        <TrendingUp className="w-5 h-5 text-accent" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Visitas Reais</span>
+                                        <TrendingUp className="w-6 h-6 text-accent group-hover:scale-120 transition-transform" />
                                     </div>
-                                    <span className="text-4xl font-black text-foreground">{visitas}</span>
-                                    <p className="text-xs text-muted-foreground font-bold">Agendamentos automáticos</p>
+                                    <span className="text-5xl font-black text-foreground tracking-tighter">{visitas}</span>
+                                    <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest opacity-60">Agendamentos automáticos</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Results Section */}
-                        <div className="lg:col-span-2 bg-primary p-10 md:p-14 flex flex-col justify-between text-white relative">
-                            {/* Background accent */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-accent opacity-20 blur-3xl -z-10" />
+                        <div className="lg:col-span-2 bg-primary p-10 md:p-16 flex flex-col justify-between text-white relative">
+                            {/* Background decoration */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent pointer-events-none" />
 
-                            <div className="space-y-10">
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <DollarSign className="w-5 h-5 text-accent" />
-                                        <span className="text-xs font-black uppercase tracking-[0.2em] text-accent">Faturamento Estimado</span>
+                            <div className="space-y-12 relative z-10">
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-accent/20 rounded-lg">
+                                            <DollarSign className="w-5 h-5 text-accent" />
+                                        </div>
+                                        <span className="text-xs font-black uppercase tracking-widest text-accent">Faturamento Estimado</span>
                                     </div>
-                                    <h3 className="text-5xl md:text-6xl font-black leading-none tracking-tighter">
+                                    <h3 className="text-6xl md:text-7xl font-black leading-none tracking-tighter">
                                         R$ {receita.toLocaleString()}
                                     </h3>
-                                    <p className="text-sm font-bold opacity-60 italic text-white/80">*Comissão média: R$ 15k</p>
+                                    <p className="text-xs font-bold text-white/40 uppercase tracking-widest">Base comissão média: R$ 15k</p>
                                 </div>
 
-                                <div className="space-y-4">
+                                <div className="space-y-6">
                                     <div className="flex justify-between items-end">
-                                        <span className="text-sm font-black uppercase tracking-widest opacity-70">ROI Estimado</span>
-                                        <span className="text-3xl font-black text-accent">{Math.round(roi)}%</span>
+                                        <span className="text-xs font-black uppercase tracking-widest text-white/40">ROI Mensal</span>
+                                        <span className="text-4xl font-black text-accent">{Math.round(roi)}%</span>
                                     </div>
-                                    <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden p-1 border border-white/5">
-                                        <div className="bg-accent h-full rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-500" style={{ width: '100%' }}></div>
+                                    <div className="w-full h-4 bg-white/5 rounded-full overflow-hidden p-1 border border-white/5 shadow-inner">
+                                        <div className="bg-accent h-full rounded-full shadow-[0_0_20px_rgba(59,130,246,0.6)] transition-all duration-1000 ease-out" style={{ width: '100%' }}></div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="pt-10">
+                            <div className="pt-16 relative z-10">
                                 <Button
-                                    className="w-full bg-white text-primary hover:bg-white/90 h-16 text-lg font-black rounded-2xl shadow-xl shadow-black/20 group"
+                                    className="w-full bg-white text-primary hover:bg-white/90 h-16 md:h-20 text-lg font-black rounded-3xl shadow-2xl shadow-black/40 group active:scale-95 transition-all uppercase tracking-widest"
                                     asChild
                                 >
                                     <Link href="/sign-up">
-                                        QUERO O PLANO {plano.split(' ')[0].toUpperCase()}
-                                        <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-1 transition-transform" />
+                                        ASSINAR PLANO {plano.split(' ')[0]}
+                                        <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform" />
                                     </Link>
                                 </Button>
-                                <p className="text-center text-[10px] uppercase font-black tracking-widest mt-6 opacity-40">Setup em menos de 24 horas</p>
+                                <p className="text-center text-[10px] uppercase font-black tracking-[0.3em] mt-8 opacity-40">Ativação imediata via WhatsApp</p>
                             </div>
                         </div>
                     </div>

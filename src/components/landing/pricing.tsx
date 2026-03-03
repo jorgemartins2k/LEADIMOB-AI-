@@ -1,8 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Check, Zap, Crown, Building2, Star } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@clerk/nextjs';
 
 export function Pricing() {
+    const { isSignedIn } = useAuth();
     const plans = [
         {
             name: 'Iniciante',
@@ -70,48 +72,48 @@ export function Pricing() {
                     {plans.map((plan, index) => (
                         <div
                             key={index}
-                            className={`relative rounded-[40px] p-10 transition-all duration-300 ${plan.highlight
-                                    ? 'bg-primary text-white shadow-2xl shadow-accent/20 border-4 border-accent lg:scale-105 z-10'
-                                    : 'bg-muted/30 border border-border hover:bg-muted/50 card-hover'
+                            className={`relative rounded-[48px] p-12 transition-all duration-500 group ${plan.highlight
+                                ? 'bg-primary text-white shadow-2xl shadow-accent/30 border-4 border-accent lg:scale-105 z-10'
+                                : 'bg-muted/30 border border-border/50 hover:bg-muted/50 hover:-translate-y-2'
                                 }`}
                         >
                             {plan.highlight && (
                                 <div className="absolute -top-6 left-1/2 -translate-x-1/2">
-                                    <span className="bg-accent text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-lg border border-white/20">
+                                    <span className="bg-accent text-white px-8 py-2.5 rounded-full text-xs font-black uppercase tracking-widest shadow-xl border border-white/20 animate-float">
                                         O MAIS VENDIDO
                                     </span>
                                 </div>
                             )}
 
-                            <div className="mb-10 text-center">
-                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg ${plan.highlight ? 'bg-accent text-white' : 'bg-primary text-white'
+                            <div className="mb-12 text-center">
+                                <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl transition-transform duration-500 group-hover:scale-110 ${plan.highlight ? 'bg-accent text-white' : 'bg-primary text-white'
                                     }`}>
-                                    <plan.icon className="w-8 h-8" />
+                                    <plan.icon className="w-10 h-10" />
                                 </div>
 
-                                <h3 className={`text-2xl font-black mb-2 ${plan.highlight ? 'text-white' : 'text-foreground'}`}>
+                                <h3 className={`text-3xl font-black mb-4 uppercase tracking-tighter ${plan.highlight ? 'text-white' : 'text-foreground'}`}>
                                     {plan.name}
                                 </h3>
 
-                                <div className="flex items-center justify-center gap-1 mb-4">
+                                <div className="flex items-center justify-center gap-1 mb-6">
                                     <span className={`text-xl font-black mb-4 ${plan.highlight ? 'text-white/60' : 'text-muted-foreground'}`}>R$</span>
-                                    <span className={`text-6xl font-black tracking-tighter ${plan.highlight ? 'text-white' : 'text-foreground'}`}>
+                                    <span className={`text-7xl font-black tracking-tighter ${plan.highlight ? 'text-white' : 'text-foreground'}`}>
                                         {plan.price}
                                     </span>
                                     <span className={`text-lg font-bold ${plan.highlight ? 'text-white/60' : 'text-muted-foreground'}`}>/mês</span>
                                 </div>
 
-                                <p className={`text-sm font-bold opacity-80 ${plan.highlight ? 'text-white/80' : 'text-muted-foreground'}`}>
+                                <p className={`text-sm font-black uppercase tracking-widest opacity-60 ${plan.highlight ? 'text-white/80' : 'text-muted-foreground'}`}>
                                     {plan.description}
                                 </p>
                             </div>
 
-                            <div className="space-y-5 mb-12">
+                            <div className="space-y-6 mb-16">
                                 {plan.features.map((feature, i) => (
                                     <div key={i} className="flex items-center gap-4">
                                         <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${plan.highlight ? 'bg-accent/40 text-white' : 'bg-success/20 text-success'
                                             }`}>
-                                            <Check className="w-4 h-4 text-current stroke-[3]" />
+                                            <Check className="w-4 h-4 text-current stroke-[4]" />
                                         </div>
                                         <span className={`text-base font-bold ${plan.highlight ? 'text-white' : 'text-foreground/80'}`}>
                                             {feature}
@@ -121,14 +123,14 @@ export function Pricing() {
                             </div>
 
                             <Button
-                                className={`w-full h-16 text-lg font-black rounded-2xl shadow-xl transition-all active:scale-95 ${plan.highlight
-                                        ? 'bg-accent text-white hover:bg-accent/90 shadow-accent/20'
-                                        : 'bg-primary text-white hover:opacity-90'
+                                className={`w-full h-20 text-xl font-black rounded-3xl shadow-2xl transition-all active:scale-95 uppercase tracking-[0.2em] ${plan.highlight
+                                    ? 'bg-accent text-white hover:brightness-110 shadow-accent/30'
+                                    : 'bg-primary text-white hover:opacity-90 shadow-primary/20 font-black'
                                     }`}
                                 asChild
                             >
-                                <Link href="/sign-up">
-                                    Começar Agora
+                                <Link href={isSignedIn ? "/dashboard" : "/sign-up"}>
+                                    Assinar Agora
                                 </Link>
                             </Button>
                         </div>

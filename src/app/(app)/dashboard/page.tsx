@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
     LayoutDashboard,
     Users,
@@ -111,70 +112,86 @@ export default function DashboardPage() {
     ];
 
     return (
-        <div className="space-y-12 animate-in fade-in slide-in-from-top-4 duration-700">
+        <div className="space-y-10 pb-20 animate-in fade-in slide-in-from-top-4 duration-1000">
             {/* Header Section */}
-            <div className="flex items-center justify-between">
-                <div className="flex flex-col gap-2">
-                    <h1 className="heading-hero text-foreground">Olá, Corretor! 👋</h1>
-                    <p className="text-body text-lg">A Raquel está cuidando de 24 leads para você hoje.</p>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div className="space-y-2">
+                    <h1 className="heading-xl text-foreground">
+                        Olá, <span className="text-gradient-accent">Jorge Martins</span>
+                    </h1>
+                    <p className="text-body">Bem-vindo de volta ao seu centro de comando imobiliário.</p>
                 </div>
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" className="relative rounded-2xl h-12 w-12 bg-card border border-border shadow-soft">
+                    <Button variant="ghost" size="icon" className="relative h-14 w-14 rounded-2xl bg-card border border-border/50 shadow-soft hover:bg-muted btn-interactive">
                         <Bell className="w-5 h-5" />
-                        <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-hot rounded-full border-2 border-card" />
+                        <span className="absolute top-4 right-4 w-2.5 h-2.5 bg-hot rounded-full border-2 border-card" />
                     </Button>
                 </div>
             </div>
 
-            <div className="grid gap-8 lg:grid-cols-3">
-                <div className="lg:col-span-2 space-y-8">
-                    <div className="grid gap-6 md:grid-cols-2">
-                        {stats.map((stat) => (
-                            <div key={stat.title} className="bg-card border border-border p-8 rounded-[40px] shadow-soft card-hover relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                                    <stat.icon className="w-24 h-24 rotate-12" />
-                                </div>
-                                <div className="flex items-center justify-between mb-6">
-                                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">{stat.title}</span>
-                                    <div className={cn("p-2 rounded-xl bg-muted/50", stat.color)}>
-                                        <stat.icon className="h-5 w-5" />
-                                    </div>
-                                </div>
-                                <div className="text-5xl font-black text-foreground tracking-tighter">{stat.value}</div>
-                            </div>
-                        ))}
-                    </div>
+            {/* Bento Grid Principal */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 lg:gap-8">
 
-                    <div className="bg-card border border-border rounded-[48px] overflow-hidden shadow-soft">
-                        <div className="p-10 border-b border-border bg-muted/5 flex items-center justify-between">
-                            <h3 className="font-display font-black text-xl text-foreground uppercase tracking-tight">Atendimento em Tempo Real (Raquel)</h3>
-                            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-success/10 text-success text-[10px] font-black uppercase tracking-widest">
-                                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                                Online
+                {/* Stats Section */}
+                <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {stats.map((stat) => (
+                        <div
+                            key={stat.title}
+                            className="group card-premium p-8 flex items-center justify-between"
+                        >
+                            <div className="space-y-3">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground group-hover:text-accent transition-colors">{stat.title}</p>
+                                <div className="flex items-baseline gap-2">
+                                    <h3 className="text-4xl font-black text-foreground tracking-tighter">{stat.value}</h3>
+                                </div>
+                            </div>
+                            <div className={`p-4 rounded-2xl bg-muted/30 ${stat.color} group-hover:scale-110 transition-transform duration-500 shadow-inner`}>
+                                <stat.icon className="h-7 w-7" />
                             </div>
                         </div>
-                        <div className="p-12">
-                            <div className="h-[350px] flex flex-col items-center justify-center text-muted-foreground border-4 border-dashed border-muted/50 rounded-[40px] bg-muted/5 group hover:border-primary/20 transition-all duration-500">
-                                <div className="w-20 h-20 rounded-full bg-primary/5 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
-                                    <Megaphone className="w-10 h-10 text-primary opacity-40" />
+                    ))}
+
+                    {/* Pro ativo Section - Bento Large */}
+                    <div className="md:col-span-2 card-premium p-10 bg-primary relative overflow-hidden group">
+                        {/* Background Decoration */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-accent opacity-10 blur-3xl -z-10 group-hover:opacity-20 transition-opacity" />
+
+                        <div className="flex flex-col md:flex-row gap-10 items-center justify-between relative z-10">
+                            <div className="space-y-6 flex-1 text-center md:text-left">
+                                <div className="inline-flex items-center gap-2 bg-accent/20 text-accent px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-accent/30">
+                                    <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                                    Atendimento em Tempo Real
                                 </div>
-                                <span className="font-black text-xl uppercase tracking-[0.2em] text-foreground/50">Sincronizando WhatsApp...</span>
-                                <span className="text-xs font-bold opacity-40 mt-3">RAQUEL AI ESTÁ PROCESSANDO CONVERSAS</span>
+                                <h3 className="text-3xl font-black text-white leading-tight uppercase tracking-tighter">
+                                    A Raquel está <br />
+                                    <span className="text-accent underline underline-offset-8 decoration-accent/30">Qualificando agora</span>
+                                </h3>
+                                <p className="text-white/60 font-bold leading-relaxed max-w-md">
+                                    4 contatos ativos nos últimos 5 minutos. <br />
+                                    Fique atento às notificações de Propensão Alta.
+                                </p>
+                                <Button className="btn-primary bg-white text-primary hover:bg-white/90 h-14 px-10 text-xs font-black uppercase tracking-widest rounded-2xl btn-interactive">
+                                    Ver Conversas Ativas
+                                </Button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="space-y-8">
+                <div className="lg:col-span-4 space-y-8">
                     <OnboardingChecklist />
 
-                    <div className="bg-card border border-border rounded-[48px] p-10 shadow-soft">
-                        <h3 className="font-display font-black text-lg text-foreground uppercase tracking-tight mb-8 flex items-center gap-3">
-                            <div className="w-2.5 h-2.5 rounded-full bg-hot animate-pulse" />
-                            Próximos Compromissos
-                        </h3>
+                    {/* Próximos Compromissos */}
+                    <div className="card-premium p-10 space-y-8">
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-display font-black text-lg text-foreground uppercase tracking-tight flex items-center gap-3">
+                                <div className="w-2.5 h-2.5 rounded-full bg-hot animate-pulse" />
+                                Compromissos
+                            </h3>
+                            <div className="px-3 py-1 bg-accent/10 text-accent rounded-full text-[10px] font-black uppercase tracking-widest ring-1 ring-accent/20">Hoje</div>
+                        </div>
                         <div className="space-y-6">
-                            <div className="flex items-center gap-5 p-6 rounded-[32px] bg-muted/20 border border-border hover:border-primary/30 transition-all cursor-pointer group shadow-sm hover:shadow-md">
+                            <div className="flex items-center gap-5 p-6 rounded-[32px] bg-muted/20 border border-border/50 hover:bg-muted/40 transition-all cursor-pointer group shadow-sm hover:shadow-md">
                                 <div className="h-14 w-14 rounded-2xl bg-success/10 flex items-center justify-center text-success group-hover:scale-110 transition-transform">
                                     <Calendar className="w-6 h-6" />
                                 </div>
@@ -183,7 +200,7 @@ export default function DashboardPage() {
                                     <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1.5">14:30 • João Silva</span>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-5 p-6 rounded-[32px] bg-muted/20 border border-border hover:border-accent/30 transition-all cursor-pointer group shadow-sm hover:shadow-md">
+                            <div className="flex items-center gap-5 p-6 rounded-[32px] bg-muted/20 border border-border/50 hover:bg-muted/40 transition-all cursor-pointer group shadow-sm hover:shadow-md">
                                 <div className="h-14 w-14 rounded-2xl bg-accent/10 flex items-center justify-center text-accent group-hover:scale-110 transition-transform">
                                     <Calendar className="w-6 h-6" />
                                 </div>
@@ -193,8 +210,10 @@ export default function DashboardPage() {
                                 </div>
                             </div>
                         </div>
-                        <Button variant="ghost" className="w-full mt-8 rounded-2xl h-14 font-black uppercase tracking-widest text-[10px] text-muted-foreground hover:text-primary transition-all">
-                            Ver Agenda Completa
+                        <Button variant="ghost" className="w-full mt-4 rounded-2xl h-14 font-black uppercase tracking-widest text-[10px] text-muted-foreground hover:text-primary transition-all btn-interactive" asChild>
+                            <Link href="/agenda">
+                                Ver Agenda Completa
+                            </Link>
                         </Button>
                     </div>
                 </div>

@@ -7,41 +7,63 @@ import { cn } from "@/lib/utils";
 
 export default function PropertiesPage() {
     return (
-        <div className="space-y-12 animate-in fade-in slide-in-from-top-4 duration-700">
+        <div className="space-y-12 animate-in fade-in slide-in-from-top-4 duration-1000">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="space-y-2">
-                    <h1 className="heading-hero text-foreground">Imóveis</h1>
-                    <p className="text-body text-lg">Gerencie seu portfólio para a Raquel oferecer aos leads.</p>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+                <div className="space-y-3">
+                    <h1 className="heading-xl text-foreground">Gestão de <span className="text-gradient-accent">Portfólio</span></h1>
+                    <p className="text-body font-medium leading-relaxed">Organize e disponibilize seus imóveis para a <span className="text-foreground font-black">Raquel</span> oferecer via WhatsApp.</p>
                 </div>
-                <Button className="bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest px-8 h-16 rounded-[24px] shadow-primary/20 shadow-xl transition-all hover:scale-105 active:scale-95 text-xs">
-                    <Plus className="h-5 w-5 mr-3" /> Adicionar Imóvel
+                <Button className="btn-primary h-16 px-10 font-black uppercase text-[10px] tracking-[0.2em] gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all">
+                    <Plus className="h-5 w-5" /> Adicionar Imóvel
                 </Button>
             </div>
 
-            {/* Search Section */}
-            <div className="bg-card border border-border p-4 rounded-[32px] shadow-soft">
-                <div className="relative max-w-xl">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground opacity-50" />
+            {/* Stats/Filter Section */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {[
+                    { l: "Total Ativos", v: "12", c: "text-primary" },
+                    { l: "Destaques IA", v: "4", c: "text-accent" },
+                    { l: "Em Negociação", v: "3", c: "text-purple" },
+                    { l: "Disponíveis", v: "5", c: "text-success" },
+                ].map((s, i) => (
+                    <div key={i} className="card-premium p-6 flex flex-col gap-3">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{s.l}</span>
+                        <span className={cn("text-3xl font-black tracking-tighter", s.c)}>{s.v}</span>
+                    </div>
+                ))}
+            </div>
+
+            {/* Search & Filter */}
+            <div className="flex flex-col md:flex-row gap-6">
+                <div className="card-premium p-4 flex-1 flex items-center gap-4 bg-muted/20">
+                    <Search className="w-5 h-5 text-muted-foreground ml-2" />
                     <Input
-                        placeholder="Buscar leads, imóveis..."
-                        className="pl-14 h-16 bg-muted/30 border-none rounded-2xl font-bold text-sm tracking-tight placeholder:text-muted-foreground/40 focus-visible:ring-primary/20"
+                        placeholder="Buscar por código, rua ou condomínio..."
+                        className="bg-transparent border-none h-10 font-bold focus-visible:ring-0 placeholder:opacity-50"
                     />
                 </div>
+                <Button variant="outline" className="h-[74px] px-8 rounded-[24px] border-border/50 gap-3 btn-interactive">
+                    <Filter className="w-4 h-4" /> Filtros Avançados
+                </Button>
             </div>
 
             {/* Empty State Area */}
-            <div className="flex flex-col items-center justify-center py-32 border-4 border-dashed border-muted/50 rounded-[48px] bg-muted/5 group hover:border-primary/20 transition-all duration-500">
-                <div className="w-24 h-24 rounded-full bg-success/10 flex items-center justify-center mb-10 group-hover:scale-110 transition-transform">
-                    <Home className="h-12 w-12 text-success opacity-80" />
+            <div className="flex flex-col items-center justify-center py-32 rounded-[56px] border-4 border-dashed border-muted/50 bg-muted/5 group hover:border-accent/20 transition-all duration-700 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                <div className="relative z-10 flex flex-col items-center">
+                    <div className="w-24 h-24 rounded-3xl bg-muted/30 flex items-center justify-center mb-10 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-inner">
+                        <Home className="h-12 w-12 text-muted-foreground opacity-40" />
+                    </div>
+                    <h3 className="text-3xl font-black text-foreground uppercase tracking-tight mb-4 text-center">Nenhum imóvel cadastrado</h3>
+                    <p className="text-muted-foreground font-bold max-w-sm text-center text-sm mb-12 opacity-60 leading-relaxed">
+                        Sua vitrine está vazia. Adicione suas primeiras propriedades para que a <span className="text-foreground">Raquel</span> inicie as abordagens automáticas.
+                    </p>
+                    <Button className="btn-primary px-12 h-16 rounded-[24px] shadow-2xl hover:scale-105 active:scale-95 transition-all font-black uppercase text-[10px] tracking-widest">
+                        <Plus className="h-5 w-5 mr-3" /> Cadastrar Meu Primeiro Imóvel
+                    </Button>
                 </div>
-                <h3 className="text-2xl font-black text-foreground uppercase tracking-tight mb-4 text-center">Nenhum imóvel cadastrado</h3>
-                <p className="text-muted-foreground font-bold max-w-sm text-center text-sm mb-12 opacity-60">
-                    Adicione suas primeiras propriedades para que a IA tenha o que oferecer aos seus leads.
-                </p>
-                <Button className="bg-foreground text-background font-black uppercase tracking-widest px-10 h-16 rounded-[24px] shadow-soft transition-all hover:scale-105 active:scale-95 text-xs">
-                    <Plus className="h-5 w-5 mr-3" /> Adicionar Primeiro Imóvel
-                </Button>
             </div>
         </div>
     );
