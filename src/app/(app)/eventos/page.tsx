@@ -2,6 +2,7 @@
 
 import { Plus, Calendar, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function EventosPage() {
     return (
@@ -12,8 +13,10 @@ export default function EventosPage() {
                     <h1 className="heading-xl text-foreground">Eventos de <span className="text-gradient-accent">Conversão</span></h1>
                     <p className="text-body font-medium leading-relaxed">Organize feirões e lançamentos com captação automática pela <span className="text-foreground font-black">Raquel</span>.</p>
                 </div>
-                <Button className="btn-primary h-16 px-10 font-black uppercase text-[10px] tracking-[0.2em] gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all">
-                    <Plus className="h-5 w-5" /> Novo Evento
+                <Button className="btn-primary h-16 px-10 font-black uppercase text-[10px] tracking-[0.2em] gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all" asChild>
+                    <Link href="/eventos/novo">
+                        <Plus className="h-5 w-5" /> Novo Evento
+                    </Link>
                 </Button>
             </div>
 
@@ -37,8 +40,10 @@ export default function EventosPage() {
                     <p className="text-muted-foreground font-bold max-w-sm text-center text-sm mb-12 opacity-60 leading-relaxed">
                         Seu calendário de eventos está vazio. Crie um <span className="text-foreground">Lançamento</span> ou <span className="text-foreground">Open House</span> para impulsionar suas vendas.
                     </p>
-                    <Button className="btn-primary px-12 h-16 rounded-[24px] shadow-2xl hover:scale-105 active:scale-95 transition-all font-black uppercase text-[10px] tracking-widest bg-foreground text-background">
-                        <Plus className="h-5 w-5 mr-3" /> Criar Primeiro Evento
+                    <Button className="btn-primary px-12 h-16 rounded-[24px] shadow-2xl hover:scale-105 active:scale-95 transition-all font-black uppercase text-[10px] tracking-widest bg-foreground text-background" asChild>
+                        <Link href="/eventos/novo">
+                            <Plus className="h-5 w-5 mr-3" /> Criar Primeiro Evento
+                        </Link>
                     </Button>
                 </div>
             </div>

@@ -5,6 +5,7 @@ import { Plus, Search, Filter, Building2, Rocket, Construction, CheckCircle2, Lo
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default function LaunchesPage() {
     const [activeTab, setActiveTab] = useState("todos");
@@ -33,8 +34,10 @@ export default function LaunchesPage() {
                     <h1 className="heading-xl text-foreground">Novos <span className="text-gradient-accent">Lançamentos</span></h1>
                     <p className="text-body font-medium leading-relaxed">Gerencie unidades e materiais de venda dos seus empreendimentos em destaque.</p>
                 </div>
-                <Button className="btn-primary h-16 px-10 font-black uppercase text-[10px] tracking-[0.2em] gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all">
-                    <Plus className="h-5 w-5" /> Novo Lançamento
+                <Button className="btn-primary h-16 px-10 font-black uppercase text-[10px] tracking-[0.2em] gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all" asChild>
+                    <Link href="/lancamentos/novo">
+                        <Plus className="h-5 w-5" /> Novo Lançamento
+                    </Link>
                 </Button>
             </div>
 
@@ -79,8 +82,10 @@ export default function LaunchesPage() {
                     <p className="text-muted-foreground font-bold max-w-sm mb-12 opacity-60 leading-relaxed">
                         Sua vitrine de lançamentos está vazia. Adicione novas oportunidades para a <span className="text-foreground">Raquel</span> prospectar investidores.
                     </p>
-                    <Button className="btn-primary px-12 h-16 rounded-[24px] shadow-2xl hover:scale-105 active:scale-95 transition-all font-black uppercase text-[10px] tracking-widest bg-accent hover:bg-accent/90">
-                        <Plus className="h-5 w-5 mr-3" /> Cadastrar Meu Primeiro Lançamento
+                    <Button className="btn-primary px-12 h-16 rounded-[24px] shadow-2xl hover:scale-105 active:scale-95 transition-all font-black uppercase text-[10px] tracking-widest bg-accent hover:bg-accent/90" asChild>
+                        <Link href="/lancamentos/novo">
+                            <Plus className="h-5 w-5 mr-3" /> Cadastrar Meu Primeiro Lançamento
+                        </Link>
                     </Button>
                 </div>
             </div>

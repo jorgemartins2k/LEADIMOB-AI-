@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight, User, Bell, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default function AgendaPage() {
     const stats = [
@@ -34,8 +35,10 @@ export default function AgendaPage() {
                     <h1 className="heading-xl text-foreground">Agenda de <span className="text-gradient-accent">Visitas</span></h1>
                     <p className="text-body font-medium leading-relaxed">Gerencie seus compromissos e as visitas agendadas automaticamente pela <span className="text-foreground font-black">Raquel</span>.</p>
                 </div>
-                <Button className="btn-primary h-16 px-10 font-black uppercase text-[10px] tracking-[0.2em] gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all">
-                    <Plus className="h-5 w-5" /> Agendar Visita
+                <Button className="btn-primary h-16 px-10 font-black uppercase text-[10px] tracking-[0.2em] gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all" asChild>
+                    <Link href="/agenda/novo">
+                        <Plus className="h-5 w-5" /> Agendar Visita
+                    </Link>
                 </Button>
             </div>
 

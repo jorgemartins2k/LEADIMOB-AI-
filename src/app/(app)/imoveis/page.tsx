@@ -4,6 +4,7 @@ import { Plus, Search, Filter, Home, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default function PropertiesPage() {
     return (
@@ -14,8 +15,10 @@ export default function PropertiesPage() {
                     <h1 className="heading-xl text-foreground">Gestão de <span className="text-gradient-accent">Portfólio</span></h1>
                     <p className="text-body font-normal leading-relaxed">Organize e disponibilize seus imóveis para a <span className="text-foreground font-semibold">Raquel</span> oferecer via WhatsApp.</p>
                 </div>
-                <Button className="btn-primary h-16 px-10 font-semibold uppercase text-[10px] tracking-wider gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all">
-                    <Plus className="h-5 w-5" /> Adicionar Imóvel
+                <Button className="btn-primary h-16 px-10 font-semibold uppercase text-[10px] tracking-wider gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all" asChild>
+                    <Link href="/imoveis/novo">
+                        <Plus className="h-5 w-5" /> Adicionar Imóvel
+                    </Link>
                 </Button>
             </div>
 
@@ -60,8 +63,10 @@ export default function PropertiesPage() {
                     <p className="text-muted-foreground font-normal max-w-sm text-center text-sm mb-12 opacity-60 leading-relaxed">
                         Sua vitrine está vazia. Adicione suas primeiras propriedades para que a <span className="text-foreground font-semibold">Raquel</span> inicie as abordagens automáticas.
                     </p>
-                    <Button className="btn-primary px-12 h-16 rounded-[24px] shadow-2xl hover:scale-105 active:scale-95 transition-all font-semibold uppercase text-[10px] tracking-wider">
-                        <Plus className="h-5 w-5 mr-3" /> Cadastrar Meu Primeiro Imóvel
+                    <Button className="btn-primary px-12 h-16 rounded-[24px] shadow-2xl hover:scale-105 active:scale-95 transition-all font-semibold uppercase text-[10px] tracking-wider" asChild>
+                        <Link href="/imoveis/novo">
+                            <Plus className="h-5 w-5 mr-3" /> Cadastrar Meu Primeiro Imóvel
+                        </Link>
                     </Button>
                 </div>
             </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
     Users,
     Download,
@@ -45,8 +46,10 @@ export function LeadsView() {
                     <Button variant="outline" className="border-border/50 rounded-2xl gap-3 font-semibold uppercase text-[10px] tracking-wider h-14 px-8 btn-interactive hidden sm:flex">
                         <Download className="w-4 h-4" /> Exportar Leads
                     </Button>
-                    <Button className="btn-primary h-14 px-10 font-semibold uppercase text-[10px] tracking-wider gap-3 shadow-lg hover:scale-105 active:scale-95 transition-all">
-                        <Plus className="w-5 h-5" /> Novo de Lead
+                    <Button className="btn-primary h-14 px-10 font-semibold uppercase text-[10px] tracking-wider gap-3 shadow-lg hover:scale-105 active:scale-95 transition-all" asChild>
+                        <Link href="/leads/novo">
+                            <Plus className="w-5 h-5" /> Novo de Lead
+                        </Link>
                     </Button>
                 </div>
             </div>
