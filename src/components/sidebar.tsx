@@ -29,6 +29,9 @@ const navigation = [
 export function Sidebar() {
     const pathname = usePathname();
 
+    // Hide sidebar on dashboard because it has its own internal navigation/tabs
+    if (pathname === '/dashboard') return null;
+
     return (
         <div className="flex h-full w-64 flex-col bg-background border-r border-border transition-all duration-300 ease-in-out">
             <div className="flex h-20 items-center px-6">
