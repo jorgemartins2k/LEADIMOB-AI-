@@ -12,9 +12,9 @@ export default function PropertiesPage() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
                 <div className="space-y-3">
                     <h1 className="heading-xl text-foreground">Gestão de <span className="text-gradient-accent">Portfólio</span></h1>
-                    <p className="text-body font-medium leading-relaxed">Organize e disponibilize seus imóveis para a <span className="text-foreground font-black">Raquel</span> oferecer via WhatsApp.</p>
+                    <p className="text-body font-normal leading-relaxed">Organize e disponibilize seus imóveis para a <span className="text-foreground font-semibold">Raquel</span> oferecer via WhatsApp.</p>
                 </div>
-                <Button className="btn-primary h-16 px-10 font-black uppercase text-[10px] tracking-[0.2em] gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all">
+                <Button className="btn-primary h-16 px-10 font-semibold uppercase text-[10px] tracking-wider gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all">
                     <Plus className="h-5 w-5" /> Adicionar Imóvel
                 </Button>
             </div>
@@ -28,8 +28,8 @@ export default function PropertiesPage() {
                     { l: "Disponíveis", v: "5", c: "text-success" },
                 ].map((s, i) => (
                     <div key={i} className="card-premium p-6 flex flex-col gap-3">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{s.l}</span>
-                        <span className={cn("text-3xl font-black tracking-tighter", s.c)}>{s.v}</span>
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">{s.l}</span>
+                        <span className={cn("text-3xl font-bold tracking-tighter", s.c)}>{s.v}</span>
                     </div>
                 ))}
             </div>
@@ -56,11 +56,11 @@ export default function PropertiesPage() {
                     <div className="w-24 h-24 rounded-3xl bg-muted/30 flex items-center justify-center mb-10 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-inner">
                         <Home className="h-12 w-12 text-muted-foreground opacity-40" />
                     </div>
-                    <h3 className="text-3xl font-black text-foreground uppercase tracking-tight mb-4 text-center">Nenhum imóvel cadastrado</h3>
-                    <p className="text-muted-foreground font-bold max-w-sm text-center text-sm mb-12 opacity-60 leading-relaxed">
-                        Sua vitrine está vazia. Adicione suas primeiras propriedades para que a <span className="text-foreground">Raquel</span> inicie as abordagens automáticas.
+                    <h3 className="text-3xl font-bold text-foreground uppercase tracking-tight mb-4 text-center">Nenhum imóvel cadastrado</h3>
+                    <p className="text-muted-foreground font-normal max-w-sm text-center text-sm mb-12 opacity-60 leading-relaxed">
+                        Sua vitrine está vazia. Adicione suas primeiras propriedades para que a <span className="text-foreground font-semibold">Raquel</span> inicie as abordagens automáticas.
                     </p>
-                    <Button className="btn-primary px-12 h-16 rounded-[24px] shadow-2xl hover:scale-105 active:scale-95 transition-all font-black uppercase text-[10px] tracking-widest">
+                    <Button className="btn-primary px-12 h-16 rounded-[24px] shadow-2xl hover:scale-105 active:scale-95 transition-all font-semibold uppercase text-[10px] tracking-wider">
                         <Plus className="h-5 w-5 mr-3" /> Cadastrar Meu Primeiro Imóvel
                     </Button>
                 </div>

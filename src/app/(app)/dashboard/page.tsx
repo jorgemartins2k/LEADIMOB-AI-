@@ -140,9 +140,9 @@ export default function DashboardPage() {
                             className="group card-premium p-8 flex items-center justify-between"
                         >
                             <div className="space-y-3">
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground group-hover:text-accent transition-colors">{stat.title}</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-accent transition-colors">{stat.title}</p>
                                 <div className="flex items-baseline gap-2">
-                                    <h3 className="text-4xl font-black text-foreground tracking-tighter">{stat.value}</h3>
+                                    <h3 className="text-4xl font-bold text-foreground tracking-tighter">{stat.value}</h3>
                                 </div>
                             </div>
                             <div className={`p-4 rounded-2xl bg-muted/30 ${stat.color} group-hover:scale-110 transition-transform duration-500 shadow-inner`}>
@@ -162,15 +162,15 @@ export default function DashboardPage() {
                                     <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
                                     Atendimento em Tempo Real
                                 </div>
-                                <h3 className="text-3xl font-black text-white leading-tight uppercase tracking-tighter">
+                                <h3 className="text-3xl font-bold text-white leading-tight uppercase tracking-tighter">
                                     A Raquel está <br />
                                     <span className="text-accent underline underline-offset-8 decoration-accent/30">Qualificando agora</span>
                                 </h3>
-                                <p className="text-white/60 font-bold leading-relaxed max-w-md">
+                                <p className="text-white/60 font-medium leading-relaxed max-w-md">
                                     4 contatos ativos nos últimos 5 minutos. <br />
                                     Fique atento às notificações de Propensão Alta.
                                 </p>
-                                <Button className="btn-primary bg-white text-primary hover:bg-white/90 h-14 px-10 text-xs font-black uppercase tracking-widest rounded-2xl btn-interactive">
+                                <Button className="btn-primary bg-white text-primary hover:bg-white/90 h-14 px-10 text-xs font-semibold uppercase tracking-wider rounded-2xl btn-interactive">
                                     Ver Conversas Ativas
                                 </Button>
                             </div>

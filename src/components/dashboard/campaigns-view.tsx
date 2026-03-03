@@ -73,9 +73,9 @@ export function CampaignsView() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
                 <div className="space-y-3">
                     <h1 className="heading-xl text-foreground">Campanhas <span className="text-gradient-accent">Inteligentes</span></h1>
-                    <p className="text-body font-medium leading-relaxed">Links rastreáveis que conectam seus anúncios diretamente à <span className="text-foreground font-black">Raquel</span>.</p>
+                    <p className="text-body font-normal leading-relaxed">Links rastreáveis que conectam seus anúncios diretamente à <span className="text-foreground font-semibold">Raquel</span>.</p>
                 </div>
-                <Button className="btn-primary h-16 px-10 font-black uppercase text-[10px] tracking-[0.2em] gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all">
+                <Button className="btn-primary h-16 px-10 font-semibold uppercase text-[10px] tracking-wider gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all">
                     <Rocket className="w-5 h-5" /> Nova Campanha
                 </Button>
             </div>
@@ -84,8 +84,8 @@ export function CampaignsView() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat) => (
                     <div key={stat.label} className="card-premium p-8 flex flex-col gap-3">
-                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">{stat.label}</p>
-                        <p className={cn("text-4xl font-black tracking-tighter", stat.color)}>{stat.value}</p>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{stat.label}</p>
+                        <p className={cn("text-4xl font-bold tracking-tighter", stat.color)}>{stat.value}</p>
                     </div>
                 ))}
             </div>
@@ -99,12 +99,12 @@ export function CampaignsView() {
                         <Lightbulb className="w-10 h-10" />
                     </div>
                     <div className="space-y-4 flex-1">
-                        <h3 className="text-xl font-black text-foreground uppercase tracking-tight">Otimize seu Investimento em Tráfego</h3>
-                        <p className="text-muted-foreground font-medium leading-relaxed max-w-2xl">
-                            Use links únicos para cada plataforma (Instagram, Facebook, Google) e descubra exatamente de onde vêm seus clientes mais lucrativos. A <span className="text-foreground font-black">Raquel</span> identifica a origem e adapta a abordagem.
+                        <h3 className="text-lg font-bold text-foreground uppercase tracking-tight">Otimize seu Investimento em Tráfego</h3>
+                        <p className="text-muted-foreground font-normal leading-relaxed max-w-2xl">
+                            Use links únicos para cada plataforma (Instagram, Facebook, Google) e descubra exatamente de onde vêm seus clientes mais lucrativos. A <span className="text-foreground font-semibold">Raquel</span> identifica a origem e adapta a abordagem.
                         </p>
                     </div>
-                    <Button variant="outline" className="h-14 px-8 rounded-2xl border-accent/20 text-accent font-black uppercase text-[10px] tracking-widest btn-interactive">
+                    <Button variant="outline" className="h-14 px-8 rounded-2xl border-accent/20 text-accent font-semibold uppercase text-[10px] tracking-wider btn-interactive">
                         Ver Tutorial Completo
                     </Button>
                 </div>
@@ -141,12 +141,12 @@ export function CampaignsView() {
                                         </div>
 
                                         <div className="flex items-center gap-3 bg-muted/20 p-2.5 rounded-2xl group-hover:bg-muted/40 transition-colors border border-border/50">
-                                            <code className="text-[11px] font-bold text-muted-foreground truncate flex-1 px-4">{camp.link}</code>
+                                            <code className="text-[11px] font-semibold text-muted-foreground truncate flex-1 px-4">{camp.link}</code>
                                             <Button
                                                 size="sm"
                                                 onClick={() => handleCopy(camp.link, camp.id)}
                                                 className={cn(
-                                                    "rounded-xl h-11 px-8 font-black text-[10px] uppercase tracking-widest transition-all shadow-lg",
+                                                    "rounded-xl h-11 px-8 font-semibold text-[10px] uppercase tracking-wider transition-all shadow-lg",
                                                     copiedLink === camp.id ? "bg-success hover:bg-success scale-105" : "bg-primary hover:scale-105 active:scale-95"
                                                 )}
                                             >

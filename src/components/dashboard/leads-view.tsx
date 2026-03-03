@@ -39,13 +39,13 @@ export function LeadsView() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="space-y-2">
                     <h1 className="heading-xl text-foreground">Gestão de Leads</h1>
-                    <p className="text-body mt-1 font-medium">Controle total sobre o funil de vendas da Raquel.</p>
+                    <p className="text-body mt-1 font-normal">Controle total sobre o funil de vendas da Raquel.</p>
                 </div>
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" className="border-border/50 rounded-2xl gap-3 font-black uppercase text-[10px] tracking-widest h-14 px-8 btn-interactive hidden sm:flex">
+                    <Button variant="outline" className="border-border/50 rounded-2xl gap-3 font-semibold uppercase text-[10px] tracking-wider h-14 px-8 btn-interactive hidden sm:flex">
                         <Download className="w-4 h-4" /> Exportar Leads
                     </Button>
-                    <Button className="btn-primary h-14 px-10 font-black uppercase text-[10px] tracking-widest gap-3 shadow-lg hover:scale-105 active:scale-95 transition-all">
+                    <Button className="btn-primary h-14 px-10 font-semibold uppercase text-[10px] tracking-wider gap-3 shadow-lg hover:scale-105 active:scale-95 transition-all">
                         <Plus className="w-5 h-5" /> Novo de Lead
                     </Button>
                 </div>
@@ -57,8 +57,8 @@ export function LeadsView() {
 
                 <div className="flex flex-col lg:flex-row items-center justify-between mb-10 gap-8">
                     <div className="space-y-3 flex-1 text-center lg:text-left">
-                        <h3 className="font-display font-black text-2xl text-foreground uppercase tracking-tight">Capacidade da IA</h3>
-                        <p className="text-body font-medium">Plano PRO: <span className="text-foreground font-black">3.000 leads/mês</span> ativos.</p>
+                        <h3 className="heading-lg text-foreground uppercase tracking-tight">Capacidade da IA</h3>
+                        <p className="text-body font-normal">Plano PRO: <span className="text-foreground font-semibold">3.000 leads/mês</span> ativos.</p>
                     </div>
                     <div className="text-center lg:text-right">
                         <div className="text-6xl font-black text-foreground tracking-tighter">
@@ -139,10 +139,10 @@ export function LeadsView() {
                                                     {lead.name.charAt(0)}
                                                 </div>
                                                 <div>
-                                                    <p className="font-black text-foreground text-lg tracking-tight group-hover:text-accent transition-colors">{lead.name}</p>
+                                                    <p className="font-bold text-foreground text-lg tracking-tight group-hover:text-accent transition-colors">{lead.name}</p>
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <span className="w-1.5 h-1.5 rounded-full bg-success" />
-                                                        <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">{lead.status}</p>
+                                                        <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">{lead.status}</p>
                                                     </div>
                                                 </div>
                                             </div>

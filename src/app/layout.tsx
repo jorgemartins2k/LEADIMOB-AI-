@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Syne, DM_Sans } from "next/font/google";
+import { Inter, Geist } from "next/font/google";
 import "./globals.css";
 
-const syne = Syne({
+const geistSans = Geist({
   variable: "--font-display",
   subsets: ["latin"],
 });
 
-const dmSans = DM_Sans({
+const inter = Inter({
   variable: "--font-body",
   subsets: ["latin"],
 });
@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${syne.variable} ${dmSans.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${inter.variable} antialiased`}>
         <ClerkProvider>
           {children}
         </ClerkProvider>

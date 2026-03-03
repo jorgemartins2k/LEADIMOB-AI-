@@ -91,16 +91,16 @@ export function Pricing() {
                                     <plan.icon className="w-10 h-10" />
                                 </div>
 
-                                <h3 className={`text-3xl font-black mb-4 uppercase tracking-tighter ${plan.highlight ? 'text-white' : 'text-foreground'}`}>
+                                <h3 className={`text-3xl font-bold mb-4 uppercase tracking-tighter ${plan.highlight ? 'text-white' : 'text-foreground'}`}>
                                     {plan.name}
                                 </h3>
 
                                 <div className="flex items-center justify-center gap-1 mb-6">
-                                    <span className={`text-xl font-black mb-4 ${plan.highlight ? 'text-white/60' : 'text-muted-foreground'}`}>R$</span>
-                                    <span className={`text-7xl font-black tracking-tighter ${plan.highlight ? 'text-white' : 'text-foreground'}`}>
+                                    <span className={`text-xl font-bold mb-4 ${plan.highlight ? 'text-white/60' : 'text-muted-foreground'}`}>R$</span>
+                                    <span className={`text-7xl font-bold tracking-tighter ${plan.highlight ? 'text-white' : 'text-foreground'}`}>
                                         {plan.price}
                                     </span>
-                                    <span className={`text-lg font-bold ${plan.highlight ? 'text-white/60' : 'text-muted-foreground'}`}>/mês</span>
+                                    <span className={`text-lg font-medium ${plan.highlight ? 'text-white/60' : 'text-muted-foreground'}`}>/mês</span>
                                 </div>
 
                                 <p className={`text-sm font-black uppercase tracking-widest opacity-60 ${plan.highlight ? 'text-white/80' : 'text-muted-foreground'}`}>
@@ -123,9 +123,9 @@ export function Pricing() {
                             </div>
 
                             <Button
-                                className={`w-full h-20 text-xl font-black rounded-3xl shadow-2xl transition-all active:scale-95 uppercase tracking-[0.2em] ${plan.highlight
+                                className={`w-full h-20 text-lg font-semibold rounded-3xl shadow-2xl transition-all active:scale-95 uppercase tracking-wider ${plan.highlight
                                     ? 'bg-accent text-white hover:brightness-110 shadow-accent/30'
-                                    : 'bg-primary text-white hover:opacity-90 shadow-primary/20 font-black'
+                                    : 'bg-primary text-white hover:opacity-90 shadow-primary/20'
                                     }`}
                                 asChild
                             >

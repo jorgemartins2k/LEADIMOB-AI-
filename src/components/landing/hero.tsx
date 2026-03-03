@@ -29,15 +29,15 @@ export function Hero() {
                             </span>
                         </h1>
 
-                        <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-xl mx-auto lg:mx-0 font-medium leading-relaxed">
+                        <p className="text-body text-lg md:text-xl mb-12 max-w-xl mx-auto lg:mx-0 font-normal leading-relaxed">
                             A Raquel é a sua assistente de IA que prospecta, qualifica e entrega o lead quente direto no seu WhatsApp.
-                            <span className="text-foreground font-bold"> Você só se preocupa em fechar.</span>
+                            <span className="text-foreground font-semibold"> Você só se preocupa em fechar.</span>
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-6 mb-16 justify-center lg:justify-start">
                             <Button
                                 size="lg"
-                                className="btn-primary group h-16 px-10 text-lg font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                                className="btn-primary group h-16 px-10 text-base font-semibold uppercase tracking-wider shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
                                 asChild
                             >
                                 <Link href="/sign-up">
@@ -48,7 +48,7 @@ export function Hero() {
                             <Button
                                 variant="outline"
                                 size="lg"
-                                className="h-16 px-10 text-lg font-black uppercase tracking-widest border-2 border-border/50 hover:bg-muted/50 hover:border-accent transition-all rounded-[24px] btn-interactive"
+                                className="h-16 px-10 text-base font-semibold uppercase tracking-wider border-2 border-border/50 hover:bg-muted/50 hover:border-accent transition-all rounded-[24px] btn-interactive"
                                 onClick={() => {
                                     document.getElementById('calculadora')?.scrollIntoView({ behavior: 'smooth' });
                                 }}
@@ -57,7 +57,7 @@ export function Hero() {
                             </Button>
                         </div>
 
-                        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-8 text-sm text-muted-foreground font-bold uppercase tracking-wider">
+                        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-8 text-sm text-muted-foreground font-semibold uppercase tracking-wider">
                             <div className="flex items-center gap-2">
                                 <Clock className="w-5 h-5 text-accent" />
                                 Setup Rápido
