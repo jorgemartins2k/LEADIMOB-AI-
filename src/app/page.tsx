@@ -10,7 +10,14 @@ import { FinalCTA } from "@/components/landing/final-cta";
 import { Footer } from "@/components/landing/footer";
 
 export default async function Home() {
-  const { userId } = await auth();
+  let userId: string | null = null;
+
+  try {
+    const authData = await auth();
+    userId = authData.userId;
+  } catch (e) {
+    console.error("Clerk auth error on landing page:", e);
+  }
 
   if (userId) {
     redirect("/dashboard");
