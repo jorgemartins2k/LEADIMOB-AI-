@@ -42,12 +42,30 @@ export const leads = pgTable('leads', {
     status: text('status').notNull().default('waiting'),
     profile: text('profile'),
     budgetRange: text('budget_range'),
+    temperature: text('temperature').notNull().default('cold'), // 'cold' | 'warm' | 'hot' | 'very_hot'
     notes: text('notes'),
     scheduledDate: date('scheduled_date').notNull().default(sql`CURRENT_DATE`),
     contactedAt: timestamp('contacted_at', { withTimezone: true }),
     transferredAt: timestamp('transferred_at', { withTimezone: true }),
     quarantineUntil: date('quarantine_until'),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+export const campaigns = pgTable('campaigns', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    contentType: text('content_type').notNull(),
+    trackingLink: text('tracking_link').notNull(),
+    campaignUrl: text('campaign_url'),
+    status: text('status').notNull().default('active'),
+    totalClicks: smallint('total_clicks').notNull().default(0),
+    totalLeads: smallint('total_leads').notNull().default(0),
+    totalConversions: smallint('total_conversions').notNull().default(0),
+    propertyId: uuid('property_id').references(() => properties.id),
+    launchId: uuid('launch_id').references(() => launches.id),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
