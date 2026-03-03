@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from '@/components/ui/button';
 import { Check, Zap, Crown, Building2, Star } from 'lucide-react';
 import Link from 'next/link';
