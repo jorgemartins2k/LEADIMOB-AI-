@@ -17,47 +17,47 @@ export function OnboardingChecklist() {
     const progress = (completedCount / steps.length) * 100;
 
     return (
-        <Card className="bg-surface border-surface-2 overflow-hidden">
-            <CardHeader className="pb-4">
+        <Card className="bg-card border-border overflow-hidden shadow-soft">
+            <CardHeader className="pb-4 bg-muted/20 border-b border-border">
                 <div className="flex items-center justify-between mb-2">
-                    <CardTitle className="font-display text-xl">Configuração Inicial</CardTitle>
-                    <span className="text-sm font-medium text-primary">{completedCount}/{steps.length} concluídos</span>
+                    <CardTitle className="font-display text-xl text-foreground">Configuração Inicial</CardTitle>
+                    <span className="text-sm font-bold text-primary">{completedCount}/{steps.length} concluídos</span>
                 </div>
-                <CardDescription>Siga os passos abaixo para ativar a Raquel 100%.</CardDescription>
-                <div className="w-full h-2 bg-surface-2 rounded-full mt-4 overflow-hidden">
+                <CardDescription className="text-muted-foreground font-medium">Siga os passos abaixo para ativar a Raquel 100%.</CardDescription>
+                <div className="w-full h-2 bg-muted rounded-full mt-4 overflow-hidden">
                     <div
-                        className="h-full bg-primary transition-all duration-500 ease-out"
+                        className="h-full bg-primary transition-all duration-500 ease-out shadow-[0_0_10px_rgba(30,41,59,0.3)]"
                         style={{ width: `${progress}%` }}
                     />
                 </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pt-6">
                 {steps.map((step) => (
                     <div
                         key={step.id}
                         className={cn(
-                            "flex items-start gap-4 p-3 rounded-xl border transition-all duration-200",
+                            "flex items-start gap-4 p-4 rounded-2xl border transition-all duration-200 card-hover",
                             step.completed
-                                ? "bg-secondary/5 border-secondary/20"
-                                : "bg-surface-2/30 border-transparent hover:border-surface-2"
+                                ? "bg-success/10 border-success/30"
+                                : "bg-muted/10 border-transparent hover:border-border"
                         )}
                     >
                         <div className="mt-1">
                             {step.completed ? (
-                                <CheckCircle2 className="h-5 w-5 text-secondary" />
+                                <CheckCircle2 className="h-6 w-6 text-success" />
                             ) : (
-                                <Circle className="h-5 w-5 text-text-muted" />
+                                <Circle className="h-6 w-6 text-muted-foreground" />
                             )}
                         </div>
                         <div className="flex-1">
-                            <h4 className={cn("text-sm font-semibold", step.completed ? "text-text" : "text-text")}>
+                            <h4 className={cn("text-base font-bold text-foreground")}>
                                 {step.title}
                             </h4>
-                            <p className="text-xs text-text-muted mt-0.5">{step.description}</p>
+                            <p className="text-sm text-muted-foreground mt-0.5">{step.description}</p>
                         </div>
                         {!step.completed && (
-                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary">
-                                <ArrowRight className="h-4 w-4" />
+                            <Button size="icon" variant="ghost" className="rounded-full shadow-sm hover:bg-primary/10 hover:text-primary">
+                                <ArrowRight className="h-5 w-5" />
                             </Button>
                         )}
                     </div>
