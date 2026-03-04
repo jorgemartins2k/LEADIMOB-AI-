@@ -11,12 +11,14 @@ import {
     MoreVertical,
     Flame,
     Clock,
-    AlertCircle
+    AlertCircle,
+    Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { LeadImportModal } from './lead-import-modal';
 
 export function LeadsView() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -43,9 +45,11 @@ export function LeadsView() {
                     <p className="text-body mt-1 font-normal">Controle total sobre o funil de vendas da Raquel.</p>
                 </div>
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" className="border-border/50 rounded-2xl gap-3 font-semibold uppercase text-[10px] tracking-wider h-14 px-8 btn-interactive hidden sm:flex">
-                        <Download className="w-4 h-4" /> Exportar Leads
-                    </Button>
+                    <LeadImportModal>
+                        <Button variant="outline" className="border-border/50 rounded-2xl gap-3 font-semibold uppercase text-[10px] tracking-wider h-14 px-8 btn-interactive hidden sm:flex">
+                            <Upload className="w-4 h-4" /> Importar Leads
+                        </Button>
+                    </LeadImportModal>
                     <Button className="btn-primary h-14 px-10 font-semibold uppercase text-[10px] tracking-wider gap-3 shadow-lg hover:scale-105 active:scale-95 transition-all" asChild>
                         <Link href="/leads/novo">
                             <Plus className="w-5 h-5" /> Novo de Lead
