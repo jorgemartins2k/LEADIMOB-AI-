@@ -75,7 +75,10 @@ export function CampaignsView() {
                     <h1 className="heading-xl text-foreground">Campanhas <span className="text-gradient-accent">Inteligentes</span></h1>
                     <p className="text-body font-normal leading-relaxed">Links rastreáveis que conectam seus anúncios diretamente à <span className="text-foreground font-semibold">Raquel</span>.</p>
                 </div>
-                <Button className="btn-primary h-16 px-10 font-semibold uppercase text-[10px] tracking-wider gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all">
+                <Button
+                    className="btn-primary h-16 px-10 font-semibold uppercase text-[10px] tracking-wider gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all"
+                    onClick={() => alert("Módulo de Campanhas: Em breve!")}
+                >
                     <Rocket className="w-5 h-5" /> Nova Campanha
                 </Button>
             </div>

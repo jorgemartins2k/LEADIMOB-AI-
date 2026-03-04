@@ -601,7 +601,7 @@ export default function NewLaunchPage() {
                                     {isSaving ? (
                                         <Loader2 className="w-6 h-6 animate-spin" />
                                     ) : (
-                                        Salvar Empreendimento
+                                        "Salvar Empreendimento"
                                     )}
                                 </Button>
                             </div>

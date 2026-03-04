@@ -4,6 +4,7 @@ import { CheckCircle2, Circle, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
 
 const steps = [
     { id: "profile", title: "Completar Perfil", description: "Adicione sua foto e nome da imobiliária.", completed: true },
