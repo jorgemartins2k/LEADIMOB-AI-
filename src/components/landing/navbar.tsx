@@ -30,38 +30,37 @@ export function Navbar() {
   };
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      scrolled ? 'bg-background/95 backdrop-blur-md border-b border-border py-3' : 'bg-transparent py-5'
-    }`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/95 backdrop-blur-md border-b border-border py-3' : 'bg-transparent py-5'
+      }`}>
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-             <span className="text-2xl font-extrabold tracking-tighter font-display">
-                LEADIMOB<span className="text-accent">AI</span>
-             </span>
+            <span className="text-2xl font-extrabold tracking-tighter font-display">
+              LEADIMOB<span className="text-accent">AI</span>
+            </span>
           </Link>
-          
+
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <button 
-              onClick={() => scrollToSection('funcionalidades')} 
+            <button
+              onClick={() => scrollToSection('funcionalidades')}
               className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors"
             >
               Funcionalidades
             </button>
-            <button 
-              onClick={() => scrollToSection('calculadora')} 
+            <button
+              onClick={() => scrollToSection('calculadora')}
               className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors"
             >
-              Calculadora ROI
+              Calculadora de Vendas
             </button>
-            <button 
-              onClick={() => scrollToSection('precos')} 
+            <button
+              onClick={() => scrollToSection('precos')}
               className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors"
             >
               Preços
             </button>
-            
+
             <div className="flex items-center gap-3 ml-4">
               {isSignedIn ? (
                 <div className="flex items-center gap-4">
@@ -72,8 +71,8 @@ export function Navbar() {
                 </div>
               ) : (
                 <>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="font-bold text-muted-foreground hover:text-foreground transition-all"
                     asChild
                   >
@@ -82,7 +81,7 @@ export function Navbar() {
                       Entrar
                     </Link>
                   </Button>
-                  <Button 
+                  <Button
                     className="btn-primary font-bold px-6"
                     asChild
                   >
@@ -97,7 +96,7 @@ export function Navbar() {
           </div>
 
           {/* Mobile Menu Button */}
-          <button 
+          <button
             className="md:hidden p-2 text-foreground"
             onClick={() => setIsOpen(!isOpen)}
           >
@@ -108,25 +107,25 @@ export function Navbar() {
         {/* Mobile Navigation */}
         {isOpen && (
           <div className="md:hidden pt-4 pb-6 space-y-4 animate-fade-in">
-            <button 
-              onClick={() => scrollToSection('funcionalidades')} 
+            <button
+              onClick={() => scrollToSection('funcionalidades')}
               className="block w-full text-left py-2 text-lg font-bold text-muted-foreground"
             >
               Funcionalidades
             </button>
-            <button 
-              onClick={() => scrollToSection('calculadora')} 
+            <button
+              onClick={() => scrollToSection('calculadora')}
               className="block w-full text-left py-2 text-lg font-bold text-muted-foreground"
             >
-              Calculadora ROI
+              Calculadora de Vendas
             </button>
-            <button 
-              onClick={() => scrollToSection('precos')} 
+            <button
+              onClick={() => scrollToSection('precos')}
               className="block w-full text-left py-2 text-lg font-bold text-muted-foreground"
             >
               Preços
             </button>
-            
+
             <div className="pt-4 border-t border-border space-y-3">
               {isSignedIn ? (
                 <Button className="w-full btn-primary font-bold py-6" asChild>
