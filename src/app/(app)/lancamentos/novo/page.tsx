@@ -61,6 +61,7 @@ const launchSchema = z.object({
         name: z.string().min(1, "Nome da planta"),
         areaSqm: z.string().optional(),
         bedrooms: z.string().optional(),
+        bathrooms: z.string().optional(),
         parkingSpots: z.string().optional(),
         price: z.string().optional(),
         photo: z.string().optional(),
@@ -92,7 +93,7 @@ export default function NewLaunchPage() {
             targetAudience: [],
             status: "pre_launch",
             photos: [],
-            units: [{ name: "", areaSqm: "", bedrooms: "", parkingSpots: "", price: "", photo: "", minhaCasaMinhaVida: false, allowsFinancing: false, downPayment: "", condoFee: "", isCondo: false }],
+            units: [{ name: "", areaSqm: "", bedrooms: "", bathrooms: "", parkingSpots: "", price: "", photo: "", minhaCasaMinhaVida: false, allowsFinancing: false, downPayment: "", condoFee: "", isCondo: false }],
         },
     });
 
@@ -110,6 +111,7 @@ export default function NewLaunchPage() {
                 units: data.units.map((u) => ({
                     ...u,
                     bedrooms: u.bedrooms ? parseInt(u.bedrooms) : undefined,
+                    bathrooms: u.bathrooms ? parseInt(u.bathrooms) : undefined,
                     parkingSpots: u.parkingSpots ? parseInt(u.parkingSpots) : undefined,
                     minhaCasaMinhaVida: !!u.minhaCasaMinhaVida,
                     allowsFinancing: !!u.allowsFinancing,
@@ -316,6 +318,7 @@ export default function NewLaunchPage() {
                                             name: "",
                                             areaSqm: "",
                                             bedrooms: "",
+                                            bathrooms: "",
                                             parkingSpots: "",
                                             price: "",
                                             photo: "",
@@ -356,7 +359,7 @@ export default function NewLaunchPage() {
                                                 )}
                                             />
 
-                                            <div className="grid grid-cols-3 gap-6">
+                                            <div className="grid grid-cols-4 gap-4">
                                                 <FormField
                                                     name={`units.${index}.areaSqm`}
                                                     render={({ field }) => (
@@ -373,6 +376,17 @@ export default function NewLaunchPage() {
                                                     render={({ field }) => (
                                                         <FormItem>
                                                             <FormLabel className="text-[10px] font-black text-muted-foreground uppercase text-center block">Quartos</FormLabel>
+                                                            <FormControl>
+                                                                <Input type="number" {...field} className="bg-white/5 border-border h-12 rounded-xl text-center font-bold" />
+                                                            </FormControl>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    name={`units.${index}.bathrooms`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className="text-[10px] font-black text-muted-foreground uppercase text-center block">Banh.</FormLabel>
                                                             <FormControl>
                                                                 <Input type="number" {...field} className="bg-white/5 border-border h-12 rounded-xl text-center font-bold" />
                                                             </FormControl>

@@ -19,12 +19,14 @@ export function ImageUpload({ value, onChange, disabled }: ImageUploadProps) {
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
         setIsUploading(true);
         try {
+            console.log("Starting upload for files:", acceptedFiles.map(f => f.name));
             const uploadPromises = acceptedFiles.map(file => uploadImage(file));
             const urls = await Promise.all(uploadPromises);
+            console.log("Upload successful. URLs:", urls);
             onChange([...value, ...urls]);
-        } catch (error) {
-            console.error("Upload failed", error);
-            alert("Erro ao fazer upload da imagem.");
+        } catch (error: any) {
+            console.error("Upload failed details:", error);
+            alert(`Erro ao fazer upload da imagem: ${error?.message || 'Erro desconhecido'}`);
         } finally {
             setIsUploading(false);
         }

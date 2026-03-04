@@ -47,6 +47,7 @@ const propertySchema = z.object({
     address: z.string().optional(),
     state: z.string().optional(),
     price: z.string().min(1, "O preço é obrigatório"),
+    areaSqm: z.string().optional(),
     bedrooms: z.string().optional(),
     bathrooms: z.string().optional(),
     parkingSpots: z.string().optional(),
@@ -76,6 +77,7 @@ export default function NewPropertyPage() {
             address: "",
             state: "SP",
             price: "",
+            areaSqm: "",
             bedrooms: "",
             bathrooms: "",
             parkingSpots: "",
@@ -96,6 +98,7 @@ export default function NewPropertyPage() {
             await createProperty({
                 ...values,
                 bedrooms: values.bedrooms ? parseInt(values.bedrooms) : undefined,
+                bathrooms: values.bathrooms ? parseInt(values.bathrooms) : undefined,
                 parkingSpots: values.parkingSpots ? parseInt(values.parkingSpots) : undefined,
                 photos: values.photos || [],
                 minhaCasaMinhaVida: values.minhaCasaMinhaVida,
@@ -457,7 +460,18 @@ export default function NewPropertyPage() {
                             </div>
 
                             {/* Specs */}
-                            <div className="grid grid-cols-3 gap-6">
+                            <div className="grid grid-cols-4 gap-4">
+                                <FormField
+                                    name="areaSqm"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-3">
+                                            <FormLabel className="text-sm font-bold text-foreground text-center block">M²</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-4 text-center font-bold text-lg" />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
                                 <FormField
                                     name="bedrooms"
                                     render={({ field }) => (
@@ -473,7 +487,7 @@ export default function NewPropertyPage() {
                                     name="bathrooms"
                                     render={({ field }) => (
                                         <FormItem className="space-y-3">
-                                            <FormLabel className="text-sm font-bold text-foreground text-center block">Banheiros</FormLabel>
+                                            <FormLabel className="text-sm font-bold text-foreground text-center block">Banh.</FormLabel>
                                             <FormControl>
                                                 <Input type="number" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-4 text-center font-bold text-lg" />
                                             </FormControl>
