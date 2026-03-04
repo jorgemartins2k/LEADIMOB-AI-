@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { ArrowRight, Calculator, TrendingUp, DollarSign, Zap, Crown, Building2 } from 'lucide-react';
 
 export function SalesCalculator() {
-    const [leads, setLeads] = useState(3000);
+    const [leads, setLeads] = useState(1500);
 
     // Nova lógica: 8 vendas para cada 3000 leads (0.266% de conversão)
     // v = (l / 3000) * 8
@@ -65,7 +65,7 @@ export function SalesCalculator() {
                                     onValueChange={(val) => setLeads(val[0])}
                                     max={5000}
                                     step={500}
-                                    min={500}
+                                    min={1500}
                                     className="py-10"
                                 />
 
