@@ -152,7 +152,11 @@ export default function ConfiguraçõesPage() {
                                         <User className="w-24 h-24 text-muted-foreground opacity-10" />
                                     </div>
                                 </div>
-                                <Button size="icon" className="absolute -bottom-4 -right-4 w-16 h-16 rounded-[24px] bg-foreground text-background shadow-2xl hover:scale-110 active:scale-90 transition-all border-4 border-card">
+                                <Button
+                                    size="icon"
+                                    onClick={() => alert("Upload de foto: Em breve!")}
+                                    className="absolute -bottom-4 -right-4 w-16 h-16 rounded-[24px] bg-foreground text-background shadow-2xl hover:scale-110 active:scale-90 transition-all border-4 border-card"
+                                >
                                     <Camera className="w-6 h-6" />
                                 </Button>
                             </div>
