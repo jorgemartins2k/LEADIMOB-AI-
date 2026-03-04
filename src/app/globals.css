@@ -8,6 +8,7 @@
   /* SaaS 2026 Typography */
   --font-display: "Geist Sans", "Syne", sans-serif;
   --font-body: "Inter", "DM Sans", sans-serif;
+  --font-sora: "Sora", sans-serif;
 
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));

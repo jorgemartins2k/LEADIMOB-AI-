@@ -30,6 +30,8 @@ const navigation = [
     { name: "Configurações", href: "/configuracoes", icon: Settings },
 ];
 
+import { LeadImobLogo } from "@/components/LeadImobLogo";
+
 export function Sidebar() {
     const pathname = usePathname();
 
@@ -42,12 +44,7 @@ export function Sidebar() {
             {/* Brand Logo Section */}
             <div className="flex h-24 items-center px-8 relative z-10">
                 <Link href="/dashboard" className="flex items-center gap-3 group/logo">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-accent/60 flex items-center justify-center shadow-lg shadow-accent/20 group-hover/logo:scale-110 transition-transform duration-500">
-                        <Rocket className="w-6 h-6 text-white" />
-                    </div>
-                    <span className="text-xl font-display font-black tracking-[-0.03em] text-white">
-                        Leadimob <span className="text-accent underline underline-offset-4 decoration-accent/30">AI</span>
-                    </span>
+                    <LeadImobLogo variant="dark" iconSize={36} fontSize="text-xl" />
                 </Link>
             </div>
 

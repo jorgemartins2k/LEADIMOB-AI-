@@ -18,7 +18,7 @@ export function Footer() {
             <div className="container mx-auto px-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
                     <div className="md:col-span-2 space-y-8">
-                        <LeadImobLogo className="text-white brightness-0 invert" />
+                        <LeadImobLogo variant="white" iconSize={48} fontSize="text-2xl" />
                         <p className="text-white/60 text-lg font-medium leading-relaxed max-w-sm">
                             A revolução do atendimento imobiliário através de Inteligência Artificial proprietária.
                             Simples. Direto. Lucrativo.

@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
-import { Inter, Geist } from "next/font/google";
+import { Inter, Geist, Sora } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-display",
   subsets: ["latin"],
+});
+
+const sora = Sora({
+  variable: "--font-sora",
+  subsets: ["latin"],
+  weight: ["700", "800"],
 });
 
 const inter = Inter({
@@ -26,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${geistSans.variable} ${inter.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${inter.variable} ${sora.variable} antialiased`}>
         <ClerkProvider>
           {children}
         </ClerkProvider>

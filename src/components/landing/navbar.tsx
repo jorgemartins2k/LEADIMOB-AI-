@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu, X, LogIn, UserPlus } from 'lucide-react';
 import Link from 'next/link';
+import { LeadImobLogo } from '@/components/LeadImobLogo';
 import { useAuth, UserButton } from '@clerk/nextjs';
 
 export function Navbar() {
@@ -35,9 +36,7 @@ export function Navbar() {
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl font-extrabold tracking-tighter font-display">
-              LEADIMOB<span className="text-accent">AI</span>
-            </span>
+            <LeadImobLogo variant="standard" iconSize={36} fontSize="text-2xl" />
           </Link>
 
           {/* Desktop Navigation */}
