@@ -38,7 +38,7 @@ export default function ConfiguraçõesPage() {
                 </div>
                 <div className="px-5 py-2 bg-success/10 text-success rounded-full text-[10px] font-black uppercase tracking-widest border border-success/20 flex items-center gap-2">
                     <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
-                    Sincronizado com WhatsApp
+                    Notificações Ativas
                 </div>
             </div>
 
@@ -174,8 +174,9 @@ export default function ConfiguraçõesPage() {
                                 <Input defaultValue="Jorge Martins" className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all" />
                             </div>
                             <div className="space-y-4">
-                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4">WhatsApp Business</label>
+                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4">WhatsApp para Notificações</label>
                                 <Input defaultValue="(11) 98765-4321" className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all" />
+                                <p className="text-[9px] font-bold text-muted-foreground opacity-40 ml-4">*Onde você receberá os alertas de leads aquecidos.</p>
                             </div>
                             <div className="space-y-4">
                                 <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4">E-mail Corporativo</label>

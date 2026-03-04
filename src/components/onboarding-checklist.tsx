@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 const steps = [
     { id: "profile", title: "Completar Perfil", description: "Adicione sua foto e nome da imobiliária.", completed: true },
-    { id: "whatsapp", title: "Conectar WhatsApp", description: "Escaneie o QR Code para a Raquel começar a atender.", completed: false },
+    { id: "whatsapp", title: "WhatsApp de Notificações", description: "Cadastre seu número para receber alertas quando Raquel aquecer um lead.", completed: false },
     { id: "schedule", title: "Configurar Expediente", description: "Defina os horários que você quer que a Raquel trabalhe.", completed: false },
     { id: "properties", title: "Adicionar Imóveis", description: "Cadastre seu portfólio para a Raquel oferecer aos leads.", completed: false },
 ];
