@@ -63,16 +63,16 @@ export function SalesCalculator() {
                                 <Slider
                                     value={[leads]}
                                     onValueChange={(val) => setLeads(val[0])}
-                                    max={10000}
+                                    max={5000}
                                     step={500}
                                     min={500}
                                     className="py-10"
                                 />
 
                                 <div className="flex justify-between text-[10px] font-black text-muted-foreground uppercase opacity-40 tracking-widest">
-                                    <span>Pequeno Porte</span>
-                                    <span>Escala Média</span>
-                                    <span>Alta Performance</span>
+                                    <span>Até 1.500</span>
+                                    <span>Até 3.000</span>
+                                    <span>Escala 5.000</span>
                                 </div>
                             </div>
 
