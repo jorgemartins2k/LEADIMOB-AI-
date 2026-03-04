@@ -53,6 +53,11 @@ const propertySchema = z.object({
     standard: z.enum(["economico", "medio", "alto"]),
     targetAudience: z.array(z.string()),
     photos: z.array(z.string()),
+    minhaCasaMinhaVida: z.boolean(),
+    allowsFinancing: z.boolean(),
+    isCondo: z.boolean(),
+    downPayment: z.string().optional(),
+    condoFee: z.string().optional(),
 });
 
 type PropertyFormValues = z.infer<typeof propertySchema>;
@@ -77,6 +82,11 @@ export default function NewPropertyPage() {
             standard: "medio",
             targetAudience: [],
             photos: [],
+            minhaCasaMinhaVida: false,
+            allowsFinancing: false,
+            downPayment: "",
+            condoFee: "",
+            isCondo: false,
         },
     });
 
@@ -88,6 +98,11 @@ export default function NewPropertyPage() {
                 bedrooms: values.bedrooms ? parseInt(values.bedrooms) : undefined,
                 parkingSpots: values.parkingSpots ? parseInt(values.parkingSpots) : undefined,
                 photos: values.photos || [],
+                minhaCasaMinhaVida: values.minhaCasaMinhaVida,
+                allowsFinancing: values.allowsFinancing,
+                isCondo: values.isCondo,
+                downPayment: values.downPayment || undefined,
+                condoFee: values.condoFee || undefined,
             });
             router.push("/imoveis");
         } catch (error) {
@@ -183,6 +198,129 @@ export default function NewPropertyPage() {
                                         </FormItem>
                                     )}
                                 />
+                            </div>
+
+                            {/* Financiamento e MCMV */}
+                            <div className="grid grid-cols-2 gap-6 pt-6 border-t border-border">
+                                <FormField
+                                    name="minhaCasaMinhaVida"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center justify-between rounded-2xl border border-border/50 p-6 bg-muted/10">
+                                            <div className="space-y-0.5">
+                                                <FormLabel className="text-sm font-bold">Reserva MCMV</FormLabel>
+                                                <p className="text-[10px] text-muted-foreground font-medium">Aceita Minha Casa Minha Vida</p>
+                                            </div>
+                                            <FormControl>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => field.onChange(!field.value)}
+                                                    className={cn(
+                                                        "w-12 h-6 rounded-full transition-all duration-300 relative",
+                                                        field.value ? "bg-primary shadow-[0_0_15px_-3px_rgba(59,130,246,0.5)]" : "bg-muted"
+                                                    )}
+                                                >
+                                                    <div className={cn(
+                                                        "absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300",
+                                                        field.value ? "right-1" : "left-1"
+                                                    )} />
+                                                </button>
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    name="allowsFinancing"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center justify-between rounded-2xl border border-border/50 p-6 bg-muted/10">
+                                            <div className="space-y-0.5">
+                                                <FormLabel className="text-sm font-bold">Financiamento</FormLabel>
+                                                <p className="text-[10px] text-muted-foreground font-medium">Realizamos financiamento</p>
+                                            </div>
+                                            <FormControl>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => field.onChange(!field.value)}
+                                                    className={cn(
+                                                        "w-12 h-6 rounded-full transition-all duration-300 relative",
+                                                        field.value ? "bg-primary shadow-[0_0_15px_-3px_rgba(59,130,246,0.5)]" : "bg-muted"
+                                                    )}
+                                                >
+                                                    <div className={cn(
+                                                        "absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300",
+                                                        field.value ? "right-1" : "left-1"
+                                                    )} />
+                                                </button>
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            {/* Valor de Entrada */}
+                            <FormField
+                                name="downPayment"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-3">
+                                        <FormLabel className="text-sm font-bold text-foreground">Valor de Entrada Opcional (R$)</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Ex: 50000"
+                                                {...field}
+                                                className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium focus-visible:ring-primary/20 transition-all"
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Detalhes de Condomínio */}
+                            <div className="space-y-6 pt-6 border-t border-border">
+                                <FormField
+                                    name="isCondo"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center justify-between rounded-2xl border border-border/50 p-6 bg-muted/10">
+                                            <div className="space-y-0.5">
+                                                <FormLabel className="text-sm font-bold">É Condomínio?</FormLabel>
+                                                <p className="text-[10px] text-muted-foreground font-medium">Marque se o imóvel possui condomínio</p>
+                                            </div>
+                                            <FormControl>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => field.onChange(!field.value)}
+                                                    className={cn(
+                                                        "w-12 h-6 rounded-full transition-all duration-300 relative",
+                                                        field.value ? "bg-primary shadow-[0_0_15px_-3px_rgba(59,130,246,0.5)]" : "bg-muted"
+                                                    )}
+                                                >
+                                                    <div className={cn(
+                                                        "absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300",
+                                                        field.value ? "right-1" : "left-1"
+                                                    )} />
+                                                </button>
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {form.watch("isCondo") && (
+                                    <FormField
+                                        name="condoFee"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                <FormLabel className="text-sm font-bold text-foreground">Taxa de Condomínio (R$)</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="Ex: 450"
+                                                        {...field}
+                                                        className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium focus-visible:ring-primary/20 transition-all"
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
                             </div>
 
                             {/* Padrão do Imóvel */}

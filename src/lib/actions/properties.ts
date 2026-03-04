@@ -21,6 +21,11 @@ const propertySchema = z.object({
     standard: z.enum(["economico", "medio", "alto"]),
     targetAudience: z.array(z.string()).default([]),
     photos: z.array(z.string()).default([]),
+    minhaCasaMinhaVida: z.boolean().default(false),
+    allowsFinancing: z.boolean().default(false),
+    downPayment: z.string().optional(),
+    condoFee: z.string().optional(),
+    isCondo: z.boolean().default(false),
 });
 
 async function getInternalUser() {
@@ -50,9 +55,24 @@ export async function createProperty(data: z.infer<typeof propertySchema>) {
 
     await db.insert(properties).values({
         userId: user.id,
-        ...validated,
-        price: validated.price, // Drizzle handles numeric
+        title: validated.title,
+        description: validated.description,
+        type: validated.type,
+        city: validated.city,
+        neighborhood: validated.neighborhood,
+        address: validated.address,
+        price: validated.price,
         areaSqm: validated.areaSqm,
+        bedrooms: validated.bedrooms,
+        parkingSpots: validated.parkingSpots,
+        standard: validated.standard,
+        targetAudience: validated.targetAudience,
+        photos: validated.photos,
+        minhaCasaMinhaVida: validated.minhaCasaMinhaVida,
+        allowsFinancing: validated.allowsFinancing,
+        downPayment: validated.downPayment,
+        condoFee: validated.condoFee,
+        isCondo: validated.isCondo,
     });
 
     revalidatePath("/imoveis");

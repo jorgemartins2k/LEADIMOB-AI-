@@ -26,6 +26,11 @@ const launchSchema = z.object({
         parkingSpots: z.number().optional(),
         price: z.string().optional(),
         photo: z.string().optional(),
+        minhaCasaMinhaVida: z.boolean().default(false),
+        allowsFinancing: z.boolean().default(false),
+        downPayment: z.string().optional(),
+        condoFee: z.string().optional(),
+        isCondo: z.boolean().default(false),
     })).default([]),
 });
 
@@ -85,6 +90,11 @@ export async function createLaunch(data: z.infer<typeof launchSchema>) {
                 parkingSpots: unit.parkingSpots,
                 price: unit.price,
                 photo: unit.photo,
+                minhaCasaMinhaVida: unit.minhaCasaMinhaVida,
+                allowsFinancing: unit.allowsFinancing,
+                downPayment: unit.downPayment,
+                condoFee: unit.condoFee,
+                isCondo: unit.isCondo,
             }))
         );
     }

@@ -96,6 +96,11 @@ export const properties = pgTable('properties', {
     targetAudience: text('target_audience').array().notNull().default(sql`'{}'`),
     status: text('status').notNull().default('available'),
     photos: text('photos').array().default(sql`'{}'`),
+    minhaCasaMinhaVida: boolean('minha_casa_minha_vida').default(false),
+    allowsFinancing: boolean('allows_financing').default(false),
+    downPayment: numeric('down_payment', { precision: 12, scale: 2 }),
+    condoFee: numeric('condo_fee', { precision: 12, scale: 2 }),
+    isCondo: boolean('is_condo').default(false),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
@@ -130,6 +135,11 @@ export const launchUnits = pgTable('launch_units', {
     parkingSpots: smallint('parking_spots'),
     price: numeric('price', { precision: 12, scale: 2 }),
     photo: text('photo'),
+    minhaCasaMinhaVida: boolean('minha_casa_minha_vida').default(false),
+    allowsFinancing: boolean('allows_financing').default(false),
+    downPayment: numeric('down_payment', { precision: 12, scale: 2 }),
+    condoFee: numeric('condo_fee', { precision: 12, scale: 2 }),
+    isCondo: boolean('is_condo').default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
