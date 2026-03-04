@@ -25,7 +25,7 @@ export function Hero() {
                         <h1 className="heading-hero text-foreground mb-8">
                             Transforme 3.000 leads em{' '}
                             <span className="text-gradient-accent">
-                                18 Vendas por Mês
+                                até 8 vendas por mês
                             </span>
                         </h1>
 
