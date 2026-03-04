@@ -25,6 +25,7 @@ const launchSchema = z.object({
         bedrooms: z.number().optional(),
         parkingSpots: z.number().optional(),
         price: z.string().optional(),
+        photo: z.string().optional(),
     })).default([]),
 });
 
@@ -83,6 +84,7 @@ export async function createLaunch(data: z.infer<typeof launchSchema>) {
                 bedrooms: unit.bedrooms,
                 parkingSpots: unit.parkingSpots,
                 price: unit.price,
+                photo: unit.photo,
             }))
         );
     }

@@ -357,30 +357,13 @@ export default function NewPropertyPage() {
                                         <FormLabel className="text-sm font-bold text-foreground">Fotos do Imóvel</FormLabel>
                                         <FormControl>
                                             <div className="flex flex-col gap-4">
-                                                <div className="grid grid-cols-4 gap-4">
-                                                    {field.value.map((url, i) => (
-                                                        <div key={i} className="aspect-square rounded-2xl border border-border overflow-hidden relative group">
-                                                            <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
-                                                            <button
-                                                                onClick={() => field.onChange(field.value.filter((_, idx) => idx !== i))}
-                                                                className="absolute top-2 right-2 bg-hot text-white rounded-lg p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                            >
-                                                                <X className="w-3 h-3" />
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                    <button
-                                                        type="button"
-                                                        className="aspect-square rounded-2xl border-2 border-dashed border-border/50 flex flex-col items-center justify-center gap-2 hover:bg-muted/20 hover:border-primary/30 transition-all group"
-                                                    >
-                                                        <div className="w-10 h-10 rounded-xl bg-muted/30 flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                                                            <Plus className="w-5 h-5" />
-                                                        </div>
-                                                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Adicionar</span>
-                                                    </button>
-                                                </div>
+                                                <ImageUpload
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    disabled={isSaving}
+                                                />
                                                 <p className="text-[10px] text-muted-foreground font-medium italic opacity-60">
-                                                    Clique para adicionar fotos do imóvel
+                                                    Arraste fotos ou clique para adicionar arquivos da galeria.
                                                 </p>
                                             </div>
                                         </FormControl>

@@ -129,6 +129,7 @@ export const launchUnits = pgTable('launch_units', {
     bedrooms: smallint('bedrooms'),
     parkingSpots: smallint('parking_spots'),
     price: numeric('price', { precision: 12, scale: 2 }),
+    photo: text('photo'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
