@@ -17,6 +17,7 @@ import {
     Bell,
 } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
+import { LeadImobLogo } from "@/components/LeadImobLogo";
 
 const navigation = [
     { name: "Visão Geral", href: "/dashboard", icon: LayoutDashboard },
@@ -30,7 +31,7 @@ const navigation = [
     { name: "Configurações", href: "/configuracoes", icon: Settings },
 ];
 
-import { LeadImobLogo } from "@/components/LeadImobLogo";
+
 
 export function Sidebar() {
     const pathname = usePathname();
