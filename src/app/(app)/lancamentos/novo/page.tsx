@@ -428,12 +428,14 @@ export default function NewLaunchPage() {
                                                                     type="button"
                                                                     onClick={() => field.onChange(!field.value)}
                                                                     className={cn(
-                                                                        "w-10 h-5 rounded-full transition-all duration-300 relative",
-                                                                        field.value ? "bg-primary shadow-[0_0_10px_-2px_rgba(59,130,246,0.5)]" : "bg-muted/20"
+                                                                        "w-10 h-5 rounded-full transition-all duration-300 relative border border-transparent",
+                                                                        field.value
+                                                                            ? "bg-primary shadow-[0_0_10px_-2px_rgba(59,130,246,0.5)]"
+                                                                            : "bg-zinc-300 dark:bg-zinc-700 border-zinc-400/50 shadow-inner"
                                                                     )}
                                                                 >
                                                                     <div className={cn(
-                                                                        "absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all duration-300",
+                                                                        "absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-[0_1px_5px_rgba(0,0,0,0.3)]",
                                                                         field.value ? "right-0.5" : "left-0.5"
                                                                     )} />
                                                                 </button>
@@ -453,12 +455,14 @@ export default function NewLaunchPage() {
                                                                     type="button"
                                                                     onClick={() => field.onChange(!field.value)}
                                                                     className={cn(
-                                                                        "w-10 h-5 rounded-full transition-all duration-300 relative",
-                                                                        field.value ? "bg-primary shadow-[0_0_10px_-2px_rgba(59,130,246,0.5)]" : "bg-muted/20"
+                                                                        "w-10 h-5 rounded-full transition-all duration-300 relative border border-transparent",
+                                                                        field.value
+                                                                            ? "bg-primary shadow-[0_0_10px_-2px_rgba(59,130,246,0.5)]"
+                                                                            : "bg-zinc-300 dark:bg-zinc-700 border-zinc-400/50 shadow-inner"
                                                                     )}
                                                                 >
                                                                     <div className={cn(
-                                                                        "absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all duration-300",
+                                                                        "absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-[0_1px_5px_rgba(0,0,0,0.3)]",
                                                                         field.value ? "right-0.5" : "left-0.5"
                                                                     )} />
                                                                 </button>
@@ -492,8 +496,10 @@ export default function NewLaunchPage() {
                                                                     type="button"
                                                                     onClick={() => field.onChange(!field.value)}
                                                                     className={cn(
-                                                                        "w-10 h-5 rounded-full transition-all duration-300 relative",
-                                                                        field.value ? "bg-primary shadow-[0_0_10px_-2px_rgba(59,130,246,0.5)]" : "bg-muted/20"
+                                                                        "w-10 h-5 rounded-full transition-all duration-300 relative border border-transparent",
+                                                                        field.value
+                                                                            ? "bg-primary shadow-[0_0_10px_-2px_rgba(59,130,246,0.5)]"
+                                                                            : "bg-zinc-300 dark:bg-zinc-700 border-zinc-400/50 shadow-inner"
                                                                     )}
                                                                 >
                                                                     <div className={cn(

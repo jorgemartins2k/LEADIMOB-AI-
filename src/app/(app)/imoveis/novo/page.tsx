@@ -215,12 +215,14 @@ export default function NewPropertyPage() {
                                                     type="button"
                                                     onClick={() => field.onChange(!field.value)}
                                                     className={cn(
-                                                        "w-12 h-6 rounded-full transition-all duration-300 relative",
-                                                        field.value ? "bg-primary shadow-[0_0_15px_-3px_rgba(59,130,246,0.5)]" : "bg-muted"
+                                                        "w-12 h-6 rounded-full transition-all duration-300 relative border border-transparent",
+                                                        field.value
+                                                            ? "bg-primary shadow-[0_0_15px_-3px_rgba(59,130,246,0.5)]"
+                                                            : "bg-zinc-300 dark:bg-zinc-700 border-zinc-400/50 shadow-inner"
                                                     )}
                                                 >
                                                     <div className={cn(
-                                                        "absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300",
+                                                        "absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-[0_2px_10px_rgba(0,0,0,0.3)]",
                                                         field.value ? "right-1" : "left-1"
                                                     )} />
                                                 </button>
@@ -241,12 +243,14 @@ export default function NewPropertyPage() {
                                                     type="button"
                                                     onClick={() => field.onChange(!field.value)}
                                                     className={cn(
-                                                        "w-12 h-6 rounded-full transition-all duration-300 relative",
-                                                        field.value ? "bg-primary shadow-[0_0_15px_-3px_rgba(59,130,246,0.5)]" : "bg-muted"
+                                                        "w-12 h-6 rounded-full transition-all duration-300 relative border border-transparent",
+                                                        field.value
+                                                            ? "bg-primary shadow-[0_0_15px_-3px_rgba(59,130,246,0.5)]"
+                                                            : "bg-zinc-300 dark:bg-zinc-700 border-zinc-400/50 shadow-inner"
                                                     )}
                                                 >
                                                     <div className={cn(
-                                                        "absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300",
+                                                        "absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-[0_2px_10px_rgba(0,0,0,0.3)]",
                                                         field.value ? "right-1" : "left-1"
                                                     )} />
                                                 </button>
@@ -289,12 +293,14 @@ export default function NewPropertyPage() {
                                                     type="button"
                                                     onClick={() => field.onChange(!field.value)}
                                                     className={cn(
-                                                        "w-12 h-6 rounded-full transition-all duration-300 relative",
-                                                        field.value ? "bg-primary shadow-[0_0_15px_-3px_rgba(59,130,246,0.5)]" : "bg-muted"
+                                                        "w-12 h-6 rounded-full transition-all duration-300 relative border border-transparent",
+                                                        field.value
+                                                            ? "bg-primary shadow-[0_0_15px_-3px_rgba(59,130,246,0.5)]"
+                                                            : "bg-zinc-300 dark:bg-zinc-700 border-zinc-400/50 shadow-inner"
                                                     )}
                                                 >
                                                     <div className={cn(
-                                                        "absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300",
+                                                        "absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-[0_2px_10px_rgba(0,0,0,0.3)]",
                                                         field.value ? "right-1" : "left-1"
                                                     )} />
                                                 </button>
