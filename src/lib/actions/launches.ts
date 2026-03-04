@@ -113,3 +113,13 @@ export async function deleteLaunch(id: string) {
     revalidatePath("/lancamentos");
     return { success: true };
 }
+
+export async function getLaunchById(id: string) {
+    const user = await getInternalUser();
+    return db.query.launches.findFirst({
+        where: and(eq(launches.id, id), eq(launches.userId, user.id)),
+        with: {
+            units: true,
+        }
+    });
+}

@@ -79,6 +79,7 @@ export async function createProperty(data: z.infer<typeof propertySchema>) {
     return { success: true };
 }
 
+
 export async function deleteProperty(id: string) {
     const user = await getInternalUser();
 
@@ -88,4 +89,11 @@ export async function deleteProperty(id: string) {
 
     revalidatePath("/imoveis");
     return { success: true };
+}
+
+export async function getPropertyById(id: string) {
+    const user = await getInternalUser();
+    return db.query.properties.findFirst({
+        where: and(eq(properties.id, id), eq(properties.userId, user.id)),
+    });
 }
