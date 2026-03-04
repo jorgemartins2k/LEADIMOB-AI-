@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { Navbar } from "@/components/landing/navbar";
 import { Hero } from "@/components/landing/hero";
 import { HowItWorks } from "@/components/landing/how-it-works";
-import { ROICalculator } from "@/components/landing/roi-calculator";
+import { SalesCalculator } from "@/components/landing/roi-calculator";
 import { Pricing } from "@/components/landing/pricing";
 import { AboutUs } from "@/components/landing/about-us";
 import { FinalCTA } from "@/components/landing/final-cta";
@@ -22,7 +22,7 @@ export default async function Home() {
       <main className="flex-1">
         <Hero />
         <HowItWorks />
-        <ROICalculator />
+        <SalesCalculator />
         <Pricing />
         <AboutUs />
         <FinalCTA />
