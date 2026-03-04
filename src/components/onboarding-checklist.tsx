@@ -56,9 +56,11 @@ export function OnboardingChecklist() {
                             <p className="text-sm text-muted-foreground mt-0.5">{step.description}</p>
                         </div>
                         {!step.completed && (
-                            <Button size="icon" variant="ghost" className="rounded-full shadow-sm hover:bg-primary/10 hover:text-primary">
-                                <ArrowRight className="h-5 w-5" />
-                            </Button>
+                            <Link href={step.id === "profile" ? "/configuracoes" : step.id === "whatsapp" ? "/configuracoes" : step.id === "schedule" ? "/configuracoes/expediente" : "/imoveis/novo"}>
+                                <Button size="icon" variant="ghost" className="rounded-full shadow-sm hover:bg-primary/10 hover:text-primary">
+                                    <ArrowRight className="h-5 w-5" />
+                                </Button>
+                            </Link>
                         )}
                     </div>
                 ))}

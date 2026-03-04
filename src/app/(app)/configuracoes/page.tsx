@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { User, Bell, Clock, Save, Camera, Smartphone, Mail, Globe, Hash, Info, Check, X } from "lucide-react";
+import { User, Bell, Clock, Save, Camera, Smartphone, Mail, Globe, Hash, Info, Check, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default function ConfiguraçõesPage() {
     const [activeTab, setActiveTab] = useState("horarios");
@@ -95,8 +96,10 @@ export default function ConfiguraçõesPage() {
                         </div>
 
                         <div className="flex justify-end pt-8">
-                            <Button className="btn-primary px-16 h-18 text-xs font-black uppercase tracking-[0.2em] rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all">
-                                <Save className="w-5 h-5 mr-3" /> Atualizar Expediente
+                            <Button className="btn-primary h-16 px-10 font-black uppercase text-[10px] tracking-[0.2em] gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all" asChild>
+                                <Link href="/agenda/novo">
+                                    <Plus className="h-5 w-5" /> Agendar Compromisso
+                                </Link>
                             </Button>
                         </div>
                     </div>
@@ -128,7 +131,10 @@ export default function ConfiguraçõesPage() {
                         </div>
 
                         <div className="flex justify-end pt-8">
-                            <Button className="btn-primary px-16 h-18 text-xs font-black uppercase tracking-[0.2em] rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all bg-accent hover:bg-accent/90">
+                            <Button
+                                onClick={() => alert("Preferências salvas com sucesso!")}
+                                className="btn-primary px-16 h-18 text-xs font-black uppercase tracking-[0.2em] rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all bg-accent hover:bg-accent/90"
+                            >
                                 <Save className="w-5 h-5 mr-3" /> Salvar Preferências
                             </Button>
                         </div>
@@ -197,10 +203,17 @@ export default function ConfiguraçõesPage() {
                         </div>
 
                         <div className="flex flex-col md:flex-row justify-end pt-12 gap-6">
-                            <Button variant="ghost" className="font-black uppercase tracking-widest text-[10px] h-18 px-12 rounded-3xl hover:bg-muted btn-interactive">
+                            <Button
+                                variant="ghost"
+                                onClick={() => alert("Um link de redefinição foi enviado para seu e-mail.")}
+                                className="font-black uppercase tracking-widest text-[10px] h-18 px-12 rounded-3xl hover:bg-muted btn-interactive"
+                            >
                                 Redefinir Senha de Acesso
                             </Button>
-                            <Button className="btn-primary px-20 h-18 text-xs font-black uppercase tracking-[0.2em] rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all">
+                            <Button
+                                onClick={() => alert("Perfil profissional atualizado!")}
+                                className="btn-primary px-20 h-18 text-xs font-black uppercase tracking-[0.2em] rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all"
+                            >
                                 <Save className="w-5 h-5 mr-3" /> Salvar Perfil Profissional
                             </Button>
                         </div>

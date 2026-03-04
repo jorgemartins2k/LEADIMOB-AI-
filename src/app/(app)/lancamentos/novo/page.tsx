@@ -428,7 +428,7 @@ export default function NewLaunchPage() {
                                                 )}
                                             />
 
-                                            {/* Financiamento e MCMV Unidades */}
+                                            {/* Salvar Empreendimento e MCMV Unidades */}
                                             <div className="grid grid-cols-2 gap-4 pb-2">
                                                 <FormField
                                                     name={`units.${index}.minhaCasaMinhaVida`}
@@ -601,7 +601,7 @@ export default function NewLaunchPage() {
                                     {isSaving ? (
                                         <Loader2 className="w-6 h-6 animate-spin" />
                                     ) : (
-                                        "Salvar Empreendimento"
+                                        Salvar Empreendimento
                                     )}
                                 </Button>
                             </div>

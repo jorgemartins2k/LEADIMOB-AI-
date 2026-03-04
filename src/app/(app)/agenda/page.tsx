@@ -37,7 +37,7 @@ export default function AgendaPage() {
                 </div>
                 <Button className="btn-primary h-16 px-10 font-black uppercase text-[10px] tracking-[0.2em] gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all" asChild>
                     <Link href="/agenda/novo">
-                        <Plus className="h-5 w-5" /> Agendar Visita
+                        <Plus className="h-5 w-5" /> Agendar Compromisso
                     </Link>
                 </Button>
             </div>
