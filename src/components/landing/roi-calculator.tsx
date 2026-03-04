@@ -9,9 +9,9 @@ import { ArrowRight, Calculator, TrendingUp, DollarSign, Zap, Crown, Building2 }
 export function SalesCalculator() {
     const [leads, setLeads] = useState(1500);
 
-    // Nova lógica: 8 vendas para cada 3000 leads (0.266% de conversão)
-    // v = (l / 3000) * 8
-    const vendas = Math.round((leads / 3000) * 8);
+    // Nova lógica: 18 vendas para cada 3000 leads (0.6% de conversão)
+    // v = (l / 3000) * 18
+    const vendas = Math.round((leads / 3000) * 18);
     const comissaoMedia = 15000;
     const receita = vendas * comissaoMedia;
 
