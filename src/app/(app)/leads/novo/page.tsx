@@ -68,10 +68,16 @@ export default function NewLeadPage() {
     async function onSubmit(data: LeadFormValues) {
         setIsSaving(true);
         try {
-            await createLead(data);
+            const result = await createLead(data);
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+            alert("Lead cadastrado e Raquel ativada! 🚀");
             router.push("/leads");
         } catch (err) {
             console.error(err);
+            alert("Erro inesperado ao salvar lead.");
         } finally {
             setIsSaving(false);
         }

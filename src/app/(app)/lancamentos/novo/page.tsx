@@ -105,7 +105,7 @@ export default function NewLaunchPage() {
     async function onSubmit(data: LaunchFormValues) {
         setIsSaving(true);
         try {
-            await createLaunch({
+            const result = await createLaunch({
                 ...data,
                 photos: data.photos || [],
                 units: data.units.map((u) => ({
@@ -120,9 +120,17 @@ export default function NewLaunchPage() {
                     condoFee: u.condoFee || undefined,
                 }))
             });
+
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+
+            alert("Empreendimento salvo com sucesso! 🚀");
             router.push("/lancamentos");
         } catch (error) {
             console.error(error);
+            alert("Erro inesperado ao salvar lançamento.");
         } finally {
             setIsSaving(false);
         }

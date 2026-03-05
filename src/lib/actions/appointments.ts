@@ -44,25 +44,29 @@ export async function getAppointments() {
 }
 
 export async function createAppointment(data: z.infer<typeof appointmentSchema>) {
-    const user = await getInternalUser();
+    try {
+        const user = await getInternalUser();
+        const validated = appointmentSchema.parse(data);
 
-    const validated = appointmentSchema.parse(data);
+        await db.insert(appointments).values({
+            userId: user.id,
+            leadId: validated.leadId || null,
+            propertyId: validated.propertyId || null,
+            launchId: validated.launchId || null,
+            title: validated.title,
+            appointmentDate: validated.appointmentDate,
+            appointmentTime: validated.appointmentTime || null,
+            notes: validated.notes || null,
+            status: validated.status,
+        });
 
-    await db.insert(appointments).values({
-        userId: user.id,
-        leadId: validated.leadId || null,
-        propertyId: validated.propertyId || null,
-        launchId: validated.launchId || null,
-        title: validated.title,
-        appointmentDate: validated.appointmentDate,
-        appointmentTime: validated.appointmentTime || null,
-        notes: validated.notes || null,
-        status: validated.status,
-    });
-
-    revalidatePath("/agenda");
-    revalidatePath("/dashboard");
-    return { success: true };
+        revalidatePath("/agenda");
+        revalidatePath("/dashboard");
+        return { success: true };
+    } catch (err: any) {
+        console.error(err);
+        return { error: err.message || "Erro ao agendar compromisso." };
+    }
 }
 
 export async function updateAppointmentStatus(id: string, status: "scheduled" | "completed" | "cancelled") {

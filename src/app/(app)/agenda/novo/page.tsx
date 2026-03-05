@@ -50,10 +50,16 @@ export default function NewAppointmentPage() {
     async function onSubmit(data: AppointmentFormValues) {
         setIsSaving(true);
         try {
-            await createAppointment(data);
+            const result = await createAppointment(data);
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+            alert("Compromisso agendado com sucesso! ⏰");
             router.push("/agenda");
         } catch (error) {
             console.error(error);
+            alert("Erro inesperado ao agendar compromisso.");
         } finally {
             setIsSaving(false);
         }

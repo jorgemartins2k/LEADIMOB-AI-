@@ -59,50 +59,54 @@ export async function getLaunches() {
 }
 
 export async function createLaunch(data: z.infer<typeof launchSchema>) {
-    const user = await getInternalUser();
+    try {
+        const user = await getInternalUser();
+        const validated = launchSchema.parse(data);
 
-    const validated = launchSchema.parse(data);
+        // 1. Inserir o lançamento
+        const [newLaunch] = await db.insert(launches).values({
+            userId: user.id,
+            name: validated.name,
+            developer: validated.developer,
+            description: validated.description,
+            city: validated.city,
+            neighborhood: validated.neighborhood,
+            priceFrom: validated.priceFrom?.replace(/[^\d.]/g, ''),
+            deliveryDate: validated.deliveryDate,
+            standard: validated.standard,
+            targetAudience: validated.targetAudience,
+            status: validated.status,
+            photos: validated.photos,
+        }).returning();
 
-    // 1. Inserir o lançamento
-    const [newLaunch] = await db.insert(launches).values({
-        userId: user.id,
-        name: validated.name,
-        developer: validated.developer,
-        description: validated.description,
-        city: validated.city,
-        neighborhood: validated.neighborhood,
-        priceFrom: validated.priceFrom?.replace(/[^\d.]/g, ''),
-        deliveryDate: validated.deliveryDate, // date string is fine forpg date
-        standard: validated.standard,
-        targetAudience: validated.targetAudience,
-        status: validated.status,
-        photos: validated.photos,
-    }).returning();
+        // 2. Inserir as unidades (plantas)
+        if (validated.units.length > 0) {
+            await db.insert(launchUnits).values(
+                validated.units.map((unit) => ({
+                    launchId: newLaunch.id,
+                    userId: user.id,
+                    name: unit.name,
+                    areaSqm: unit.areaSqm,
+                    bedrooms: unit.bedrooms,
+                    bathrooms: unit.bathrooms,
+                    parkingSpots: unit.parkingSpots,
+                    price: unit.price?.replace(/[^\d.]/g, ''),
+                    photo: unit.photo,
+                    minhaCasaMinhaVida: unit.minhaCasaMinhaVida,
+                    allowsFinancing: unit.allowsFinancing,
+                    downPayment: unit.downPayment,
+                    condoFee: unit.condoFee,
+                    isCondo: unit.isCondo,
+                }))
+            );
+        }
 
-    // 2. Inserir as unidades (plantas)
-    if (validated.units.length > 0) {
-        await db.insert(launchUnits).values(
-            validated.units.map((unit) => ({
-                launchId: newLaunch.id,
-                userId: user.id,
-                name: unit.name,
-                areaSqm: unit.areaSqm,
-                bedrooms: unit.bedrooms,
-                bathrooms: unit.bathrooms,
-                parkingSpots: unit.parkingSpots,
-                price: unit.price?.replace(/[^\d.]/g, ''),
-                photo: unit.photo,
-                minhaCasaMinhaVida: unit.minhaCasaMinhaVida,
-                allowsFinancing: unit.allowsFinancing,
-                downPayment: unit.downPayment,
-                condoFee: unit.condoFee,
-                isCondo: unit.isCondo,
-            }))
-        );
+        revalidatePath("/lancamentos");
+        return { success: true };
+    } catch (err: any) {
+        console.error(err);
+        return { error: err.message || "Erro ao salvar lançamento." };
     }
-
-    revalidatePath("/lancamentos");
-    return { success: true };
 }
 
 export async function deleteLaunch(id: string) {

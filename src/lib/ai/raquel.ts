@@ -140,3 +140,49 @@ EVENTOS: ${JSON.stringify(brokerEvents.map(e => ({ name: e.name, date: e.eventDa
         });
     }
 }
+
+export async function initiateRaquelContact(leadId: string) {
+    const lead = await db.query.leads.findFirst({
+        where: eq(leads.id, leadId),
+    });
+    if (!lead) return;
+
+    const broker = await db.query.users.findFirst({
+        where: eq(users.id, lead.userId),
+    });
+    if (!broker) return;
+
+    // Build intro prompt
+    const systemPrompt = `Você é Raquel, a assistente virtual inteligente do corretor de imóveis ${broker.name}.
+Seu objetivo é fazer o primeiro contato com ${lead.name} que acabou de ser cadastrado.
+NOTAS DO CORRETOR: "${lead.notes || 'Interesse geral em imóveis'}".
+TEMPERATURA INICIAL: ${lead.status === 'waiting' ? 'Novo Lead' : lead.status}.
+
+DIRETRIZES:
+- Apresente-se como assistente do ${broker.name}.
+- Seja cordial, profissional e direta.
+- Use as notas do corretor para ser específica na abordagem.
+- Pergunte se este é um bom momento para conversarem sobre as opções disponíveis.
+- Mantenha a resposta curta o suficiente para ser lida no WhatsApp sem "ler mais".`;
+
+    const completion = await getOpenAI().chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: `Olá, acabo de ser cadastrada como lead do ${broker.name}. Por favor, me envie a primeira mensagem de boas-vindas.` },
+        ],
+    });
+
+    const reply = completion.choices[0].message.content || "";
+
+    // Save conversation
+    await db.insert(conversations).values({
+        leadId: lead.id,
+        userId: broker.id,
+        role: "assistant",
+        content: reply,
+    });
+
+    // Send via Z-API
+    await sendWhatsAppMessage({ phone: lead.phone, message: reply });
+}

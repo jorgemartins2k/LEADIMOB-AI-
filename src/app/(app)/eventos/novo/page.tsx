@@ -54,10 +54,16 @@ export default function NewEventPage() {
     async function onSubmit(data: EventFormValues) {
         setIsSaving(true);
         try {
-            await createEvent(data);
+            const result = await createEvent(data);
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+            alert("Evento agendado com sucesso! 📅");
             router.push("/eventos");
         } catch (error) {
             console.error(error);
+            alert("Erro inesperado ao salvar evento.");
         } finally {
             setIsSaving(false);
         }

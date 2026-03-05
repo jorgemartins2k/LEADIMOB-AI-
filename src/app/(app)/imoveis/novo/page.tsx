@@ -95,7 +95,7 @@ export default function NewPropertyPage() {
     async function onSubmit(values: PropertyFormValues) {
         setIsSaving(true);
         try {
-            await createProperty({
+            const result = await createProperty({
                 ...values,
                 bedrooms: values.bedrooms ? parseInt(values.bedrooms) : undefined,
                 bathrooms: values.bathrooms ? parseInt(values.bathrooms) : undefined,
@@ -107,9 +107,17 @@ export default function NewPropertyPage() {
                 downPayment: values.downPayment || undefined,
                 condoFee: values.condoFee || undefined,
             });
+
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+
+            alert("Imóvel cadastrado com sucesso! 🏠");
             router.push("/imoveis");
         } catch (error) {
             console.error(error);
+            alert("Erro inesperado ao salvar imóvel.");
         } finally {
             setIsSaving(false);
         }

@@ -38,24 +38,28 @@ export async function getEvents() {
 }
 
 export async function createEvent(data: z.infer<typeof eventSchema>) {
-    const user = await getInternalUser();
+    try {
+        const user = await getInternalUser();
+        const validated = eventSchema.parse(data);
 
-    const validated = eventSchema.parse(data);
+        await db.insert(events).values({
+            userId: user.id,
+            name: validated.name,
+            eventDate: validated.eventDate, // String YYYY-MM-DD
+            eventTime: validated.eventTime || null,
+            location: validated.location || null,
+            description: validated.description || null,
+            targetAudience: validated.targetAudience,
+            standard: validated.standard || null,
+        });
 
-    await db.insert(events).values({
-        userId: user.id,
-        name: validated.name,
-        eventDate: validated.eventDate, // String YYYY-MM-DD
-        eventTime: validated.eventTime || null,
-        location: validated.location || null,
-        description: validated.description || null,
-        targetAudience: validated.targetAudience,
-        standard: validated.standard || null,
-    });
-
-    revalidatePath("/eventos");
-    revalidatePath("/agenda");
-    return { success: true };
+        revalidatePath("/eventos");
+        revalidatePath("/agenda");
+        return { success: true };
+    } catch (err: any) {
+        console.error(err);
+        return { error: err.message || "Erro ao agendar evento." };
+    }
 }
 
 export async function deleteEvent(id: string) {

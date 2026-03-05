@@ -50,35 +50,39 @@ export async function getProperties() {
 }
 
 export async function createProperty(data: z.infer<typeof propertySchema>) {
-    const user = await getInternalUser();
+    try {
+        const user = await getInternalUser();
+        const validated = propertySchema.parse(data);
 
-    const validated = propertySchema.parse(data);
+        await db.insert(properties).values({
+            userId: user.id,
+            title: validated.title,
+            description: validated.description,
+            type: validated.type,
+            city: validated.city,
+            neighborhood: validated.neighborhood,
+            address: validated.address,
+            price: validated.price.replace(/[^\d.]/g, ''),
+            areaSqm: validated.areaSqm,
+            bedrooms: validated.bedrooms,
+            bathrooms: validated.bathrooms,
+            parkingSpots: validated.parkingSpots,
+            standard: validated.standard,
+            targetAudience: validated.targetAudience,
+            photos: validated.photos,
+            minhaCasaMinhaVida: validated.minhaCasaMinhaVida,
+            allowsFinancing: validated.allowsFinancing,
+            downPayment: validated.downPayment,
+            condoFee: validated.condoFee,
+            isCondo: validated.isCondo,
+        });
 
-    await db.insert(properties).values({
-        userId: user.id,
-        title: validated.title,
-        description: validated.description,
-        type: validated.type,
-        city: validated.city,
-        neighborhood: validated.neighborhood,
-        address: validated.address,
-        price: validated.price.replace(/[^\d.]/g, ''),
-        areaSqm: validated.areaSqm,
-        bedrooms: validated.bedrooms,
-        bathrooms: validated.bathrooms,
-        parkingSpots: validated.parkingSpots,
-        standard: validated.standard,
-        targetAudience: validated.targetAudience,
-        photos: validated.photos,
-        minhaCasaMinhaVida: validated.minhaCasaMinhaVida,
-        allowsFinancing: validated.allowsFinancing,
-        downPayment: validated.downPayment,
-        condoFee: validated.condoFee,
-        isCondo: validated.isCondo,
-    });
-
-    revalidatePath("/imoveis");
-    return { success: true };
+        revalidatePath("/imoveis");
+        return { success: true };
+    } catch (err: any) {
+        console.error(err);
+        return { error: err.message || "Erro ao salvar imóvel." };
+    }
 }
 
 

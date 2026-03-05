@@ -10,20 +10,31 @@ export async function updateProfile(data: {
     name: string;
     whatsapp?: string;
     realEstateAgency?: string;
-}) {
+    creci?: string;
+    presentation?: string;
+    email?: string;
+}): Promise<{ success?: boolean; error?: string }> {
     const { userId: clerkUserId } = await auth();
     if (!clerkUserId) throw new Error("Não autorizado");
 
-    await db
-        .update(users)
-        .set({
-            ...data,
-            updatedAt: new Date(),
-        })
-        .where(eq(users.clerkUserId, clerkUserId));
+    try {
+        await db
+            .update(users)
+            .set({
+                name: data.name,
+                whatsapp: data.whatsapp,
+                realEstateAgency: data.realEstateAgency,
+                creci: data.creci,
+                presentation: data.presentation,
+                updatedAt: new Date(),
+            })
+            .where(eq(users.clerkUserId, clerkUserId));
 
-    revalidatePath("/configuracoes");
-    return { success: true };
+        revalidatePath("/configuracoes");
+        return { success: true };
+    } catch (e: any) {
+        return { error: e.message || "Erro ao atualizar perfil." };
+    }
 }
 
 export async function getProfile() {
@@ -35,4 +46,21 @@ export async function getProfile() {
     });
 
     return user;
+}
+
+export async function saveAvatarUrl(avatarUrl: string) {
+    const { userId: clerkUserId } = await auth();
+    if (!clerkUserId) return { error: "Não autorizado" };
+
+    try {
+        await db
+            .update(users)
+            .set({ avatarUrl, updatedAt: new Date() })
+            .where(eq(users.clerkUserId, clerkUserId));
+
+        revalidatePath("/configuracoes");
+        return { success: true };
+    } catch (e: any) {
+        return { error: e.message || "Erro ao salvar foto." };
+    }
 }
