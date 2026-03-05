@@ -10,6 +10,9 @@ async function run() {
         // 1. Users Table
         console.log('Atualizando tabela users...');
         await sql.unsafe(`
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS creci TEXT;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS presentation TEXT;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT NOT NULL DEFAULT 'start';
             ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_cycle_start DATE NOT NULL DEFAULT CURRENT_DATE;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_report BOOLEAN DEFAULT TRUE;
