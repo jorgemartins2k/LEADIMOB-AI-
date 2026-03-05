@@ -6,6 +6,8 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
+import { getOrCreateInternalUser } from "@/lib/auth-utils";
+
 export async function updateProfile(data: {
     name: string;
     whatsapp?: string;
@@ -14,21 +16,21 @@ export async function updateProfile(data: {
     presentation?: string;
     email?: string;
 }): Promise<{ success?: boolean; error?: string }> {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) throw new Error("Não autorizado");
-
     try {
+        const user = await getOrCreateInternalUser();
+
         await db
             .update(users)
             .set({
                 name: data.name,
                 whatsapp: data.whatsapp,
+                email: data.email,
                 realEstateAgency: data.realEstateAgency,
                 creci: data.creci,
                 presentation: data.presentation,
                 updatedAt: new Date(),
             })
-            .where(eq(users.clerkUserId, clerkUserId));
+            .where(eq(users.id, user.id));
 
         revalidatePath("/configuracoes");
         return { success: true };
@@ -38,25 +40,17 @@ export async function updateProfile(data: {
 }
 
 export async function getProfile() {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) throw new Error("Não autorizado");
-
-    const user = await db.query.users.findFirst({
-        where: eq(users.clerkUserId, clerkUserId),
-    });
-
-    return user;
+    return getOrCreateInternalUser();
 }
 
 export async function saveAvatarUrl(avatarUrl: string) {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) return { error: "Não autorizado" };
-
     try {
+        const user = await getOrCreateInternalUser();
+
         await db
             .update(users)
             .set({ avatarUrl, updatedAt: new Date() })
-            .where(eq(users.clerkUserId, clerkUserId));
+            .where(eq(users.id, user.id));
 
         revalidatePath("/configuracoes");
         return { success: true };

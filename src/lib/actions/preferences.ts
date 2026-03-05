@@ -6,16 +6,17 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
+import { getOrCreateInternalUser } from "@/lib/auth-utils";
+
 export async function saveNotificationPreferences(data: {
     dailyReport: boolean;
     hotLeadAlert: boolean;
     browserPush: boolean;
     weeklyPerformance: boolean;
 }) {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) return { error: "Não autorizado" };
-
     try {
+        const user = await getOrCreateInternalUser();
+
         await db
             .update(users)
             .set({
@@ -25,7 +26,7 @@ export async function saveNotificationPreferences(data: {
                 weeklyPerformance: data.weeklyPerformance,
                 updatedAt: new Date(),
             })
-            .where(eq(users.clerkUserId, clerkUserId));
+            .where(eq(users.id, user.id));
 
         revalidatePath("/configuracoes");
         return { success: true };
@@ -36,12 +37,11 @@ export async function saveNotificationPreferences(data: {
 }
 
 export async function getNotificationPreferences() {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) return { error: "Não autorizado" };
-
     try {
-        const user = await db.query.users.findFirst({
-            where: eq(users.clerkUserId, clerkUserId),
+        const user = await getOrCreateInternalUser();
+
+        const userData = await db.query.users.findFirst({
+            where: eq(users.id, user.id),
             columns: {
                 dailyReport: true,
                 hotLeadAlert: true,
@@ -49,8 +49,8 @@ export async function getNotificationPreferences() {
                 weeklyPerformance: true,
             },
         });
-        if (!user) return { error: "Usuário não encontrado" };
-        return { success: true, preferences: user };
+        if (!userData) return { error: "Usuário não encontrado" };
+        return { success: true, preferences: userData };
     } catch (error: any) {
         console.error("Error fetching preferences:", error);
         return { error: error.message || "Erro ao buscar preferências." };

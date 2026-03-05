@@ -5,13 +5,10 @@ import { db } from "@/lib/db";
 import { users, workSchedules, properties, launches } from "@/lib/db/schema";
 import { eq, count } from "drizzle-orm";
 
-export async function getOnboardingStatus() {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) throw new Error("Não autorizado");
+import { getOrCreateInternalUser } from "@/lib/auth-utils";
 
-    const user = await db.query.users.findFirst({
-        where: eq(users.clerkUserId, clerkUserId),
-    });
+export async function getOnboardingStatus() {
+    const user = await getOrCreateInternalUser();
 
     if (!user) return null;
 

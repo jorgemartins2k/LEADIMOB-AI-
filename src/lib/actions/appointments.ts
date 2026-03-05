@@ -18,20 +18,10 @@ const appointmentSchema = z.object({
     status: z.enum(["scheduled", "completed", "cancelled"]).default("scheduled"),
 });
 
-async function getInternalUser() {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) throw new Error("Não autorizado");
-
-    const user = await db.query.users.findFirst({
-        where: eq(users.clerkUserId, clerkUserId),
-    });
-
-    if (!user) throw new Error("Usuário não encontrado");
-    return user;
-}
+import { getOrCreateInternalUser } from "@/lib/auth-utils";
 
 export async function getAppointments() {
-    const user = await getInternalUser();
+    const user = await getOrCreateInternalUser();
     return db.query.appointments.findMany({
         where: and(eq(appointments.userId, user.id)),
         orderBy: [asc(appointments.appointmentDate), asc(appointments.appointmentTime)],
@@ -45,7 +35,7 @@ export async function getAppointments() {
 
 export async function createAppointment(data: z.infer<typeof appointmentSchema>) {
     try {
-        const user = await getInternalUser();
+        const user = await getOrCreateInternalUser();
         const validated = appointmentSchema.parse(data);
 
         await db.insert(appointments).values({
@@ -70,7 +60,7 @@ export async function createAppointment(data: z.infer<typeof appointmentSchema>)
 }
 
 export async function updateAppointmentStatus(id: string, status: "scheduled" | "completed" | "cancelled") {
-    const user = await getInternalUser();
+    const user = await getOrCreateInternalUser();
 
     await db
         .update(appointments)
@@ -82,7 +72,7 @@ export async function updateAppointmentStatus(id: string, status: "scheduled" | 
 }
 
 export async function deleteAppointment(id: string) {
-    const user = await getInternalUser();
+    const user = await getOrCreateInternalUser();
 
     await db
         .delete(appointments)

@@ -7,6 +7,7 @@ import { eq, and, desc, gte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { getOrCreateInternalUser } from "@/lib/auth-utils";
 import { initiateRaquelContact } from "@/lib/ai/raquel";
 
 const leadSchema = z.object({
@@ -17,20 +18,8 @@ const leadSchema = z.object({
     notes: z.string().optional(),
 });
 
-async function getInternalUser() {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) throw new Error("Não autorizado");
-
-    const user = await db.query.users.findFirst({
-        where: eq(users.clerkUserId, clerkUserId),
-    });
-
-    if (!user) throw new Error("Usuário não encontrado");
-    return user;
-}
-
 export async function getLeads() {
-    const user = await getInternalUser();
+    const user = await getOrCreateInternalUser();
     return db.query.leads.findMany({
         where: and(eq(leads.userId, user.id)),
         orderBy: [desc(leads.createdAt)],
@@ -38,7 +27,7 @@ export async function getLeads() {
 }
 
 export async function checkQuarantine(phone: string) {
-    const user = await getInternalUser();
+    const user = await getOrCreateInternalUser();
 
     // Clean phone string (remove non-digits if needed, but assuming standard format)
     // cleanPhone not used yet, but keeping for reference if needed later
@@ -55,7 +44,7 @@ export async function checkQuarantine(phone: string) {
 }
 
 export async function createLead(data: z.infer<typeof leadSchema>) {
-    const user = await getInternalUser();
+    const user = await getOrCreateInternalUser();
     const validated = leadSchema.parse(data);
 
     try {
@@ -92,7 +81,7 @@ export async function createLead(data: z.infer<typeof leadSchema>) {
 }
 
 export async function deleteLead(id: string) {
-    const user = await getInternalUser();
+    const user = await getOrCreateInternalUser();
 
     await db
         .delete(leads)

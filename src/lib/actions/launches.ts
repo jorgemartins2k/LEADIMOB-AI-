@@ -35,20 +35,10 @@ const launchSchema = z.object({
     })).default([]),
 });
 
-async function getInternalUser() {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) throw new Error("Não autorizado");
-
-    const user = await db.query.users.findFirst({
-        where: eq(users.clerkUserId, clerkUserId),
-    });
-
-    if (!user) throw new Error("Usuário não encontrado");
-    return user;
-}
+import { getOrCreateInternalUser } from "@/lib/auth-utils";
 
 export async function getLaunches() {
-    const user = await getInternalUser();
+    const user = await getOrCreateInternalUser();
     return db.query.launches.findMany({
         where: and(eq(launches.userId, user.id)),
         orderBy: [desc(launches.createdAt)],
@@ -60,7 +50,7 @@ export async function getLaunches() {
 
 export async function createLaunch(data: z.infer<typeof launchSchema>) {
     try {
-        const user = await getInternalUser();
+        const user = await getOrCreateInternalUser();
         const validated = launchSchema.parse(data);
 
         // 1. Inserir o lançamento
@@ -110,7 +100,7 @@ export async function createLaunch(data: z.infer<typeof launchSchema>) {
 }
 
 export async function deleteLaunch(id: string) {
-    const user = await getInternalUser();
+    const user = await getOrCreateInternalUser();
 
     await db
         .delete(launches)
@@ -121,7 +111,7 @@ export async function deleteLaunch(id: string) {
 }
 
 export async function getLaunchById(id: string) {
-    const user = await getInternalUser();
+    const user = await getOrCreateInternalUser();
     return db.query.launches.findFirst({
         where: and(eq(launches.id, id), eq(launches.userId, user.id)),
         with: {

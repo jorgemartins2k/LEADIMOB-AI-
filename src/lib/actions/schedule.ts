@@ -6,17 +6,11 @@ import { users, workSchedules } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
+import { getOrCreateInternalUser } from "@/lib/auth-utils";
+
 export async function getWorkSchedules() {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) return [];
-
-        const user = await db.query.users.findFirst({
-            where: eq(users.clerkUserId, clerkUserId),
-        });
-
-        if (!user) return [];
-
+        const user = await getOrCreateInternalUser();
         return db.query.workSchedules.findMany({
             where: eq(workSchedules.userId, user.id),
         });
@@ -33,15 +27,7 @@ export async function saveWorkSchedules(data: {
     isActive: boolean;
 }[]): Promise<{ success?: boolean; error?: string }> {
     try {
-        const { userId: clerkUserId } = await auth();
-        if (!clerkUserId) throw new Error("Não autorizado");
-
-        // 1. Buscar o ID interno do usuário no Supabase
-        const user = await db.query.users.findFirst({
-            where: eq(users.clerkUserId, clerkUserId),
-        });
-
-        if (!user) throw new Error("Usuário não encontrado no banco");
+        const user = await getOrCreateInternalUser();
 
         // 2. Salvar individualmente (upsert logic)
         for (const schedule of data) {

@@ -29,20 +29,10 @@ const propertySchema = z.object({
     isCondo: z.boolean().default(false),
 });
 
-async function getInternalUser() {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) throw new Error("Não autorizado");
-
-    const user = await db.query.users.findFirst({
-        where: eq(users.clerkUserId, clerkUserId),
-    });
-
-    if (!user) throw new Error("Usuário não encontrado");
-    return user;
-}
+import { getOrCreateInternalUser } from "@/lib/auth-utils";
 
 export async function getProperties() {
-    const user = await getInternalUser();
+    const user = await getOrCreateInternalUser();
     return db.query.properties.findMany({
         where: and(eq(properties.userId, user.id)),
         orderBy: [desc(properties.createdAt)],
@@ -51,7 +41,7 @@ export async function getProperties() {
 
 export async function createProperty(data: z.infer<typeof propertySchema>) {
     try {
-        const user = await getInternalUser();
+        const user = await getOrCreateInternalUser();
         const validated = propertySchema.parse(data);
 
         await db.insert(properties).values({
@@ -87,7 +77,7 @@ export async function createProperty(data: z.infer<typeof propertySchema>) {
 
 
 export async function deleteProperty(id: string) {
-    const user = await getInternalUser();
+    const user = await getOrCreateInternalUser();
 
     await db
         .delete(properties)
@@ -98,7 +88,7 @@ export async function deleteProperty(id: string) {
 }
 
 export async function getPropertyById(id: string) {
-    const user = await getInternalUser();
+    const user = await getOrCreateInternalUser();
     return db.query.properties.findFirst({
         where: and(eq(properties.id, id), eq(properties.userId, user.id)),
     });
