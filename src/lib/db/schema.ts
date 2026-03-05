@@ -48,7 +48,7 @@ export const leads = pgTable('leads', {
     status: text('status').notNull().default('waiting'),
     profile: text('profile'),
     budgetRange: text('budget_range'),
-    temperature: text('temperature').notNull().default('cold'), // 'cold' | 'warm' | 'hot' | 'very_hot'
+    temperature: text('temperature').notNull().default('morno'), // 'frio' | 'morno' | 'quente' | 'muito_quente'
     notes: text('notes'),
     scheduledDate: date('scheduled_date').notNull().default(sql`CURRENT_DATE`),
     contactedAt: timestamp('contacted_at', { withTimezone: true }),

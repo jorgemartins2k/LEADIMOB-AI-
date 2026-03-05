@@ -10,6 +10,8 @@ async function run() {
         // 1. Users Table
         console.log('Atualizando tabela users...');
         await sql.unsafe(`
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT NOT NULL DEFAULT 'start';
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_cycle_start DATE NOT NULL DEFAULT CURRENT_DATE;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_report BOOLEAN DEFAULT TRUE;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS hot_lead_alert BOOLEAN DEFAULT TRUE;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS browser_push BOOLEAN DEFAULT TRUE;
@@ -29,10 +31,17 @@ async function run() {
             await sql`UPDATE campaigns SET slug = ${slug} WHERE id = ${camp.id}`;
         }
 
-        await sql.unsafe(`
-            ALTER TABLE campaigns ALTER COLUMN slug SET NOT NULL;
-            ALTER TABLE campaigns ADD CONSTRAINT campaigns_slug_unique UNIQUE (slug);
-        `);
+        const missingSlugCheck = await sql`SELECT count(*) FROM campaigns WHERE slug IS NULL`;
+        if (parseInt(missingSlugCheck[0].count) === 0) {
+            try {
+                await sql.unsafe(`
+                    ALTER TABLE campaigns ALTER COLUMN slug SET NOT NULL;
+                    ALTER TABLE campaigns ADD CONSTRAINT campaigns_slug_unique UNIQUE (slug);
+                `);
+            } catch (e) {
+                console.log('Nota: Constraint de slug já existe ou não pôde ser aplicada.');
+            }
+        }
 
         // 3. Leads Table
         console.log('Atualizando tabela leads...');
