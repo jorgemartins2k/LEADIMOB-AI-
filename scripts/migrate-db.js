@@ -52,6 +52,30 @@ async function run() {
             ALTER TABLE leads ADD COLUMN IF NOT EXISTS temperature TEXT NOT NULL DEFAULT 'morno';
         `);
 
+        // 4. Properties Table
+        console.log('Atualizando tabela properties...');
+        await sql.unsafe(`
+            ALTER TABLE properties ADD COLUMN IF NOT EXISTS bathrooms SMALLINT;
+            ALTER TABLE properties ADD COLUMN IF NOT EXISTS minha_casa_minha_vida BOOLEAN DEFAULT FALSE;
+            ALTER TABLE properties ADD COLUMN IF NOT EXISTS allows_financing BOOLEAN DEFAULT FALSE;
+            ALTER TABLE properties ADD COLUMN IF NOT EXISTS down_payment NUMERIC(12, 2);
+            ALTER TABLE properties ADD COLUMN IF NOT EXISTS condo_fee NUMERIC(12, 2);
+            ALTER TABLE properties ADD COLUMN IF NOT EXISTS is_condo BOOLEAN DEFAULT FALSE;
+        `);
+
+        // 5. Launch Units Table
+        console.log('Atualizando tabela launch_units...');
+        await sql.unsafe(`
+            ALTER TABLE launch_units ADD COLUMN IF NOT EXISTS bathrooms SMALLINT;
+            ALTER TABLE launch_units ADD COLUMN IF NOT EXISTS photo TEXT;
+            ALTER TABLE launch_units ADD COLUMN IF NOT EXISTS minha_casa_minha_vida BOOLEAN DEFAULT FALSE;
+            ALTER TABLE launch_units ADD COLUMN IF NOT EXISTS allows_financing BOOLEAN DEFAULT FALSE;
+            ALTER TABLE launch_units ADD COLUMN IF NOT EXISTS down_payment NUMERIC(12, 2);
+            ALTER TABLE launch_units ADD COLUMN IF NOT EXISTS condo_fee NUMERIC(12, 2);
+            ALTER TABLE launch_units ADD COLUMN IF NOT EXISTS is_condo BOOLEAN DEFAULT FALSE;
+            ALTER TABLE launch_units ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+        `);
+
         console.log('--- Schema Atualizado com Sucesso! ---');
     } catch (err) {
         console.error('Erro ao atualizar schema:', err);
