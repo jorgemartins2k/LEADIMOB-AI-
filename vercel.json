@@ -1,0 +1,8 @@
+{
+    "crons": [
+        {
+            "path": "/api/automation/run?key=eb422b2bc82741feb5b1740f86cbc0585762a2ccac5f4bdb9f6651b10d393067",
+            "schedule": "*/10 * * * *"
+        }
+    ]
+}
