@@ -107,45 +107,48 @@ export function Navbar() {
         </div>
 
         {/* Mobile Navigation */}
-        {isOpen && (
-          <div className="md:hidden pt-4 pb-6 space-y-4 animate-fade-in">
+        <div className={cn(
+          "md:hidden fixed inset-x-0 top-0 pt-24 pb-10 bg-background/98 backdrop-blur-2xl border-b border-border transition-all duration-500 ease-in-out transform z-[40]",
+          isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"
+        )}>
+          <div className="container mx-auto px-6 space-y-2">
             <button
               onClick={() => scrollToSection('funcionalidades')}
-              className="block w-full text-left py-2 text-lg font-bold text-muted-foreground"
+              className="flex items-center w-full px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all"
             >
               Funcionalidades
             </button>
             <button
               onClick={() => scrollToSection('calculadora')}
-              className="block w-full text-left py-2 text-lg font-bold text-muted-foreground"
+              className="flex items-center w-full px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all"
             >
               Calculadora de Vendas
             </button>
             <button
               onClick={() => scrollToSection('precos')}
-              className="block w-full text-left py-2 text-lg font-bold text-muted-foreground"
+              className="flex items-center w-full px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all"
             >
               Preços
             </button>
 
-            <div className="pt-4 border-t border-border space-y-3">
+            <div className="pt-6 mt-4 border-t border-border/50 space-y-3 px-2">
               {isSignedIn ? (
-                <Button className="w-full btn-primary font-bold py-6" asChild>
+                <Button className="w-full btn-primary font-black uppercase tracking-widest text-[10px] h-14 rounded-2xl" asChild>
                   <Link href="/dashboard">Meu Painel</Link>
                 </Button>
               ) : (
-                <>
-                  <Button variant="outline" className="w-full font-bold py-6" asChild>
+                <div className="grid grid-cols-2 gap-4">
+                  <Button variant="outline" className="font-black uppercase tracking-widest text-[10px] h-14 rounded-2xl border-border/50" asChild>
                     <Link href="/sign-in">Entrar</Link>
                   </Button>
-                  <Button className="w-full btn-primary font-bold py-6" asChild>
+                  <Button className="btn-primary font-black uppercase tracking-widest text-[10px] h-14 rounded-2xl shadow-lg shadow-primary/20" asChild>
                     <Link href="/sign-up">Teste Grátis</Link>
                   </Button>
-                </>
+                </div>
               )}
             </div>
           </div>
-        )}
+        </div>
       </div>
     </nav>
   );
