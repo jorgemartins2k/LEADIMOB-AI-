@@ -16,20 +16,29 @@ import {
     Loader2,
     Trash2
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
-import { LeadImportModal } from './lead-import-modal';
 import { getLeads, deleteLead } from '@/lib/actions/leads';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { AlertTriangle } from 'lucide-react';
 
 export function LeadsView() {
     const [searchTerm, setSearchTerm] = useState('');
     const [leadsList, setLeadsList] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [tempFilter, setTempFilter] = useState<string | null>(null);
+
+    // Modal state
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [leadToDelete, setLeadToDelete] = useState<{ id: string, name: string } | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         const fetchLeads = async () => {
@@ -45,20 +54,29 @@ export function LeadsView() {
         fetchLeads();
     }, []);
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Tem certeza que deseja excluir este lead?")) return;
+    const confirmDelete = (id: string, name: string) => {
+        setLeadToDelete({ id, name });
+        setIsDeleteDialogOpen(true);
+    };
 
+    const handleDelete = async () => {
+        if (!leadToDelete) return;
+
+        setIsDeleting(true);
         try {
-            const result = await deleteLead(id);
+            const result = await deleteLead(leadToDelete.id);
             if (result.success) {
-                toast.success("Lead excluído com sucesso.");
-                setLeadsList(prev => prev.filter(l => l.id !== id));
+                toast.success(`Lead ${leadToDelete.name} excluído com sucesso.`);
+                setLeadsList(prev => prev.filter(l => l.id !== leadToDelete.id));
+                setIsDeleteDialogOpen(false);
             } else {
                 toast.error("Erro ao excluir lead.");
             }
         } catch (error) {
             console.error(error);
             toast.error("Erro ao excluir lead.");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -256,7 +274,7 @@ export function LeadsView() {
                                                     size="icon"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        handleDelete(lead.id);
+                                                        confirmDelete(lead.id, lead.name);
                                                     }}
                                                     className="h-12 w-12 rounded-2xl hover:bg-destructive/10 hover:text-destructive btn-interactive"
                                                 >
@@ -282,6 +300,53 @@ export function LeadsView() {
                     </div>
                 </div>
             </div>
+
+            {/* Modal de Exclusão Premium */}
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent className="max-w-md p-0 overflow-hidden border-none bg-transparent shadow-2xl">
+                    <div className="relative bg-card/90 backdrop-blur-2xl border border-white/10 rounded-[40px] overflow-hidden p-10 animate-in zoom-in duration-300">
+                        {/* Background Decoration */}
+                        <div className="absolute -top-24 -right-24 w-48 h-48 bg-destructive/10 blur-[80px] rounded-full" />
+
+                        <div className="relative z-10 space-y-8">
+                            <div className="w-20 h-20 rounded-3xl bg-destructive/10 flex items-center justify-center mx-auto shadow-inner border border-destructive/20 rotate-3 group-hover:rotate-0 transition-transform">
+                                <AlertTriangle className="w-10 h-10 text-destructive animate-pulse" />
+                            </div>
+
+                            <div className="space-y-3 text-center">
+                                <h2 className="text-2xl font-black text-foreground uppercase tracking-tighter leading-none">
+                                    Confirmar Exclusão
+                                </h2>
+                                <p className="text-muted-foreground font-medium leading-relaxed">
+                                    Você está prestes a remover o lead <span className="text-foreground font-bold italic">"{leadToDelete?.name}"</span>. Esta ação não poderá ser desfeita.
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => setIsDeleteDialogOpen(false)}
+                                    className="h-16 rounded-2xl font-black uppercase tracking-widest text-[10px] text-muted-foreground hover:bg-muted/50"
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    onClick={handleDelete}
+                                    disabled={isDeleting}
+                                    className="h-16 rounded-2xl bg-destructive text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-destructive/20 hover:scale-105 active:scale-95 transition-all gap-2"
+                                >
+                                    {isDeleting ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Trash2 className="w-4 h-4" />
+                                    )}
+                                    Excluir Agora
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
