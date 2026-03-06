@@ -34,10 +34,18 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
         const property = await getPropertyById(id);
 
         if (!property) {
-            notFound();
+            return (
+                <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+                    <h2 className="text-2xl font-bold">Imóvel não encontrado</h2>
+                    <p className="text-muted-foreground">O imóvel que você está procurando não existe ou foi removido.</p>
+                    <Link href="/imoveis">
+                        <Button variant="outline">Voltar para Portfólio</Button>
+                    </Link>
+                </div>
+            )
         }
 
-        const photos = property.photos && property.photos.length > 0
+        const photos = property?.photos?.length > 0
             ? property.photos
             : ["https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1000&auto=format&fit=crop"];
 
