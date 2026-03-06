@@ -89,6 +89,7 @@ export async function deleteProperty(id: string) {
 
 export async function getPropertyById(id: string) {
     try {
+        console.log("---- Fetching Property ID:", id, "----");
         const user = await getOrCreateInternalUser();
         // Fallback robusto para Edge/Serveless onde o Drizzle às vezes falha ao serializar datas/arrays
         const result = await db.execute(sql`
@@ -97,36 +98,43 @@ export async function getPropertyById(id: string) {
             LIMIT 1
         `);
 
-        if (result.length === 0) return null;
+        if (result.length === 0) {
+            console.log("Property not found for user:", user.id);
+            return null;
+        }
 
         // Converter snake_case para camelCase
-        const row = result[0];
+        const row = result[0] as any;
+        console.log("RAW DB Row keys:", Object.keys(row));
+
+        // Forçar tipos primitivos e strings para tudo que for complexo (Date, JSON, Arrays)
+        // Isso evita o erro de digest de serialização dos Server Components do Next 15
         return {
-            id: row.id,
-            userId: row.user_id,
-            title: row.title,
-            description: row.description,
-            type: row.type,
-            city: row.city,
-            neighborhood: row.neighborhood,
-            address: row.address,
-            price: row.price,
-            areaSqm: row.area_sqm,
-            bedrooms: row.bedrooms,
-            bathrooms: row.bathrooms,
-            parkingSpots: row.parking_spots,
-            standard: row.standard,
-            targetAudience: row.target_audience,
-            status: row.status,
-            photos: row.photos,
-            minhaCasaMinhaVida: row.minha_casa_minha_vida,
-            allowsFinancing: row.allows_financing,
-            downPayment: row.down_payment,
-            condoFee: row.condo_fee,
-            isCondo: row.is_condo,
+            id: String(row.id),
+            userId: String(row.user_id),
+            title: String(row.title),
+            description: row.description ? String(row.description) : null,
+            type: String(row.type),
+            city: String(row.city),
+            neighborhood: row.neighborhood ? String(row.neighborhood) : null,
+            address: row.address ? String(row.address) : null,
+            price: row.price ? String(row.price) : null,
+            areaSqm: row.area_sqm ? String(row.area_sqm) : null,
+            bedrooms: row.bedrooms !== null ? Number(row.bedrooms) : null,
+            bathrooms: row.bathrooms !== null ? Number(row.bathrooms) : null,
+            parkingSpots: row.parking_spots !== null ? Number(row.parking_spots) : null,
+            standard: row.standard ? String(row.standard) : 'medio',
+            targetAudience: Array.isArray(row.target_audience) ? row.target_audience : [],
+            status: String(row.status),
+            photos: Array.isArray(row.photos) ? row.photos : [],
+            minhaCasaMinhaVida: Boolean(row.minha_casa_minha_vida),
+            allowsFinancing: Boolean(row.allows_financing),
+            downPayment: row.down_payment ? String(row.down_payment) : null,
+            condoFee: row.condo_fee ? String(row.condo_fee) : null,
+            isCondo: Boolean(row.is_condo),
         };
     } catch (error) {
-        console.error("Error fetching property by ID:", error);
-        return null;
+        console.error("Critical Error fetching property by ID:", error);
+        return null; // Silent catch - let the component handle `null`
     }
 }
