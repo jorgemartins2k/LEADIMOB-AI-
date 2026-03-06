@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -56,14 +58,14 @@ export default function NewEventPage() {
         try {
             const result = await createEvent(data);
             if (result.error) {
-                alert(result.error);
+                toast.error(result.error, { duration: 3000 });
                 return;
             }
-            alert("Evento agendado com sucesso! 📅");
-            router.push("/eventos");
+            toast.success("Evento agendado com sucesso! 📅", { duration: 3000 });
+            form.reset();
         } catch (error) {
             console.error(error);
-            alert("Erro inesperado ao salvar evento.");
+            toast.error("Erro inesperado ao salvar evento.", { duration: 3000 });
         } finally {
             setIsSaving(false);
         }

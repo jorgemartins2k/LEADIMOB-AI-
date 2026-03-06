@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Megaphone, MapPin, Calendar, Trash2, Edit, UserPlus, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { deleteLaunch } from "@/lib/actions/launches";
+import { toast } from "sonner";
 
 interface LaunchCardProps {
     launch: {
@@ -26,8 +27,9 @@ export function LaunchCard({ launch }: LaunchCardProps) {
         if (confirm("Tem certeza que deseja excluir este lançamento?")) {
             try {
                 await deleteLaunch(launch.id);
+                toast.success("Lançamento excluído.", { duration: 3000 });
             } catch (error) {
-                alert("Erro ao excluir lançamento.");
+                toast.error("Erro ao excluir lançamento.", { duration: 3000 });
             }
         }
     };

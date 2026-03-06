@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
+import { toast } from "sonner";
 
 interface Preferences {
   dailyReport: boolean;
@@ -55,13 +56,13 @@ export default function PreferencesSection() {
       });
       const data = await res.json();
       if (data.success) {
-        alert("Preferências salvas com sucesso!");
+        toast.success("Preferências salvas com sucesso!", { duration: 3000 });
       } else {
-        alert(data.error || "Erro ao salvar preferências.");
+        toast.error(data.error || "Erro ao salvar preferências.", { duration: 3000 });
       }
     } catch (e) {
       console.error(e);
-      alert("Erro ao salvar preferências.");
+      toast.error("Erro ao salvar preferências.", { duration: 3000 });
     } finally {
       setSaving(false);
     }

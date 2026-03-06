@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { User, Bell, Clock, Save, Camera, Loader2, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -151,13 +152,13 @@ export default function ConfiguraçõesPage() {
             );
 
             if (result.error) {
-                alert(result.error);
+                toast.error(result.error, { duration: 3000 });
                 return;
             }
-            alert("Expediente da IA atualizado com sucesso! 🕒");
+            toast.success("Expediente da IA atualizado com sucesso! 🕒", { duration: 3000 });
         } catch (error) {
             console.error(error);
-            alert("Erro ao salvar horários.");
+            toast.error("Erro ao salvar horários.", { duration: 3000 });
         } finally {
             setIsSavingSchedule(false);
         }
@@ -173,13 +174,13 @@ export default function ConfiguraçõesPage() {
 
         // Validate file type
         if (!file.type.startsWith("image/")) {
-            alert("Por favor, selecione um arquivo de imagem.");
+            toast.warning("Por favor, selecione um arquivo de imagem.", { duration: 3000 });
             return;
         }
 
         // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            alert("A imagem deve ter no máximo 5MB.");
+            toast.warning("A imagem deve ter no máximo 5MB.", { duration: 3000 });
             return;
         }
 
@@ -190,14 +191,14 @@ export default function ConfiguraçõesPage() {
             // Save URL to DB
             const result = await saveAvatarUrl(url);
             if (result.error) {
-                alert("Erro ao salvar foto: " + result.error);
+                toast.error("Erro ao salvar foto: " + result.error, { duration: 3000 });
                 return;
             }
             setAvatarUrl(url);
-            alert("Foto de perfil atualizada com sucesso! 📸");
+            toast.success("Foto de perfil atualizada com sucesso! 📸", { duration: 3000 });
         } catch (error: any) {
             console.error(error);
-            alert("Erro ao fazer upload da foto: " + (error.message || "Tente novamente."));
+            toast.error("Erro ao fazer upload da foto: " + (error.message || "Tente novamente."), { duration: 3000 });
         } finally {
             setIsUploading(false);
             // Reset input so same file can be re-selected
@@ -208,7 +209,7 @@ export default function ConfiguraçõesPage() {
     const handlePasswordReset = async () => {
         const email = form.getValues("email");
         if (!email) {
-            alert("Por favor, preencha o campo de e-mail antes de redefinir a senha.");
+            toast.warning("Por favor, preencha o campo de e-mail antes de redefinir a senha.", { duration: 3000 });
             return;
         }
 
@@ -220,12 +221,12 @@ export default function ConfiguraçõesPage() {
             });
             const data = await response.json();
             if (data.error) {
-                alert("Erro ao enviar e-mail: " + data.error);
+                toast.error("Erro ao enviar e-mail: " + data.error, { duration: 3000 });
             } else {
-                alert("Um link de redefinição de senha foi enviado para o seu e-mail! Verifique sua caixa de entrada.");
+                toast.success("Um link de redefinição de senha foi enviado para o seu e-mail! Verifique sua caixa de entrada.", { duration: 3000 });
             }
         } catch (e) {
-            alert("Erro ao solicitar redefinição de senha. Tente novamente.");
+            toast.error("Erro ao solicitar redefinição de senha. Tente novamente.", { duration: 3000 });
         }
     };
 
@@ -234,13 +235,13 @@ export default function ConfiguraçõesPage() {
         try {
             const result = await updateProfile(values);
             if (result.error) {
-                alert("Erro ao atualizar perfil: " + result.error);
+                toast.error("Erro ao atualizar perfil: " + result.error, { duration: 3000 });
             } else {
-                alert("Perfil profissional atualizado com sucesso! ✅");
+                toast.success("Perfil profissional atualizado com sucesso! ✅", { duration: 3000 });
             }
         } catch (error) {
             console.error(error);
-            alert("Erro ao atualizar perfil.");
+            toast.error("Erro ao atualizar perfil.", { duration: 3000 });
         } finally {
             setIsSaving(false);
         }

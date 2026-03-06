@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -70,14 +72,14 @@ export default function NewLeadPage() {
         try {
             const result = await createLead(data);
             if (result.error) {
-                alert(result.error);
+                toast.error(result.error, { duration: 3000 });
                 return;
             }
-            alert("Lead cadastrado e Raquel ativada! 🚀");
-            router.push("/leads");
+            toast.success("Lead cadastrado e Raquel ativada! 🚀", { duration: 3000 });
+            form.reset();
         } catch (err) {
             console.error(err);
-            alert("Erro inesperado ao salvar lead.");
+            toast.error("Erro inesperado ao salvar lead.", { duration: 3000 });
         } finally {
             setIsSaving(false);
         }

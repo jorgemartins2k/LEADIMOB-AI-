@@ -19,6 +19,7 @@ import {
     Plus,
     Loader2
 } from 'lucide-react';
+import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -84,16 +85,16 @@ export function CampaignsView() {
                 contentType: newType
             });
             if (result.error) {
-                alert(result.error);
+                toast.error(result.error, { duration: 3000 });
             } else {
-                alert("Campanha criada com sucesso! 🚀");
+                toast.success("Campanha criada com sucesso! 🚀", { duration: 3000 });
                 setIsModalOpen(false);
                 setNewTitle("");
                 loadCampaigns();
             }
         } catch (error) {
             console.error(error);
-            alert("Erro ao criar campanha.");
+            toast.error("Erro ao criar campanha.", { duration: 3000 });
         } finally {
             setIsCreating(false);
         }
@@ -104,13 +105,14 @@ export function CampaignsView() {
         try {
             const result = await deleteCampaign(id);
             if (result.error) {
-                alert(result.error);
+                toast.error(result.error, { duration: 3000 });
             } else {
+                toast.success("Campanha excluída.", { duration: 3000 });
                 loadCampaigns();
             }
         } catch (error) {
             console.error(error);
-            alert("Erro ao excluir campanha.");
+            toast.error("Erro ao excluir campanha.", { duration: 3000 });
         }
     };
 

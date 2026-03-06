@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
@@ -122,15 +124,14 @@ export default function NewLaunchPage() {
             });
 
             if (result.error) {
-                alert(result.error);
+                toast.error(result.error, { duration: 3000 });
                 return;
             }
-
-            alert("Empreendimento salvo com sucesso! 🚀");
-            router.push("/lancamentos");
+            toast.success("Empreendimento salvo com sucesso! 🚀", { duration: 3000 });
+            form.reset();
         } catch (error) {
             console.error(error);
-            alert("Erro inesperado ao salvar lançamento.");
+            toast.error("Erro inesperado ao salvar lançamento.", { duration: 3000 });
         } finally {
             setIsSaving(false);
         }

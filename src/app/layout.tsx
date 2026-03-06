@@ -24,6 +24,7 @@ export const metadata: Metadata = {
 };
 
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function RootLayout({
   children,
@@ -35,6 +36,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${inter.variable} ${sora.variable} antialiased`}>
         <ClerkProvider>
           {children}
+          <Toaster position="top-center" expand={false} richColors closeButton />
         </ClerkProvider>
       </body>
     </html>

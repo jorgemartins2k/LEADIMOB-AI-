@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -109,15 +111,14 @@ export default function NewPropertyPage() {
             });
 
             if (result.error) {
-                alert(result.error);
+                toast.error(result.error, { duration: 3000 });
                 return;
             }
-
-            alert("Imóvel cadastrado com sucesso! 🏠");
-            router.push("/imoveis");
+            toast.success("Imóvel cadastrado com sucesso! 🏠", { duration: 3000 });
+            form.reset();
         } catch (error) {
             console.error(error);
-            alert("Erro inesperado ao salvar imóvel.");
+            toast.error("Erro inesperado ao salvar imóvel.", { duration: 3000 });
         } finally {
             setIsSaving(false);
         }

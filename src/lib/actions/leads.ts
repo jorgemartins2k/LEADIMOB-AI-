@@ -69,7 +69,12 @@ export async function createLead(data: z.infer<typeof leadSchema>) {
         const newLeadId = result[0].insertedId;
 
         // 3. Trigger Raquel
-        await initiateRaquelContact(newLeadId);
+        try {
+            await initiateRaquelContact(newLeadId);
+        } catch (raquelErr) {
+            console.error("Erro ao iniciar contato da Raquel:", raquelErr);
+            // Non-blocking error, lead is already saved
+        }
 
         revalidatePath("/leads");
         revalidatePath("/dashboard");

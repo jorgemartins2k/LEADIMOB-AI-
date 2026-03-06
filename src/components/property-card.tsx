@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Home, MapPin, Minimize2, Bed, Car, Trash2, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { deleteProperty } from "@/lib/actions/properties";
+import { toast } from "sonner";
 
 interface PropertyCardProps {
     property: {
@@ -28,8 +29,9 @@ export function PropertyCard({ property }: PropertyCardProps) {
         if (confirm("Tem certeza que deseja excluir este imóvel?")) {
             try {
                 await deleteProperty(property.id);
+                toast.success("Imóvel excluído.", { duration: 3000 });
             } catch (error) {
-                alert("Erro ao excluir imóvel.");
+                toast.error("Erro ao excluir imóvel.", { duration: 3000 });
             }
         }
     };

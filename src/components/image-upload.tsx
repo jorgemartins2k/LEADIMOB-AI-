@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { uploadImage, deleteImage } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
@@ -26,7 +27,7 @@ export function ImageUpload({ value, onChange, disabled }: ImageUploadProps) {
             onChange([...value, ...urls]);
         } catch (error: any) {
             console.error("Upload failed details:", error);
-            alert(`Erro ao fazer upload da imagem: ${error?.message || 'Erro desconhecido'}`);
+            toast.error(`Erro ao fazer upload da imagem: ${error?.message || 'Erro desconhecido'}`, { duration: 3000 });
         } finally {
             setIsUploading(false);
         }
