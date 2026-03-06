@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Search, Filter, Home, MapPin, Maximize2, BedDouble, Car, ChevronRight } from "lucide-react";
+import { Plus, Search, Filter, Home, MapPin, Maximize2, BedDouble, Car, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -9,11 +9,37 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
 import { getProperties } from "@/lib/actions/properties";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 export default function PropertiesPage() {
     const [properties, setProperties] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [filters, setFilters] = useState({
+        type: "all",
+        standard: "all",
+        minBedrooms: 0,
+        minPrice: 0,
+        maxPrice: Infinity,
+        mcmv: false,
+    });
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchProperties = async () => {
@@ -29,11 +55,30 @@ export default function PropertiesPage() {
         fetchProperties();
     }, []);
 
-    const filteredProperties = properties.filter(p =>
-        p.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.neighborhood?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.city?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredProperties = properties.filter(p => {
+        const matchesSearch =
+            p.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.neighborhood?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.id?.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const matchesType = filters.type === "all" || p.type === filters.type;
+        const matchesStandard = filters.standard === "all" || p.standard === filters.standard;
+        const matchesBedrooms = (p.bedrooms || 0) >= filters.minBedrooms;
+        const matchesPrice = Number(p.price || 0) >= filters.minPrice && Number(p.price || 0) <= filters.maxPrice;
+        const matchesMCMV = !filters.mcmv || p.minhaCasaMinhaVida === true;
+
+        return matchesSearch && matchesType && matchesStandard && matchesBedrooms && matchesPrice && matchesMCMV;
+    });
+
+    const activeFiltersCount = [
+        filters.type !== "all",
+        filters.standard !== "all",
+        filters.minBedrooms > 0,
+        filters.maxPrice !== Infinity,
+        filters.mcmv
+    ].filter(Boolean).length;
 
     return (
         <div className="space-y-12 animate-in fade-in slide-in-from-top-4 duration-1000">
@@ -76,7 +121,11 @@ export default function PropertiesPage() {
                         className="bg-transparent border-none h-10 font-bold focus-visible:ring-0 placeholder:opacity-50"
                     />
                 </div>
-                <Button variant="outline" className="h-[74px] px-8 rounded-[24px] border-border/50 gap-3 btn-interactive">
+                <Button
+                    variant="outline"
+                    className="h-[74px] px-8 rounded-[24px] border-border/50 gap-3 btn-interactive"
+                    onClick={() => setIsFilterModalOpen(true)}
+                >
                     <Filter className="w-4 h-4" /> Filtros Avançados
                 </Button>
             </div>
@@ -190,6 +239,107 @@ export default function PropertiesPage() {
                     </div>
                 </div>
             )}
+            {/* Advanced Filters Modal */}
+            <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
+                <DialogContent className="max-w-2xl p-0 overflow-hidden border-none bg-transparent shadow-2xl">
+                    <div className="relative bg-card/90 backdrop-blur-2xl border border-white/10 rounded-[40px] overflow-hidden p-10">
+                        <DialogHeader className="mb-8">
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <DialogTitle className="text-2xl font-black text-foreground uppercase tracking-tighter">Filtros Avançados</DialogTitle>
+                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Refine sua busca no portfólio</p>
+                                </div>
+                            </div>
+                        </DialogHeader>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                            <div className="space-y-4">
+                                <Label className="text-[10px] font-black uppercase tracking-widest opacity-50">Tipo de Imóvel</Label>
+                                <Select value={filters.type} onValueChange={(v) => setFilters(f => ({ ...f, type: v }))}>
+                                    <SelectTrigger className="w-full h-14 rounded-2xl border-border/50 bg-muted/20 font-bold">
+                                        <SelectValue placeholder="Todos os tipos" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todos os tipos</SelectItem>
+                                        <SelectItem value="apartamento">Apartamento</SelectItem>
+                                        <SelectItem value="casa">Casa</SelectItem>
+                                        <SelectItem value="terreno">Terreno</SelectItem>
+                                        <SelectItem value="comercial">Comercial</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-4">
+                                <Label className="text-[10px] font-black uppercase tracking-widest opacity-50">Padrão</Label>
+                                <Select value={filters.standard} onValueChange={(v) => setFilters(f => ({ ...f, standard: v }))}>
+                                    <SelectTrigger className="w-full h-14 rounded-2xl border-border/50 bg-muted/20 font-bold">
+                                        <SelectValue placeholder="Todos os padrões" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todos os padrões</SelectItem>
+                                        <SelectItem value="economico">Econômico</SelectItem>
+                                        <SelectItem value="medio">Médio Padrão</SelectItem>
+                                        <SelectItem value="alto">Alto Padrão</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-6 md:col-span-2">
+                                <div className="flex justify-between items-center mb-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-50">Faixa de Preço (Até)</Label>
+                                    <span className="text-lg font-black text-accent tracking-tighter">
+                                        {filters.maxPrice === Infinity ? "Qualquer valor" : `R$ ${filters.maxPrice.toLocaleString('pt-BR')}`}
+                                    </span>
+                                </div>
+                                <Slider
+                                    defaultValue={[0]}
+                                    max={10000000}
+                                    step={50000}
+                                    onValueChange={(v) => setFilters(f => ({ ...f, maxPrice: v[0] === 0 ? Infinity : v[0] }))}
+                                    className="py-4"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between p-6 rounded-3xl bg-muted/20 border border-border/30 md:col-span-2">
+                                <div className="space-y-1">
+                                    <p className="font-bold text-foreground tracking-tight">Minha Casa Minha Vida</p>
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60">Filtrar apenas imóveis MCMV</p>
+                                </div>
+                                <Switch
+                                    checked={filters.mcmv}
+                                    onCheckedChange={(v) => setFilters(f => ({ ...f, mcmv: v }))}
+                                />
+                            </div>
+                        </div>
+
+                        <DialogFooter className="grid grid-cols-2 gap-4">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setFilters({
+                                        type: "all",
+                                        standard: "all",
+                                        minBedrooms: 0,
+                                        minPrice: 0,
+                                        maxPrice: Infinity,
+                                        mcmv: false,
+                                    });
+                                    setSearchTerm("");
+                                }}
+                                className="h-16 rounded-2xl font-black uppercase tracking-widest text-[10px] text-muted-foreground border-border/50"
+                            >
+                                Limpar Tudo
+                            </Button>
+                            <Button
+                                onClick={() => setIsFilterModalOpen(false)}
+                                className="h-16 rounded-2xl bg-foreground text-background font-black uppercase tracking-widest text-[10px] hover:scale-105 active:scale-95 transition-all"
+                            >
+                                Aplicar Filtros
+                            </Button>
+                        </DialogFooter>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
