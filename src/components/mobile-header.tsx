@@ -78,40 +78,46 @@ export function MobileHeader() {
                                 href={item.href}
                                 style={{ transitionDelay: `${index * 40}ms` }}
                                 className={cn(
-                                    "flex items-center gap-4 px-5 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-wider transition-all duration-300",
+                                    "flex items-center gap-4 px-6 py-4 rounded-[28px] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 relative",
                                     isOpen ? "translate-x-0 opacity-100" : "-translate-x-4 opacity-0",
                                     isActive
-                                        ? "bg-white/10 text-white shadow-[0_8px_20px_-6px_rgba(0,0,0,0.3)] border border-white/5"
-                                        : "text-slate-400 hover:text-white hover:bg-white/5 active:scale-[0.98]"
+                                        ? "bg-white/10 text-white"
+                                        : "text-slate-400 hover:text-white hover:bg-white/5"
                                 )}
                             >
-                                <div className={cn(
-                                    "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
-                                    isActive ? "bg-primary/20 text-primary" : "bg-white/5 text-slate-500"
-                                )}>
-                                    <item.icon className="h-5 w-5" />
-                                </div>
-                                {item.name}
+                                <item.icon className={cn("h-5 w-5", isActive ? "text-blue-400" : "text-slate-500")} />
+                                <span className="relative">
+                                    {item.name}
+                                    {isActive && (
+                                        <div className="absolute -bottom-1 left-0 w-1/2 h-0.5 bg-blue-500/50 rounded-full" />
+                                    )}
+                                </span>
                                 {isActive && (
-                                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
+                                    <div className="ml-auto w-2 h-2 rounded-full bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.8)]" />
                                 )}
                             </Link>
                         );
                     })}
 
-                    <div className="mt-8 pt-8 border-t border-white/5 px-4 space-y-4">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-slate-800 border-2 border-white/10 flex items-center justify-center text-white font-bold">
-                                JM
+                    <div className="mt-8 pt-8 border-t border-white/5 px-4">
+                        <div className="bg-white/5 rounded-[32px] p-6 flex items-center gap-4 border border-white/5">
+                            <div className="relative">
+                                <div className="w-14 h-14 rounded-full bg-slate-800 border-2 border-white/10 overflow-hidden">
+                                    <img
+                                        src="https://github.com/jorgemartins2k.png"
+                                        alt="Jorge Martins"
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#020617]" />
                             </div>
-                            <div>
-                                <p className="text-sm font-bold text-white">Jorge Martins</p>
-                                <p className="text-xs text-slate-500">Corretor Premium</p>
+                            <div className="space-y-1">
+                                <p className="text-base font-black text-white leading-none">Jorge Martins</p>
+                                <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#1e293b] border border-white/10">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Plano Pro</span>
+                                </div>
                             </div>
                         </div>
-                        <Button variant="outline" className="w-full border-white/10 text-white hover:bg-white/5 h-12 rounded-xl">
-                            Sair do sistema
-                        </Button>
                     </div>
                 </nav>
             </div>
