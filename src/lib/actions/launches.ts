@@ -127,85 +127,34 @@ export async function getLaunchById(id: string) {
     try {
         const user = await getOrCreateInternalUser();
 
-        // 1. Buscar o lançamento com SQL robusto
-        const launchResult = await db.execute(sql`
-            SELECT 
-                id::text, 
-                user_id::text, 
-                name, 
-                developer, 
-                description, 
-                city, 
-                neighborhood, 
-                price_from::text, 
-                delivery_date::text, 
-                standard, 
-                target_audience, 
-                status, 
-                photos
-            FROM launches 
-            WHERE id = ${id}::uuid AND user_id = ${user.id}::uuid
-            LIMIT 1
-        `);
+        const launch = await db.query.launches.findFirst({
+            where: and(eq(launches.id, id), eq(launches.userId, user.id)),
+            with: {
+                units: true
+            }
+        });
 
-        if (launchResult.length === 0) return null;
-        const launchRow = launchResult[0] as any;
+        if (!launch) return null;
 
-        // 2. Buscar as unidades vinculadas
-        const unitsResult = await db.execute(sql`
-            SELECT 
-                id::text,
-                launch_id::text,
-                user_id::text,
-                name,
-                area_sqm::text,
-                bedrooms,
-                bathrooms,
-                parking_spots,
-                price::text,
-                photo,
-                minha_casa_minha_vida,
-                allows_financing,
-                down_payment::text,
-                condo_fee::text,
-                is_condo,
-                target_audience
-            FROM launch_units
-            WHERE launch_id = ${id}::uuid
-        `);
-
-        // 3. Montar objeto final serializável
+        // Garantir que os dados sejam serializáveis para Client Components
         return {
-            id: String(launchRow.id),
-            userId: String(launchRow.user_id),
-            name: String(launchRow.name || ''),
-            developer: launchRow.developer ? String(launchRow.developer) : null,
-            description: launchRow.description ? String(launchRow.description) : null,
-            city: String(launchRow.city || ''),
-            neighborhood: launchRow.neighborhood ? String(launchRow.neighborhood) : null,
-            priceFrom: launchRow.price_from ? String(launchRow.price_from) : null,
-            deliveryDate: launchRow.delivery_date ? String(launchRow.delivery_date) : null,
-            standard: String(launchRow.standard || 'medio'),
-            targetAudience: Array.isArray(launchRow.target_audience) ? launchRow.target_audience : [],
-            status: String(launchRow.status || 'launch'),
-            photos: Array.isArray(launchRow.photos) ? launchRow.photos : [],
-            units: unitsResult.map((u: any) => ({
+            ...launch,
+            id: String(launch.id),
+            userId: String(launch.userId),
+            priceFrom: launch.priceFrom ? String(launch.priceFrom) : null,
+            deliveryDate: launch.deliveryDate ? String(launch.deliveryDate) : null,
+            targetAudience: Array.isArray(launch.targetAudience) ? launch.targetAudience : [],
+            photos: Array.isArray(launch.photos) ? launch.photos : [],
+            units: launch.units.map((u) => ({
+                ...u,
                 id: String(u.id),
-                launchId: String(u.launch_id),
-                userId: String(u.user_id),
-                name: String(u.name || ''),
-                areaSqm: u.area_sqm ? String(u.area_sqm) : null,
-                bedrooms: u.bedrooms !== null ? Number(u.bedrooms) : null,
-                bathrooms: u.bathrooms !== null ? Number(u.bathrooms) : null,
-                parkingSpots: u.parking_spots !== null ? Number(u.parking_spots) : null,
+                launchId: String(u.launchId),
+                userId: String(u.userId),
+                areaSqm: u.areaSqm ? String(u.areaSqm) : null,
                 price: u.price ? String(u.price) : null,
-                photo: u.photo ? String(u.photo) : null,
-                minhaCasaMinhaVida: Boolean(u.minha_casa_minha_vida),
-                allowsFinancing: Boolean(u.allows_financing),
-                downPayment: u.down_payment ? String(u.down_payment) : null,
-                condoFee: u.condo_fee ? String(u.condo_fee) : null,
-                isCondo: Boolean(u.is_condo),
-                targetAudience: Array.isArray(u.target_audience) ? u.target_audience : [],
+                downPayment: u.downPayment ? String(u.downPayment) : null,
+                condoFee: u.condoFee ? String(u.condoFee) : null,
+                targetAudience: Array.isArray(u.targetAudience) ? u.targetAudience : [],
             }))
         };
     } catch (error) {
