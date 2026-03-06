@@ -123,10 +123,19 @@ export default function PropertiesPage() {
                 </div>
                 <Button
                     variant="outline"
-                    className="h-[74px] px-8 rounded-[24px] border-border/50 gap-3 btn-interactive"
+                    className={cn(
+                        "h-[74px] px-8 rounded-[24px] border-border/50 gap-3 btn-interactive relative",
+                        activeFiltersCount > 0 && "border-accent bg-accent/5 text-accent"
+                    )}
                     onClick={() => setIsFilterModalOpen(true)}
                 >
-                    <Filter className="w-4 h-4" /> Filtros Avançados
+                    <Filter className="w-4 h-4" />
+                    Filtros Avançados
+                    {activeFiltersCount > 0 && (
+                        <Badge className="absolute -top-2 -right-2 h-6 w-6 flex items-center justify-center p-0 rounded-full bg-accent text-white border-white animate-in zoom-in">
+                            {activeFiltersCount}
+                        </Badge>
+                    )}
                 </Button>
             </div>
 
