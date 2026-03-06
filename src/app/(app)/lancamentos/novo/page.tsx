@@ -195,6 +195,32 @@ export default function NewLaunchPage() {
                                     )}
                                 />
 
+                                <div className="grid grid-cols-2 gap-6">
+                                    <FormField
+                                        name="developer"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-3">
+                                                <FormLabel className="text-sm font-bold text-foreground">Incorporadora / Construtora</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Ex: Gafisa, Cyrela..." {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        name="priceFrom"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-3">
+                                                <FormLabel className="text-sm font-bold text-foreground text-accent">Valor a partir de (R$)</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Ex: 250000" {...field} className="bg-muted/20 border-accent/20 h-14 rounded-2xl px-6 font-bold text-accent" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-6 pt-6 border-t border-border">
@@ -221,6 +247,111 @@ export default function NewLaunchPage() {
                                                 <Input placeholder="Ex: Moema" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium" />
                                             </FormControl>
                                             <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-6 pt-6 border-t border-border">
+                                <FormField
+                                    name="status"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-3">
+                                            <FormLabel className="text-sm font-bold text-foreground flex items-center gap-2">
+                                                Status do Empreendimento
+                                            </FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium">
+                                                        <SelectValue placeholder="Selecione o status" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="pre_launch">Pré-Lançamento</SelectItem>
+                                                    <SelectItem value="launch">Em Lançamento</SelectItem>
+                                                    <SelectItem value="under_construction">Em Construção</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    name="deliveryDate"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-3">
+                                            <FormLabel className="text-sm font-bold text-foreground flex items-center gap-2">
+                                                <Calendar className="h-4 w-4 text-primary" /> Previsão de Entrega
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input type="date" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="space-y-8 pt-6 border-t border-border">
+                                <FormField
+                                    name="standard"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-4">
+                                            <FormLabel className="text-sm font-bold text-foreground">Padrão do Lançamento</FormLabel>
+                                            <div className="grid grid-cols-3 gap-4">
+                                                {standards.map((std) => (
+                                                    <button
+                                                        key={std.id}
+                                                        type="button"
+                                                        onClick={() => field.onChange(std.id)}
+                                                        className={cn(
+                                                            "flex flex-col items-center justify-center p-6 rounded-[24px] border-2 transition-all duration-300 group",
+                                                            field.value === std.id
+                                                                ? "bg-primary/5 border-primary shadow-lg shadow-primary/5"
+                                                                : "bg-muted/10 border-transparent hover:border-border hover:bg-muted/20"
+                                                        )}
+                                                    >
+                                                        <div className={cn(
+                                                            "w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300",
+                                                            field.value === std.id ? "bg-primary text-white scale-110" : "bg-muted/30 text-muted-foreground group-hover:scale-105"
+                                                        )}>
+                                                            <std.icon className="w-6 h-6" />
+                                                        </div>
+                                                        <span className={cn("text-sm font-bold", field.value === std.id ? "text-primary" : "text-foreground")}>{std.label}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    name="targetAudience"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-6">
+                                            <FormLabel className="text-sm font-bold text-foreground">Perfil do Cliente Ideal</FormLabel>
+                                            <div className="flex flex-wrap gap-2">
+                                                {audiences.map((audience) => (
+                                                    <Badge
+                                                        key={audience}
+                                                        variant={field.value?.includes(audience) ? "default" : "outline"}
+                                                        className={cn(
+                                                            "cursor-pointer px-6 py-3 rounded-full text-xs font-bold transition-all",
+                                                            field.value?.includes(audience) ? "bg-primary text-white scale-105" : "hover:bg-primary/5"
+                                                        )}
+                                                        onClick={() => {
+                                                            const current = Array.isArray(field.value) ? field.value : [];
+                                                            if (current.includes(audience)) {
+                                                                field.onChange(current.filter((a: string) => a !== audience));
+                                                            } else {
+                                                                field.onChange([...current, audience]);
+                                                            }
+                                                        }}
+                                                    >
+                                                        {audience}
+                                                    </Badge>
+                                                ))}
+                                            </div>
                                         </FormItem>
                                     )}
                                 />
