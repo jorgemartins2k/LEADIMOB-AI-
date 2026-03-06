@@ -115,7 +115,8 @@ export default function NewPropertyPage() {
                 return;
             }
             toast.success("Imóvel cadastrado com sucesso! 🏠", { duration: 3000 });
-            form.reset();
+            router.push("/imoveis");
+            router.refresh();
         } catch (error) {
             console.error(error);
             toast.error("Erro inesperado ao salvar imóvel.", { duration: 3000 });
