@@ -180,12 +180,17 @@ export default async function LaunchDetailsPage({ params }: LaunchDetailsPagePro
                                                     <div>
                                                         <h4 className="text-lg md:text-xl font-black tracking-tight">{unit.name}</h4>
                                                         <p className="text-[9px] md:text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
-                                                            {unit.bedrooms} Quartos • {unit.parkingSpots} Vagas
+                                                            {unit.areaSqm}m² • {unit.bedrooms} Quartos • {unit.parkingSpots} Vagas
                                                         </p>
                                                     </div>
                                                     <div className="text-right">
                                                         <span className="block text-[7px] md:text-[8px] font-black text-muted-foreground uppercase tracking-widest">Valor da Unidade</span>
                                                         <span className="text-base md:text-lg font-black text-accent">R$ {unit.price ? Number(unit.price).toLocaleString('pt-BR') : 'Consulte'}</span>
+                                                        {unit.downPayment && (
+                                                            <p className="text-[9px] font-bold text-success/80 mt-1">
+                                                                Entrada: R$ {Number(unit.downPayment).toLocaleString('pt-BR')}
+                                                            </p>
+                                                        )}
                                                     </div>
                                                 </div>
 
@@ -239,6 +244,18 @@ export default async function LaunchDetailsPage({ params }: LaunchDetailsPagePro
                                                         <div className="space-y-1">
                                                             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Valor</p>
                                                             <p className="text-xl font-bold text-accent">R$ {unit.price ? Number(unit.price).toLocaleString('pt-BR') : 'Consulte'}</p>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Entrada</p>
+                                                            <p className="text-xl font-bold text-success">
+                                                                {unit.downPayment ? `R$ ${Number(unit.downPayment).toLocaleString('pt-BR')}` : '-'}
+                                                            </p>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Condomínio</p>
+                                                            <p className="text-xl font-bold">
+                                                                {unit.isCondo ? (unit.condoFee ? `R$ ${Number(unit.condoFee).toLocaleString('pt-BR')}` : 'Sim') : 'Não'}
+                                                            </p>
                                                         </div>
                                                         <div className="space-y-1">
                                                             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Quartos</p>
