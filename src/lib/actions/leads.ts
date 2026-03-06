@@ -79,9 +79,9 @@ export async function createLead(data: z.infer<typeof leadSchema>) {
         revalidatePath("/leads");
         revalidatePath("/dashboard");
         return { success: true };
-    } catch (err) {
-        console.error(err);
-        return { error: "Erro ao criar lead no banco de dados." };
+    } catch (err: any) {
+        console.error("Database error in createLead:", err);
+        return { error: `Erro no banco de dados: ${err.message || String(err)}` };
     }
 }
 
