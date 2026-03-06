@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
+import { PropertyMap } from "@/components/properties/property-map";
 
 interface PropertyDetailsPageProps {
     params: Promise<{
@@ -52,10 +53,6 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
-            {/* Vercel Cache Debug Banner - v2.0 */}
-            <div className="bg-red-500 text-white font-bold p-2 text-center rounded-xl text-xs uppercase text-center block">
-                Deploy Snapshot: 02:40 AM | RAW Postgres SQL Branch Active
-            </div>
             {/* Header / Navigation */}
             <div className="flex items-center justify-between">
                 <Link href="/imoveis">
@@ -64,12 +61,6 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
                     </Button>
                 </Link>
                 <div className="flex gap-3">
-                    <Button variant="outline" size="icon" className="rounded-2xl border-border/50 hover:bg-muted">
-                        <Share2 className="h-4 w-4" />
-                    </Button>
-                    <Button className="btn-primary rounded-2xl px-6 gap-2 font-bold uppercase text-[10px] tracking-widest">
-                        <MessageSquare className="h-4 w-4" /> Gerar Abordagem IA
-                    </Button>
                 </div>
             </div>
 
@@ -193,9 +184,6 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
                             </div>
                         </div>
 
-                        <Button className="w-full h-16 rounded-2xl bg-foreground text-background hover:bg-foreground/90 font-black uppercase text-[10px] tracking-[0.2em] shadow-2xl transition-all">
-                            Compartilhar Vitrine
-                        </Button>
                     </div>
 
                     {/* Extra Info Card */}
@@ -204,10 +192,11 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
                         <p className="text-sm font-bold text-foreground leading-relaxed">
                             {property.address || "Endereço completo disponível sob solicitação ao corretor."}
                         </p>
-                        <div className="aspect-video w-full rounded-2xl bg-muted/20 flex flex-col items-center justify-center gap-3 border border-dashed border-border/50">
-                            <MapPin className="h-8 w-8 text-muted-foreground/30" />
-                            <span className="text-[10px] uppercase font-bold text-muted-foreground/40">Mapa indisponível</span>
-                        </div>
+                        <PropertyMap
+                            address={property.address}
+                            neighborhood={property.neighborhood}
+                            city={property.city}
+                        />
                     </div>
                 </div>
             </div>
