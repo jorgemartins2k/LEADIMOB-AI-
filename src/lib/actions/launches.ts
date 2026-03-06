@@ -57,12 +57,16 @@ export async function createLaunch(data: z.infer<typeof launchSchema>) {
         const [newLaunch] = await db.insert(launches).values({
             userId: user.id,
             name: validated.name,
-            developer: validated.developer,
-            description: validated.description,
+            developer: validated.developer || null,
+            description: validated.description || null,
             city: validated.city,
-            neighborhood: validated.neighborhood,
-            priceFrom: validated.priceFrom?.replace(/[^\d.]/g, ''),
-            deliveryDate: validated.deliveryDate,
+            neighborhood: validated.neighborhood || null,
+            priceFrom: (validated.priceFrom && validated.priceFrom.trim() !== "")
+                ? validated.priceFrom.replace(/[^\d.]/g, '')
+                : null,
+            deliveryDate: (validated.deliveryDate && validated.deliveryDate.trim() !== "")
+                ? validated.deliveryDate
+                : null,
             standard: validated.standard,
             targetAudience: validated.targetAudience,
             status: validated.status,
@@ -76,16 +80,16 @@ export async function createLaunch(data: z.infer<typeof launchSchema>) {
                     launchId: newLaunch.id,
                     userId: user.id,
                     name: unit.name,
-                    areaSqm: unit.areaSqm,
+                    areaSqm: (unit.areaSqm && unit.areaSqm.trim() !== "") ? unit.areaSqm : null,
                     bedrooms: unit.bedrooms,
                     bathrooms: unit.bathrooms,
                     parkingSpots: unit.parkingSpots,
-                    price: unit.price?.replace(/[^\d.]/g, ''),
-                    photo: unit.photo,
+                    price: (unit.price && unit.price.trim() !== "") ? unit.price.replace(/[^\d.]/g, '') : null,
+                    photo: unit.photo || null,
                     minhaCasaMinhaVida: unit.minhaCasaMinhaVida,
                     allowsFinancing: unit.allowsFinancing,
-                    downPayment: unit.downPayment,
-                    condoFee: unit.condoFee,
+                    downPayment: (unit.downPayment && unit.downPayment.trim() !== "") ? unit.downPayment.replace(/[^\d.]/g, '') : null,
+                    condoFee: (unit.condoFee && unit.condoFee.trim() !== "") ? unit.condoFee.replace(/[^\d.]/g, '') : null,
                     isCondo: unit.isCondo,
                 }))
             );
