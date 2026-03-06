@@ -32,6 +32,7 @@ const launchSchema = z.object({
         downPayment: z.string().optional(),
         condoFee: z.string().optional(),
         isCondo: z.boolean().default(false),
+        targetAudience: z.array(z.string()).default([]),
     })).default([]),
 });
 
@@ -91,6 +92,7 @@ export async function createLaunch(data: z.infer<typeof launchSchema>) {
                     downPayment: (unit.downPayment && unit.downPayment.trim() !== "") ? unit.downPayment.replace(/[^\d.]/g, '') : null,
                     condoFee: (unit.condoFee && unit.condoFee.trim() !== "") ? unit.condoFee.replace(/[^\d.]/g, '') : null,
                     isCondo: unit.isCondo,
+                    targetAudience: unit.targetAudience || [],
                 }))
             );
         }
