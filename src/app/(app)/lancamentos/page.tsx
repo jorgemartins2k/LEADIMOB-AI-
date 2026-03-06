@@ -174,10 +174,18 @@ export default function LaunchesPage() {
                                         fill
                                         className="object-cover group-hover:scale-110 transition-transform duration-700"
                                     />
-                                    <div className="absolute top-4 left-4">
+                                    <div className="absolute top-4 right-4 flex gap-2">
                                         <Badge className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border-none shadow-xl", statusMap[launch.status as keyof typeof statusMap]?.bg, statusMap[launch.status as keyof typeof statusMap]?.color)}>
                                             {statusMap[launch.status as keyof typeof statusMap]?.label}
                                         </Badge>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={(e) => confirmDelete(e, launch.id, launch.name)}
+                                            className="h-8 w-8 rounded-full bg-white/90 text-destructive hover:bg-destructive hover:text-white transition-all shadow-xl"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
                                     </div>
                                     <div className="absolute bottom-4 left-4">
                                         <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center shadow-lg border border-white/20">
@@ -226,14 +234,6 @@ export default function LaunchesPage() {
                                             <Badge variant="outline" className="rounded-full border-border/50 text-[9px] font-bold px-3">
                                                 {launch.standard}
                                             </Badge>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={(e) => confirmDelete(e, launch.id, launch.name)}
-                                                className="h-9 w-9 rounded-xl hover:bg-destructive/10 hover:text-destructive text-muted-foreground/40 transition-all"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
                                         </div>
                                     </div>
                                 </div>

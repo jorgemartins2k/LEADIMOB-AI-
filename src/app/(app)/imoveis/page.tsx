@@ -194,10 +194,18 @@ export default function PropertiesPage() {
                                         fill
                                         className="object-cover group-hover:scale-110 transition-transform duration-700"
                                     />
-                                    <div className="absolute top-4 left-4">
+                                    <div className="absolute top-4 right-4 flex gap-2">
                                         <Badge className="bg-white/90 text-black border-none font-black text-[8px] px-3 py-1 uppercase rounded-full shadow-lg">
                                             {property.type}
                                         </Badge>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={(e) => confirmDelete(e, property.id, property.title)}
+                                            className="h-8 w-8 rounded-full bg-white/90 text-destructive hover:bg-destructive hover:text-white transition-all shadow-xl"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
                                     </div>
                                     <div className="absolute bottom-4 left-4 flex gap-2">
                                         {property.minhaCasaMinhaVida && (
@@ -259,14 +267,6 @@ export default function PropertiesPage() {
                                             <Badge variant="outline" className="rounded-full border-border/50 text-[9px] font-bold px-3">
                                                 {property.standard}
                                             </Badge>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={(e) => confirmDelete(e, property.id, property.title)}
-                                                className="h-9 w-9 rounded-xl hover:bg-destructive/10 hover:text-destructive text-muted-foreground/40 transition-all"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
                                         </div>
                                     </div>
                                 </div>
