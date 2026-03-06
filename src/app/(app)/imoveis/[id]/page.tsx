@@ -26,6 +26,7 @@ interface PropertyDetailsPageProps {
     }>;
 }
 
+// Página de detalhes do imóvel - Fix: Await params for Next.js 15
 export default async function PropertyDetailsPage({ params }: PropertyDetailsPageProps) {
     const { id } = await params;
     const property = await getPropertyById(id);
