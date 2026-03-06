@@ -111,29 +111,37 @@ export default function NewLaunchPage() {
         try {
             const result = await createLaunch({
                 ...data,
+                priceFrom: data.priceFrom || undefined,
                 photos: data.photos || [],
                 units: data.units.map((u) => ({
                     ...u,
-                    bedrooms: u.bedrooms ? parseInt(u.bedrooms) : undefined,
-                    bathrooms: u.bathrooms ? parseInt(u.bathrooms) : undefined,
-                    parkingSpots: u.parkingSpots ? parseInt(u.parkingSpots) : undefined,
+                    bedrooms: u.bedrooms ? parseInt(String(u.bedrooms)) : 0,
+                    bathrooms: u.bathrooms ? parseInt(String(u.bathrooms)) : 0,
+                    parkingSpots: u.parkingSpots ? parseInt(String(u.parkingSpots)) : 0,
                     minhaCasaMinhaVida: !!u.minhaCasaMinhaVida,
                     allowsFinancing: !!u.allowsFinancing,
                     isCondo: !!u.isCondo,
                     downPayment: u.downPayment || undefined,
                     condoFee: u.condoFee || undefined,
+                    targetAudience: u.targetAudience || [],
                 }))
             });
 
             if (result.error) {
-                toast.error(result.error, { duration: 3000 });
+                toast.error(result.error, { duration: 5000 });
                 return;
             }
-            toast.success("Empreendimento salvo com sucesso! 🚀", { duration: 3000 });
-            form.reset();
+
+            toast.success("🚀 Empreendimento cadastrado!", {
+                description: "Seu lançamento já está disponível no marketplace.",
+                duration: 5000
+            });
+
+            router.push("/lancamentos");
+            router.refresh();
         } catch (error) {
             console.error(error);
-            toast.error("Erro inesperado ao salvar lançamento.", { duration: 3000 });
+            toast.error("Erro inesperado.", { description: "Verifique os dados e tente novamente." });
         } finally {
             setIsSaving(false);
         }
@@ -187,127 +195,30 @@ export default function NewLaunchPage() {
                                     )}
                                 />
 
-                                <div className="grid grid-cols-2 gap-6">
-                                    <FormField
-                                        name="developer"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-3">
-                                                <FormLabel className="text-sm font-bold text-foreground">Incorporadora</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Ex: Gafisa" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        name="deliveryDate"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-3">
-                                                <FormLabel className="text-sm font-bold text-foreground flex items-center gap-2">
-                                                    <Calendar className="h-4 w-4 text-primary" /> Data de Entrega
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input type="date" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
                             </div>
 
-                            {/* Status do Lançamento */}
-                            <FormField
-                                name="status"
-                                render={({ field }) => (
-                                    <FormItem className="space-y-4">
-                                        <FormLabel className="text-sm font-bold text-foreground uppercase tracking-widest opacity-70">Status Atual</FormLabel>
-                                        <div className="grid grid-cols-3 gap-4">
-                                            {statuses.map((stat) => (
-                                                <button
-                                                    key={stat.id}
-                                                    type="button"
-                                                    onClick={() => field.onChange(stat.id)}
-                                                    className={cn(
-                                                        "flex flex-col items-center justify-center p-6 rounded-[24px] border-2 transition-all duration-300 group",
-                                                        field.value === stat.id
-                                                            ? "bg-primary/5 border-primary shadow-lg shadow-primary/5"
-                                                            : "bg-muted/10 border-transparent hover:border-border hover:bg-muted/20"
-                                                    )}
-                                                >
-                                                    <div className={cn(
-                                                        "w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300",
-                                                        field.value === stat.id ? cn(stat.bg, stat.color, "scale-110") : "bg-muted/30 text-muted-foreground group-hover:scale-105"
-                                                    )}>
-                                                        <stat.icon className="w-6 h-6" />
-                                                    </div>
-                                                    <span className={cn("text-sm font-bold", field.value === stat.id ? "text-primary" : "text-foreground")}>{stat.label}</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Padrão */}
-                            <FormField
-                                name="standard"
-                                render={({ field }) => (
-                                    <FormItem className="space-y-4">
-                                        <FormLabel className="text-sm font-bold text-foreground uppercase tracking-widest opacity-70">Padrão Construtivo</FormLabel>
-                                        <div className="grid grid-cols-3 gap-4">
-                                            {standards.map((std) => (
-                                                <button
-                                                    key={std.id}
-                                                    type="button"
-                                                    onClick={() => field.onChange(std.id)}
-                                                    className={cn(
-                                                        "flex flex-col items-center justify-center p-6 rounded-[24px] border-2 transition-all duration-300 group",
-                                                        field.value === std.id
-                                                            ? "bg-primary/5 border-primary shadow-lg shadow-primary/5"
-                                                            : "bg-muted/10 border-transparent hover:border-border hover:bg-muted/20"
-                                                    )}
-                                                >
-                                                    <div className={cn(
-                                                        "w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300",
-                                                        field.value === std.id ? "bg-primary text-white scale-110" : "bg-muted/30 text-muted-foreground group-hover:scale-105"
-                                                    )}>
-                                                        <std.icon className="w-6 h-6" />
-                                                    </div>
-                                                    <span className={cn("text-sm font-bold", field.value === std.id ? "text-primary" : "text-foreground")}>{std.label}</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Localização e Preço */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-border">
-                                <div className="md:col-span-2">
-                                    <FormField
-                                        name="city"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-3">
-                                                <FormLabel className="text-sm font-bold text-foreground flex items-center gap-2">
-                                                    <MapPin className="h-4 w-4 text-primary" /> Cidade
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="São Paulo" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
+                            <div className="grid grid-cols-2 gap-6 pt-6 border-t border-border">
                                 <FormField
-                                    name="priceFrom"
+                                    name="city"
                                     render={({ field }) => (
                                         <FormItem className="space-y-3">
-                                            <FormLabel className="text-sm font-bold text-foreground">Preço Inicial</FormLabel>
+                                            <FormLabel className="text-sm font-bold text-foreground flex items-center gap-2">
+                                                <MapPin className="h-4 w-4 text-primary" /> Cidade
+                                            </FormLabel>
                                             <FormControl>
-                                                <Input placeholder="450000" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium" />
+                                                <Input placeholder="Ex: São Paulo" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    name="neighborhood"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-3">
+                                            <FormLabel className="text-sm font-bold text-foreground">Bairro</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Ex: Moema" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium" />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -447,7 +358,7 @@ export default function NewLaunchPage() {
                                                                         field.value?.includes(audience) ? "bg-accent text-white scale-105" : "hover:bg-accent/10"
                                                                     )}
                                                                     onClick={() => {
-                                                                        const current = field.value || [];
+                                                                        const current = Array.isArray(field.value) ? field.value : [];
                                                                         if (current.includes(audience)) {
                                                                             field.onChange(current.filter((a: string) => a !== audience));
                                                                         } else {

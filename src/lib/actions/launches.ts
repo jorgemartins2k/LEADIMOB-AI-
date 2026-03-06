@@ -52,9 +52,16 @@ export async function getLaunches() {
 export async function createLaunch(data: z.infer<typeof launchSchema>) {
     try {
         const user = await getOrCreateInternalUser();
-        const validated = launchSchema.parse(data);
 
-        // 1. Inserir o lançamento
+        // 1. Validar os dados
+        const result = launchSchema.safeParse(data);
+        if (!result.success) {
+            const firstError = result.error.issues[0];
+            return { error: `${firstError.path.join('.')}: ${firstError.message}` };
+        }
+        const validated = result.data;
+
+        // 2. Inserir o lançamento
         const [newLaunch] = await db.insert(launches).values({
             userId: user.id,
             name: validated.name,
@@ -62,37 +69,37 @@ export async function createLaunch(data: z.infer<typeof launchSchema>) {
             description: validated.description || null,
             city: validated.city,
             neighborhood: validated.neighborhood || null,
-            priceFrom: (validated.priceFrom && validated.priceFrom.trim() !== "")
-                ? validated.priceFrom.replace(/[^\d.]/g, '')
+            priceFrom: (validated.priceFrom && String(validated.priceFrom).trim() !== "")
+                ? String(validated.priceFrom).replace(/[^\d.]/g, '')
                 : null,
-            deliveryDate: (validated.deliveryDate && validated.deliveryDate.trim() !== "")
+            deliveryDate: (validated.deliveryDate && String(validated.deliveryDate).trim() !== "")
                 ? validated.deliveryDate
                 : null,
             standard: validated.standard,
-            targetAudience: validated.targetAudience,
+            targetAudience: Array.isArray(validated.targetAudience) ? validated.targetAudience : [],
             status: validated.status,
-            photos: validated.photos,
+            photos: Array.isArray(validated.photos) ? validated.photos : [],
         }).returning();
 
-        // 2. Inserir as unidades (plantas)
-        if (validated.units.length > 0) {
+        // 3. Inserir as unidades (plantas)
+        if (validated.units && validated.units.length > 0) {
             await db.insert(launchUnits).values(
                 validated.units.map((unit) => ({
                     launchId: newLaunch.id,
                     userId: user.id,
                     name: unit.name,
-                    areaSqm: (unit.areaSqm && unit.areaSqm.trim() !== "") ? unit.areaSqm : null,
-                    bedrooms: unit.bedrooms,
-                    bathrooms: unit.bathrooms,
-                    parkingSpots: unit.parkingSpots,
-                    price: (unit.price && unit.price.trim() !== "") ? unit.price.replace(/[^\d.]/g, '') : null,
+                    areaSqm: (unit.areaSqm && String(unit.areaSqm).trim() !== "") ? String(unit.areaSqm).replace(/[^\d.]/g, '') : null,
+                    bedrooms: unit.bedrooms || 0,
+                    bathrooms: unit.bathrooms || 0,
+                    parkingSpots: unit.parkingSpots || 0,
+                    price: (unit.price && String(unit.price).trim() !== "") ? String(unit.price).replace(/[^\d.]/g, '') : null,
                     photo: unit.photo || null,
-                    minhaCasaMinhaVida: unit.minhaCasaMinhaVida,
-                    allowsFinancing: unit.allowsFinancing,
-                    downPayment: (unit.downPayment && unit.downPayment.trim() !== "") ? unit.downPayment.replace(/[^\d.]/g, '') : null,
-                    condoFee: (unit.condoFee && unit.condoFee.trim() !== "") ? unit.condoFee.replace(/[^\d.]/g, '') : null,
-                    isCondo: unit.isCondo,
-                    targetAudience: unit.targetAudience || [],
+                    minhaCasaMinhaVida: !!unit.minhaCasaMinhaVida,
+                    allowsFinancing: !!unit.allowsFinancing,
+                    downPayment: (unit.downPayment && String(unit.downPayment).trim() !== "") ? String(unit.downPayment).replace(/[^\d.]/g, '') : null,
+                    condoFee: (unit.condoFee && String(unit.condoFee).trim() !== "") ? String(unit.condoFee).replace(/[^\d.]/g, '') : null,
+                    isCondo: !!unit.isCondo,
+                    targetAudience: Array.isArray(unit.targetAudience) ? unit.targetAudience : [],
                 }))
             );
         }
@@ -100,8 +107,8 @@ export async function createLaunch(data: z.infer<typeof launchSchema>) {
         revalidatePath("/lancamentos");
         return { success: true };
     } catch (err: any) {
-        console.error(err);
-        return { error: err.message || "Erro ao salvar lançamento." };
+        console.error("Error creating launch:", err);
+        return { error: err.message || "Erro ao salvar lançamento no banco de dados." };
     }
 }
 
