@@ -319,12 +319,12 @@ export function LeadsView() {
                             </div>
 
                             <div className="space-y-3 text-center">
-                                <h2 className="text-2xl font-black text-foreground uppercase tracking-tighter leading-none">
+                                <DialogTitle className="text-2xl font-black text-foreground uppercase tracking-tighter leading-none">
                                     Confirmar Exclusão
-                                </h2>
-                                <p className="text-muted-foreground font-medium leading-relaxed">
+                                </DialogTitle>
+                                <DialogDescription className="text-muted-foreground font-medium leading-relaxed">
                                     Você está prestes a remover o lead <span className="text-foreground font-bold italic">"{leadToDelete?.name}"</span>. Esta ação não poderá ser desfeita.
-                                </p>
+                                </DialogDescription>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
