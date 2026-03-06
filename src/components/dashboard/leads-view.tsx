@@ -21,7 +21,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { LeadImportModal } from './lead-import-modal';
-import { getLeads, deleteLead, checkBusinessStatus, cleanupLeads } from '@/lib/actions/leads';
+import { getLeads, deleteLead, checkBusinessStatus, cleanupLeads, processAutomation } from '@/lib/actions/leads';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
@@ -56,6 +56,15 @@ export function LeadsView() {
                 ]);
                 setLeadsList(leadsData);
                 setInBusinessHours(businessStatus);
+
+                // Se estiver no expediente, processa automação para leads que ficaram aguardando
+                if (businessStatus) {
+                    processAutomation().then(result => {
+                        if (result.success && result.contacted > 0) {
+                            toast.success(`Automação: ${result.contacted} leads contactados agora.`);
+                        }
+                    });
+                }
             } catch (error) {
                 console.error("Erro ao carregar dados:", error);
             } finally {
@@ -268,6 +277,20 @@ export function LeadsView() {
                         ))}
                     </div>
                 </div>
+
+                {!inBusinessHours && leadsList.length > 0 && (
+                    <div className="flex justify-end pb-2">
+                        <Button
+                            variant="ghost"
+                            onClick={handleCleanup}
+                            disabled={isCleaning}
+                            className="h-14 px-8 rounded-2xl border border-destructive/20 text-destructive font-black uppercase text-[10px] tracking-[0.2em] hover:bg-destructive/10 gap-3 btn-interactive"
+                        >
+                            {isCleaning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                            Limpar Lista do Expediente
+                        </Button>
+                    </div>
+                )}
 
                 <div className="card-premium overflow-hidden group">
                     <div className="overflow-x-auto">

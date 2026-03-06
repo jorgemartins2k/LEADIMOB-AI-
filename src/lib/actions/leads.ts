@@ -127,3 +127,39 @@ export async function checkBusinessStatus() {
     const user = await getOrCreateInternalUser();
     return isCurrentlyInBusinessHours(user.id);
 }
+
+export async function processAutomation() {
+    const user = await getOrCreateInternalUser();
+
+    // 1. Check if in business hours
+    const inBusinessHours = await isCurrentlyInBusinessHours(user.id);
+    if (!inBusinessHours) return { success: false, message: "Fora do horário de expediente." };
+
+    // 2. Find all 'waiting' leads for this user
+    const pendingLeads = await db.query.leads.findMany({
+        where: and(
+            eq(leads.userId, user.id),
+            eq(leads.status, "waiting")
+        )
+    });
+
+    if (pendingLeads.length === 0) return { success: true, message: "Sem leads pendentes." };
+
+    // 3. Trigger Raquel for each
+    let successCount = 0;
+    for (const lead of pendingLeads) {
+        try {
+            await initiateRaquelContact(lead.id);
+            // Update status so we don't contact again
+            await db.update(leads)
+                .set({ status: "active", updatedAt: new Date() })
+                .where(eq(leads.id, lead.id));
+            successCount++;
+        } catch (err) {
+            console.error(`Erro ao processar lead ${lead.id}:`, err);
+        }
+    }
+
+    revalidatePath("/leads");
+    return { success: true, contacted: successCount };
+}
