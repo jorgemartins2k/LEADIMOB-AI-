@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, LayoutDashboard, Users, Home, Rocket, Calendar, Megaphone, Clock, Bell, Settings } from "lucide-react";
+import { UserButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { LeadImobLogo } from "./LeadImobLogo";
 import { Button } from "./ui/button";
@@ -102,14 +103,15 @@ export function MobileHeader() {
                     <div className="mt-8 pt-8 border-t border-white/5 px-4">
                         <div className="bg-white/5 rounded-[32px] p-6 flex items-center gap-4 border border-white/5">
                             <div className="relative">
-                                <div className="w-14 h-14 rounded-full bg-slate-800 border-2 border-white/10 overflow-hidden">
-                                    <img
-                                        src="https://github.com/jorgemartins2k.png"
-                                        alt="Jorge Martins"
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                                <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#020617]" />
+                                <UserButton
+                                    afterSignOutUrl="/"
+                                    appearance={{
+                                        elements: {
+                                            userButtonAvatarBox: "h-14 w-14 border-2 border-white/10 hover:border-blue-500/50 transition-all duration-300",
+                                        },
+                                    }}
+                                />
+                                <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#020617] pointer-events-none" />
                             </div>
                             <div className="space-y-1">
                                 <p className="text-base font-black text-white leading-none">Jorge Martins</p>
