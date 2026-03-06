@@ -21,7 +21,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { LeadImportModal } from './lead-import-modal';
-import { getLeads, deleteLead } from '@/lib/actions/leads';
+import { getLeads, deleteLead, checkBusinessStatus, cleanupLeads } from '@/lib/actions/leads';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
@@ -44,20 +44,44 @@ export function LeadsView() {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [leadToDelete, setLeadToDelete] = useState<{ id: string, name: string } | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [inBusinessHours, setInBusinessHours] = useState(false);
+    const [isCleaning, setIsCleaning] = useState(false);
 
     useEffect(() => {
-        const fetchLeads = async () => {
+        const fetchData = async () => {
             try {
-                const data = await getLeads();
-                setLeadsList(data);
+                const [leadsData, businessStatus] = await Promise.all([
+                    getLeads(),
+                    checkBusinessStatus()
+                ]);
+                setLeadsList(leadsData);
+                setInBusinessHours(businessStatus);
             } catch (error) {
-                console.error("Erro ao carregar leads:", error);
+                console.error("Erro ao carregar dados:", error);
             } finally {
                 setIsLoading(false);
             }
         };
-        fetchLeads();
+        fetchData();
     }, []);
+
+    const handleCleanup = async () => {
+        if (!confirm("Isso excluirá todos os leads atuais ao final do expediente. Prosseguir?")) return;
+        setIsCleaning(true);
+        try {
+            const result = await cleanupLeads();
+            if (result.success) {
+                toast.success("Lista limpa com sucesso.");
+                setLeadsList([]);
+            } else {
+                toast.error(result.error || "Erro ao limpar lista.");
+            }
+        } catch (error) {
+            toast.error("Erro ao limpar lista.");
+        } finally {
+            setIsCleaning(false);
+        }
+    };
 
     const confirmDelete = (id: string, name: string) => {
         setLeadToDelete({ id, name });
@@ -113,17 +137,38 @@ export function LeadsView() {
                 <div className="space-y-2">
                     <h1 className="heading-xl text-foreground">Gestão de Leads</h1>
                     <p className="text-body mt-1 font-normal">Controle total sobre o funil de vendas da Raquel.</p>
+                    {inBusinessHours && (
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-widest animate-pulse">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            Horário de Atendimento: Lançamento Manual Bloqueado
+                        </div>
+                    )}
                 </div>
                 <div className="flex items-center gap-4">
                     <LeadImportModal>
-                        <Button variant="outline" className="border-border/50 rounded-2xl gap-3 font-semibold uppercase text-[10px] tracking-wider h-14 px-8 btn-interactive hidden sm:flex">
+                        <Button
+                            variant="outline"
+                            disabled={inBusinessHours}
+                            className="border-border/50 rounded-2xl gap-3 font-semibold uppercase text-[10px] tracking-wider h-14 px-8 btn-interactive hidden sm:flex"
+                        >
                             <Upload className="w-4 h-4" /> Importar Leads
                         </Button>
                     </LeadImportModal>
-                    <Button className="btn-primary h-14 px-10 font-semibold uppercase text-[10px] tracking-wider gap-3 shadow-lg hover:scale-105 active:scale-95 transition-all" asChild>
-                        <Link href="/leads/novo">
-                            <Plus className="w-5 h-5" /> Novo de Lead
-                        </Link>
+                    <Button
+                        className="btn-primary h-14 px-10 font-semibold uppercase text-[10px] tracking-wider gap-3 shadow-lg hover:scale-105 active:scale-95 transition-all"
+                        asChild={!inBusinessHours}
+                        disabled={inBusinessHours}
+                        onClick={inBusinessHours ? () => toast.error("Não é permitido lançar leads durante o expediente.") : undefined}
+                    >
+                        {!inBusinessHours ? (
+                            <Link href="/leads/novo">
+                                <Plus className="w-5 h-5" /> Novo de Lead
+                            </Link>
+                        ) : (
+                            <div className="flex items-center gap-3">
+                                <Clock className="w-5 h-5" /> Sistema em Operação
+                            </div>
+                        )}
                     </Button>
                 </div>
             </div>
