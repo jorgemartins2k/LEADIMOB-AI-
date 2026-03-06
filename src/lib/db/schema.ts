@@ -149,6 +149,7 @@ export const launchUnits = pgTable('launch_units', {
     downPayment: numeric('down_payment', { precision: 12, scale: 2 }),
     condoFee: numeric('condo_fee', { precision: 12, scale: 2 }),
     isCondo: boolean('is_condo').default(false),
+    targetAudience: text('target_audience').array().notNull().default(sql`'{}'`),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 

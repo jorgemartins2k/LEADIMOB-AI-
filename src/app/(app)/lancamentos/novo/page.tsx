@@ -26,6 +26,7 @@ import {
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ImageUpload } from "@/components/image-upload";
 import {
     Form,
@@ -72,6 +73,7 @@ const launchSchema = z.object({
         isCondo: z.boolean(),
         downPayment: z.string().optional(),
         condoFee: z.string().optional(),
+        targetAudience: z.array(z.string()).optional(),
     })),
 });
 
@@ -95,7 +97,7 @@ export default function NewLaunchPage() {
             targetAudience: [],
             status: "pre_launch",
             photos: [],
-            units: [{ name: "", areaSqm: "", bedrooms: "", bathrooms: "", parkingSpots: "", price: "", photo: "", minhaCasaMinhaVida: false, allowsFinancing: false, downPayment: "", condoFee: "", isCondo: false }],
+            units: [{ name: "", areaSqm: "", bedrooms: "", bathrooms: "", parkingSpots: "", price: "", photo: "", minhaCasaMinhaVida: false, allowsFinancing: false, downPayment: "", condoFee: "", isCondo: false, targetAudience: [] }],
         },
     });
 
@@ -335,7 +337,8 @@ export default function NewLaunchPage() {
                                             allowsFinancing: false,
                                             isCondo: false,
                                             downPayment: "",
-                                            condoFee: ""
+                                            condoFee: "",
+                                            targetAudience: []
                                         })}
                                         className="rounded-full border-primary/30 text-primary hover:bg-primary/5 h-10 px-6 gap-2"
                                     >
@@ -356,17 +359,30 @@ export default function NewLaunchPage() {
                                                 </button>
                                             )}
 
-                                            <FormField
-                                                name={`units.${index}.name`}
-                                                render={({ field }) => (
-                                                    <FormItem className="space-y-3">
-                                                        <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Nome da Planta / Modelo</FormLabel>
-                                                        <FormControl>
-                                                            <Input placeholder="Ex: Loft Concept - 45m²" {...field} className="bg-white/5 border-border h-12 rounded-xl font-bold" />
-                                                        </FormControl>
-                                                    </FormItem>
-                                                )}
-                                            />
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <FormField
+                                                    name={`units.${index}.name`}
+                                                    render={({ field }) => (
+                                                        <FormItem className="space-y-3">
+                                                            <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Nome da Planta / Modelo</FormLabel>
+                                                            <FormControl>
+                                                                <Input placeholder="Ex: Loft Concept - 45m²" {...field} className="bg-white/5 border-border h-12 rounded-xl font-bold" />
+                                                            </FormControl>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    name={`units.${index}.price`}
+                                                    render={({ field }) => (
+                                                        <FormItem className="space-y-3">
+                                                            <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Valor da Unidade (R$)</FormLabel>
+                                                            <FormControl>
+                                                                <Input placeholder="Ex: 450000" {...field} className="bg-white/5 border-accent/30 h-12 rounded-xl font-bold text-accent" />
+                                                            </FormControl>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
 
                                             <div className="grid grid-cols-4 gap-4">
                                                 <FormField
@@ -414,6 +430,38 @@ export default function NewLaunchPage() {
                                                     )}
                                                 />
                                             </div>
+
+                                            {/* Perfil do Cliente (Target Audience) for Unit */}
+                                            <FormField
+                                                name={`units.${index}.targetAudience`}
+                                                render={({ field }) => (
+                                                    <FormItem className="space-y-3">
+                                                        <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Perfil do Cliente / Público Alvo</FormLabel>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {audiences.map((audience) => (
+                                                                <Badge
+                                                                    key={audience}
+                                                                    variant={field.value?.includes(audience) ? "default" : "outline"}
+                                                                    className={cn(
+                                                                        "cursor-pointer px-4 py-2 rounded-full transition-all",
+                                                                        field.value?.includes(audience) ? "bg-accent text-white scale-105" : "hover:bg-accent/10"
+                                                                    )}
+                                                                    onClick={() => {
+                                                                        const current = field.value || [];
+                                                                        if (current.includes(audience)) {
+                                                                            field.onChange(current.filter((a: string) => a !== audience));
+                                                                        } else {
+                                                                            field.onChange([...current, audience]);
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    {audience}
+                                                                </Badge>
+                                                            ))}
+                                                        </div>
+                                                    </FormItem>
+                                                )}
+                                            />
 
                                             {/* Planta Image Upload */}
                                             <FormField

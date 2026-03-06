@@ -28,6 +28,13 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
 import { PropertyMap } from "@/components/properties/property-map";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface LaunchDetailsPageProps {
     params: Promise<{
@@ -153,44 +160,119 @@ export default async function LaunchDetailsPage({ params }: LaunchDetailsPagePro
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {launch.units.map((unit: any) => (
-                                    <div key={unit.id} className="card-premium p-0 overflow-hidden flex flex-col group hover:border-accent/50 transition-all duration-500">
-                                        <div className="relative aspect-video w-full">
-                                            <Image
-                                                src={unit.photo || photos[0]}
-                                                alt={unit.name}
-                                                fill
-                                                className="object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-700"
-                                            />
-                                            <div className="absolute top-4 right-4">
-                                                <Badge className="bg-white/90 text-black border-none font-black text-[9px] uppercase tracking-widest shadow-2xl">
-                                                    {unit.areaSqm}m²
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                        <div className="p-8 space-y-6">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <h4 className="text-xl font-black tracking-tight">{unit.name}</h4>
-                                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
-                                                        {unit.bedrooms} Quartos \u2022 {unit.parkingSpots} Vagas
-                                                    </p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className="block text-[8px] font-black text-muted-foreground uppercase tracking-widest">Valor da Unidade</span>
-                                                    <span className="text-lg font-black text-accent">R$ {unit.price ? Number(unit.price).toLocaleString('pt-BR') : 'Consulte'}</span>
+                                    <Dialog key={unit.id}>
+                                        <div className="card-premium p-0 overflow-hidden flex flex-col group hover:border-accent/50 transition-all duration-500">
+                                            <div className="relative aspect-video w-full">
+                                                <Image
+                                                    src={unit.photo || photos[0]}
+                                                    alt={unit.name}
+                                                    fill
+                                                    className="object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-700"
+                                                />
+                                                <div className="absolute top-4 right-4">
+                                                    <Badge className="bg-white/90 text-black border-none font-black text-[9px] uppercase tracking-widest shadow-2xl">
+                                                        {unit.areaSqm}m²
+                                                    </Badge>
                                                 </div>
                                             </div>
+                                            <div className="p-8 space-y-6">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <h4 className="text-xl font-black tracking-tight">{unit.name}</h4>
+                                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+                                                            {unit.bedrooms} Quartos • {unit.parkingSpots} Vagas
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="block text-[8px] font-black text-muted-foreground uppercase tracking-widest">Valor da Unidade</span>
+                                                        <span className="text-lg font-black text-accent">R$ {unit.price ? Number(unit.price).toLocaleString('pt-BR') : 'Consulte'}</span>
+                                                    </div>
+                                                </div>
 
-                                            <div className="flex gap-4 pt-2">
-                                                <div className={cn("p-2 rounded-lg border text-[9px] font-black uppercase tracking-tighter", unit.minhaCasaMinhaVida ? "border-success/30 text-success" : "border-border/50 text-muted-foreground opacity-30")}>MCMV</div>
-                                                <div className={cn("p-2 rounded-lg border text-[9px] font-black uppercase tracking-tighter", unit.allowsFinancing ? "border-accent/30 text-accent" : "border-border/50 text-muted-foreground opacity-30")}>Financiável</div>
+                                                {unit.targetAudience && unit.targetAudience.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {unit.targetAudience.map((ta: string) => (
+                                                            <Badge key={ta} variant="secondary" className="text-[8px] font-bold uppercase tracking-tighter bg-accent/5 text-accent border-accent/20">
+                                                                {ta}
+                                                            </Badge>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                <div className="flex gap-4 pt-2">
+                                                    <div className={cn("p-2 rounded-lg border text-[9px] font-black uppercase tracking-tighter", unit.minhaCasaMinhaVida ? "border-success/30 text-success" : "border-border/50 text-muted-foreground opacity-30")}>MCMV</div>
+                                                    <div className={cn("p-2 rounded-lg border text-[9px] font-black uppercase tracking-tighter", unit.allowsFinancing ? "border-accent/30 text-accent" : "border-border/50 text-muted-foreground opacity-30")}>Financiável</div>
+                                                </div>
+
+                                                <DialogTrigger asChild>
+                                                    <Button variant="outline" className="w-full h-12 rounded-xl border-border/50 font-black uppercase text-[10px] tracking-widest gap-2 group-hover:bg-accent group-hover:text-white group-hover:border-accent transition-all duration-300">
+                                                        Ver Detalhes da Planta <MoveRight className="h-3 w-3" />
+                                                    </Button>
+                                                </DialogTrigger>
                                             </div>
-
-                                            <Button variant="outline" className="w-full h-12 rounded-xl border-border/50 font-black uppercase text-[10px] tracking-widest gap-2 group-hover:bg-accent group-hover:text-white group-hover:border-accent transition-all duration-300">
-                                                Ver Detalhes da Planta <MoveRight className="h-3 w-3" />
-                                            </Button>
                                         </div>
-                                    </div>
+
+                                        <DialogContent className="max-w-4xl p-0 overflow-hidden border-none bg-transparent shadow-2xl rounded-[40px]">
+                                            <div className="bg-card border border-white/10 rounded-[40px] overflow-hidden flex flex-col md:flex-row h-full md:h-[600px]">
+                                                <div className="relative flex-1 bg-muted/20 h-[300px] md:h-full">
+                                                    <Image
+                                                        src={unit.photo || photos[0]}
+                                                        alt={unit.name}
+                                                        fill
+                                                        className="object-contain p-8"
+                                                    />
+                                                </div>
+                                                <div className="w-full md:w-[400px] p-10 flex flex-col justify-center space-y-8 bg-card relative z-10">
+                                                    <div className="space-y-4">
+                                                        <Badge className="bg-accent/10 text-accent border-none font-black text-[10px] uppercase tracking-widest">
+                                                            Detalhes da Unidade
+                                                        </Badge>
+                                                        <h3 className="text-4xl font-black tracking-tighter leading-none">{unit.name}</h3>
+                                                        <p className="text-muted-foreground text-sm font-medium">{launch.name} • {launch.neighborhood}</p>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-6 border-y border-border/50 py-8">
+                                                        <div className="space-y-1">
+                                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Área Total</p>
+                                                            <p className="text-xl font-bold">{unit.areaSqm}m²</p>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Valor</p>
+                                                            <p className="text-xl font-bold text-accent">R$ {unit.price ? Number(unit.price).toLocaleString('pt-BR') : 'Consulte'}</p>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Quartos</p>
+                                                            <p className="text-xl font-bold">{unit.bedrooms}</p>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Vagas</p>
+                                                            <p className="text-xl font-bold">{unit.parkingSpots}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-4">
+                                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Financiamento</p>
+                                                        <div className="flex gap-4">
+                                                            {unit.minhaCasaMinhaVida && (
+                                                                <div className="flex items-center gap-2 text-success font-bold text-sm">
+                                                                    <ShieldCheck className="h-4 w-4" /> MCMV Ativo
+                                                                </div>
+                                                            )}
+                                                            {unit.allowsFinancing && (
+                                                                <div className="flex items-center gap-2 text-primary font-bold text-sm">
+                                                                    <CreditCard className="h-4 w-4" /> Financiável
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <Button className="w-full h-16 rounded-2xl bg-foreground text-background font-black uppercase tracking-widest text-xs hover:scale-105 active:scale-95 transition-all">
+                                                        Solicitar Proposta
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
                                 ))}
                             </div>
                         </div>

@@ -38,8 +38,10 @@ export default function LaunchesPage() {
     ];
 
     const filteredLaunches = launches.filter(l => {
-        const matchesSearch = l.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            l.developer?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch =
+            l.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            l.developer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            l.neighborhood?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesTab = activeTab === "todos" || l.status === activeTab;
         return matchesSearch && matchesTab;
     });
@@ -114,62 +116,76 @@ export default function LaunchesPage() {
 
             {/* Marketplace Grid */}
             {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    {[1, 2].map(i => (
-                        <div key={i} className="h-[550px] rounded-[48px] bg-muted/10 animate-pulse" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="h-[500px] rounded-[48px] bg-muted/10 animate-pulse" />
                     ))}
                 </div>
             ) : filteredLaunches.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredLaunches.map((launch) => (
-                        <Link key={launch.id} href={`/lancamentos/${launch.id}`} className="group relative block overflow-hidden rounded-[48px] border-4 border-transparent hover:border-accent/30 transition-all duration-700 bg-muted/5">
-                            <div className="relative aspect-[16/10] w-full">
-                                <Image
-                                    src={launch.photos?.[0] || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1000&auto=format&fit=crop"}
-                                    alt={launch.name}
-                                    fill
-                                    className="object-cover group-hover:scale-105 transition-transform duration-1000"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-
-                                {/* Floating Badges */}
-                                <div className="absolute top-8 left-8 flex gap-3">
-                                    <Badge className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border-none shadow-xl", statusMap[launch.status as keyof typeof statusMap]?.bg, statusMap[launch.status as keyof typeof statusMap]?.color)}>
-                                        {statusMap[launch.status as keyof typeof statusMap]?.label}
-                                    </Badge>
+                        <Link key={launch.id} href={`/lancamentos/${launch.id}`} className="group h-full flex flex-col">
+                            <div className="card-premium overflow-hidden flex flex-col h-full hover:border-accent/40 transition-all duration-500 hover:shadow-2xl hover:shadow-accent/5">
+                                {/* Image Container */}
+                                <div className="relative aspect-[4/3] w-full overflow-hidden">
+                                    <Image
+                                        src={launch.photos?.[0] || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1000&auto=format&fit=crop"}
+                                        alt={launch.name}
+                                        fill
+                                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                                    />
+                                    <div className="absolute top-4 left-4">
+                                        <Badge className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border-none shadow-xl", statusMap[launch.status as keyof typeof statusMap]?.bg, statusMap[launch.status as keyof typeof statusMap]?.color)}>
+                                            {statusMap[launch.status as keyof typeof statusMap]?.label}
+                                        </Badge>
+                                    </div>
+                                    <div className="absolute bottom-4 left-4">
+                                        <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center shadow-lg border border-white/20">
+                                            <Rocket className="h-4 w-4" />
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end">
+                                {/* Content */}
+                                <div className="p-8 space-y-6 flex-1 flex flex-col">
                                     <div className="space-y-2">
-                                        <h3 className="text-4xl font-black text-white tracking-tighter drop-shadow-xl">{launch.name}</h3>
-                                        <p className="flex items-center gap-2 text-white/70 font-bold uppercase text-[10px] tracking-widest">
-                                            <MapPin className="h-3 w-3 text-accent" /> {launch.neighborhood}, {launch.city}
+                                        <div className="flex justify-between items-start">
+                                            <h3 className="text-xl font-bold tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-1">
+                                                {launch.name}
+                                            </h3>
+                                            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-all group-hover:translate-x-1" />
+                                        </div>
+                                        <p className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium italic opacity-70">
+                                            <MapPin className="h-3 w-3" /> {launch.neighborhood}, {launch.city}
                                         </p>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-white/50 text-[8px] font-black uppercase tracking-widest mb-1">A partir de</p>
-                                        <p className="text-2xl font-black text-white tracking-tight">
-                                            R$ {Number(launch.priceFrom).toLocaleString('pt-BR')}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <div className="p-10 flex items-center justify-between group-hover:bg-muted/10 transition-colors">
-                                <div className="flex gap-10">
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Incorporadora</span>
-                                        <p className="text-sm font-bold text-foreground opacity-80">{launch.developer || "Premium"}</p>
+                                    <div className="flex items-center justify-between border-y border-border/50 py-5">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Incorporadora</span>
+                                            <p className="text-sm font-bold truncate max-w-[120px]">
+                                                {launch.developer || "Premium"}
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-col gap-1 items-end text-right">
+                                            <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Entrega</span>
+                                            <p className="text-sm font-bold flex items-center gap-1.5">
+                                                <Calendar className="h-3 w-3 text-accent" /> {launch.deliveryDate ? new Date(launch.deliveryDate).toLocaleDateString('pt-BR', { month: '2-digit', year: '2-digit' }) : '-'}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Entrega</span>
-                                        <p className="text-sm font-bold text-foreground opacity-80 flex items-center gap-2">
-                                            <Calendar className="h-3 w-3 text-accent" /> {launch.deliveryDate ? new Date(launch.deliveryDate).toLocaleDateString('pt-BR', { month: '2-digit', year: '2-digit' }) : '-'}
-                                        </p>
+
+                                    <div className="pt-2 flex justify-between items-end mt-auto">
+                                        <div className="space-y-1">
+                                            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-accent">A partir de</p>
+                                            <p className="text-2xl font-black text-foreground tracking-tighter">
+                                                R$ {Number(launch.priceFrom).toLocaleString('pt-BR')}
+                                            </p>
+                                        </div>
+                                        <Badge variant="outline" className="rounded-full border-border/50 text-[9px] font-bold px-3">
+                                            {launch.standard}
+                                        </Badge>
                                     </div>
-                                </div>
-                                <div className="w-14 h-14 rounded-full bg-accent text-white flex items-center justify-center -rotate-45 group-hover:rotate-0 transition-all duration-500 shadow-xl shadow-accent/20">
-                                    <ChevronRight className="h-6 w-6" />
                                 </div>
                             </div>
                         </Link>
