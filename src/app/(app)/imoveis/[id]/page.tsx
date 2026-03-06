@@ -21,13 +21,14 @@ import Link from "next/link";
 import Image from "next/image";
 
 interface PropertyDetailsPageProps {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
 export default async function PropertyDetailsPage({ params }: PropertyDetailsPageProps) {
-    const property = await getPropertyById(params.id);
+    const { id } = await params;
+    const property = await getPropertyById(id);
 
     if (!property) {
         notFound();

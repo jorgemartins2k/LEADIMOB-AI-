@@ -88,8 +88,13 @@ export async function deleteProperty(id: string) {
 }
 
 export async function getPropertyById(id: string) {
-    const user = await getOrCreateInternalUser();
-    return db.query.properties.findFirst({
-        where: and(eq(properties.id, id), eq(properties.userId, user.id)),
-    });
+    try {
+        const user = await getOrCreateInternalUser();
+        return await db.query.properties.findFirst({
+            where: and(eq(properties.id, id), eq(properties.userId, user.id)),
+        });
+    } catch (error) {
+        console.error("Error fetching property by ID:", error);
+        return null;
+    }
 }
