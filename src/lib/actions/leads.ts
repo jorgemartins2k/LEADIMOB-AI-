@@ -130,15 +130,22 @@ export async function checkBusinessStatus() {
 
 export async function processAutomation() {
     const user = await getOrCreateInternalUser();
+    return processUserAutomation(user.id);
+}
 
+/**
+ * Core automation logic for a specific user.
+ * Can be called from background jobs or the frontend.
+ */
+export async function processUserAutomation(userId: string) {
     // 1. Check if in business hours
-    const inBusinessHours = await isCurrentlyInBusinessHours(user.id);
+    const inBusinessHours = await isCurrentlyInBusinessHours(userId);
     if (!inBusinessHours) return { success: false, message: "Fora do horário de expediente." };
 
     // 2. Find all 'waiting' leads for this user
     const pendingLeads = await db.query.leads.findMany({
         where: and(
-            eq(leads.userId, user.id),
+            eq(leads.userId, userId),
             eq(leads.status, "waiting")
         )
     });
@@ -156,7 +163,7 @@ export async function processAutomation() {
                 .where(eq(leads.id, lead.id));
             successCount++;
         } catch (err) {
-            console.error(`Erro ao processar lead ${lead.id}:`, err);
+            console.error(`Erro ao processar lead ${lead.id} do usuário ${userId}:`, err);
         }
     }
 
