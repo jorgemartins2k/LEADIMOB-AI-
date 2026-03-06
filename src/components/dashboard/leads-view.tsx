@@ -13,15 +13,17 @@ import {
     Clock,
     AlertCircle,
     Upload,
-    Loader2
+    Loader2,
+    Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { LeadImportModal } from './lead-import-modal';
-import { getLeads } from '@/lib/actions/leads';
+import { getLeads, deleteLead } from '@/lib/actions/leads';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 export function LeadsView() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -42,6 +44,23 @@ export function LeadsView() {
         };
         fetchLeads();
     }, []);
+
+    const handleDelete = async (id: string) => {
+        if (!confirm("Tem certeza que deseja excluir este lead?")) return;
+
+        try {
+            const result = await deleteLead(id);
+            if (result.success) {
+                toast.success("Lead excluído com sucesso.");
+                setLeadsList(prev => prev.filter(l => l.id !== id));
+            } else {
+                toast.error("Erro ao excluir lead.");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Erro ao excluir lead.");
+        }
+    };
 
     const filteredLeads = leadsList.filter((lead) => {
         const matchesSearch =
@@ -196,7 +215,7 @@ export function LeadsView() {
                                         <th className="text-left py-8 px-10 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Nome do Lead</th>
                                         <th className="text-left py-8 px-10 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] hidden md:table-cell">Contato Direto</th>
                                         <th className="text-left py-8 px-10 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Termômetro IA</th>
-                                        <th className="text-right py-8 px-10 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Gestão</th>
+                                        <th className="text-right py-8 px-10 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Excluir</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border/50">
@@ -232,8 +251,16 @@ export function LeadsView() {
                                                 </span>
                                             </td>
                                             <td className="py-8 px-10 text-right">
-                                                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl hover:bg-muted/50 btn-interactive">
-                                                    <MoreVertical className="w-5 h-5 text-muted-foreground" />
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDelete(lead.id);
+                                                    }}
+                                                    className="h-12 w-12 rounded-2xl hover:bg-destructive/10 hover:text-destructive btn-interactive"
+                                                >
+                                                    <Trash2 className="w-5 h-5" />
                                                 </Button>
                                             </td>
                                         </tr>
