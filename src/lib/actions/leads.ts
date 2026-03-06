@@ -9,6 +9,7 @@ import { z } from "zod";
 
 import { getOrCreateInternalUser } from "@/lib/auth-utils";
 import { initiateRaquelContact } from "@/lib/ai/raquel";
+import { isCurrentlyInBusinessHours } from "@/lib/utils/business-hours";
 
 const leadSchema = z.object({
     name: z.string().min(2, "O nome deve ter pelo menos 2 caracteres"),
@@ -47,6 +48,12 @@ export async function createLead(data: z.infer<typeof leadSchema>) {
     const user = await getOrCreateInternalUser();
     const validated = leadSchema.parse(data);
 
+    // 0. Check business hours
+    const inBusinessHours = await isCurrentlyInBusinessHours(user.id);
+    if (inBusinessHours) {
+        return { error: "Não é permitido lançar leads durante o horário de atendimento. O sistema automatizado está em operação." };
+    }
+
     try {
         // 1. Check quarantine
         const inQuarantine = await checkQuarantine(validated.phone);
@@ -68,13 +75,16 @@ export async function createLead(data: z.infer<typeof leadSchema>) {
 
         const newLeadId = result[0].insertedId;
 
-        // 3. Trigger Raquel
-        try {
-            await initiateRaquelContact(newLeadId);
-        } catch (raquelErr) {
-            console.error("Erro ao iniciar contato da Raquel:", raquelErr);
-            // Non-blocking error, lead is already saved
-        }
+
+        // 3. Trigger Raquel (AI Contact) 
+        // Logic: Since this is outside business hours (blocked by check above),
+        // we naturally wait for the next automation cycle or next business hours start.
+        // However, if the user wants them contacted in the NEXT session, we don't call it now.
+        // If we call it now, Raquel might message at night.
+        // User says: "são contactados pela AI no proximo expediente".
+
+        // So we just save with "waiting" status and don't call initiateRaquelContact here.
+        // A background worker or the next session start will trigger them.
 
         revalidatePath("/leads");
         revalidatePath("/dashboard");
@@ -94,4 +104,26 @@ export async function deleteLead(id: string) {
 
     revalidatePath("/leads");
     return { success: true };
+}
+
+export async function cleanupLeads() {
+    const user = await getOrCreateInternalUser();
+
+    try {
+        await db.delete(leads).where(eq(leads.userId, user.id));
+        revalidatePath("/leads");
+        revalidatePath("/dashboard");
+        return { success: true };
+    } catch (error: any) {
+        console.error("Erro ao limpar lista:", error);
+        return { error: "Erro ao limpar a lista de leads." };
+    }
+}
+
+/**
+ * Checks if current user is in business hours (called from frontend)
+ */
+export async function checkBusinessStatus() {
+    const user = await getOrCreateInternalUser();
+    return isCurrentlyInBusinessHours(user.id);
 }
