@@ -1,20 +1,34 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Search, Filter, Building2, Rocket, Construction, CheckCircle2, Lock, MapPin, ChevronRight, Calendar } from "lucide-react";
+import { Plus, Search, Filter, Building2, Rocket, Construction, CheckCircle2, Lock, MapPin, ChevronRight, Calendar, Trash2, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
-import { getLaunches } from "@/lib/actions/launches";
+import { getLaunches, deleteLaunch } from "@/lib/actions/launches";
+import { toast } from "sonner";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
 
 export default function LaunchesPage() {
     const [activeTab, setActiveTab] = useState("todos");
     const [launches, setLaunches] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+
+    // Delete state
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [launchToDelete, setLaunchToDelete] = useState<{ id: string, name: string } | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         const fetchLaunches = async () => {
@@ -29,6 +43,32 @@ export default function LaunchesPage() {
         };
         fetchLaunches();
     }, []);
+
+    const confirmDelete = (e: React.MouseEvent, id: string, name: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setLaunchToDelete({ id, name });
+        setIsDeleteDialogOpen(true);
+    };
+
+    const handleDelete = async () => {
+        if (!launchToDelete) return;
+        setIsDeleting(true);
+        try {
+            const result = await deleteLaunch(launchToDelete.id);
+            if (result.success) {
+                toast.success(`Lançamento "${launchToDelete.name}" excluído com sucesso.`);
+                setLaunches(prev => prev.filter(l => l.id !== launchToDelete.id));
+                setIsDeleteDialogOpen(false);
+            } else {
+                toast.error("Erro ao excluir lançamento.");
+            }
+        } catch (error) {
+            toast.error("Erro ao excluir lançamento.");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     const tabs = [
         { id: "todos", label: "Todos" },
@@ -182,9 +222,19 @@ export default function LaunchesPage() {
                                                 R$ {Number(launch.priceFrom).toLocaleString('pt-BR')}
                                             </p>
                                         </div>
-                                        <Badge variant="outline" className="rounded-full border-border/50 text-[9px] font-bold px-3">
-                                            {launch.standard}
-                                        </Badge>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="outline" className="rounded-full border-border/50 text-[9px] font-bold px-3">
+                                                {launch.standard}
+                                            </Badge>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={(e) => confirmDelete(e, launch.id, launch.name)}
+                                                className="h-9 w-9 rounded-xl hover:bg-destructive/10 hover:text-destructive text-muted-foreground/40 transition-all"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -210,6 +260,52 @@ export default function LaunchesPage() {
                     </div>
                 </div>
             )}
+            {/* Modal de Exclusão Premium */}
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent className="max-w-md p-0 overflow-hidden border-none bg-transparent shadow-2xl">
+                    <div className="relative bg-card/90 backdrop-blur-2xl border border-white/10 rounded-[40px] overflow-hidden p-10 animate-in zoom-in duration-300">
+                        {/* Background Decoration */}
+                        <div className="absolute -top-24 -right-24 w-48 h-48 bg-destructive/10 blur-[80px] rounded-full" />
+
+                        <div className="relative z-10 space-y-8">
+                            <div className="w-20 h-20 rounded-3xl bg-destructive/10 flex items-center justify-center mx-auto shadow-inner border border-destructive/20 rotate-3 group-hover:rotate-0 transition-transform">
+                                <AlertTriangle className="w-10 h-10 text-destructive animate-pulse" />
+                            </div>
+
+                            <div className="space-y-3 text-center">
+                                <DialogTitle className="text-2xl font-black text-foreground uppercase tracking-tighter leading-none">
+                                    Confirmar Exclusão
+                                </DialogTitle>
+                                <DialogDescription className="text-muted-foreground font-medium leading-relaxed">
+                                    Você está prestes a remover o lançamento <span className="text-foreground font-bold italic">"{launchToDelete?.name}"</span>. Esta ação não poderá ser desfeita.
+                                </DialogDescription>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => setIsDeleteDialogOpen(false)}
+                                    className="h-16 rounded-2xl font-black uppercase tracking-widest text-[10px] text-muted-foreground hover:bg-muted/50"
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    onClick={handleDelete}
+                                    disabled={isDeleting}
+                                    className="h-16 rounded-2xl bg-destructive text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-destructive/20 hover:scale-105 active:scale-95 transition-all gap-2"
+                                >
+                                    {isDeleting ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Trash2 className="w-4 h-4" />
+                                    )}
+                                    Excluir Agora
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

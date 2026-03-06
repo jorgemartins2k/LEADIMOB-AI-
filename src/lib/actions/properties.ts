@@ -89,33 +89,49 @@ export async function deleteProperty(id: string) {
 
 export async function getPropertyById(id: string) {
     try {
-        console.log("---- Fetching Property ID:", id, "----");
         const user = await getOrCreateInternalUser();
-        // Fallback robusto para Edge/Serveless onde o Drizzle às vezes falha ao serializar datas/arrays
+        // SQL robusto para evitar erros de serialização no Next.js 15 Edge/Serverless
         const result = await db.execute(sql`
-            SELECT * FROM properties 
-            WHERE id = ${id} AND user_id = ${user.id}
+            SELECT 
+                id::text, 
+                user_id::text, 
+                title, 
+                description, 
+                type, 
+                city, 
+                neighborhood, 
+                address, 
+                price::text, 
+                area_sqm::text, 
+                bedrooms, 
+                bathrooms, 
+                parking_spots, 
+                standard, 
+                target_audience, 
+                status, 
+                photos, 
+                minha_casa_minha_vida, 
+                allows_financing, 
+                down_payment::text, 
+                condo_fee::text, 
+                is_condo
+            FROM properties 
+            WHERE id = ${id}::uuid AND user_id = ${user.id}::uuid
             LIMIT 1
         `);
 
-        if (result.length === 0) {
-            console.log("Property not found for user:", user.id);
-            return null;
-        }
+        if (result.length === 0) return null;
 
-        // Converter snake_case para camelCase
         const row = result[0] as any;
-        console.log("RAW DB Row keys:", Object.keys(row));
 
-        // Forçar tipos primitivos e strings para tudo que for complexo (Date, JSON, Arrays)
-        // Isso evita o erro de digest de serialização dos Server Components do Next 15
+        // Limpeza absoluta de tipos para garantir serialização do Server Component
         return {
             id: String(row.id),
             userId: String(row.user_id),
-            title: String(row.title),
+            title: String(row.title || ''),
             description: row.description ? String(row.description) : null,
-            type: String(row.type),
-            city: String(row.city),
+            type: String(row.type || ''),
+            city: String(row.city || ''),
             neighborhood: row.neighborhood ? String(row.neighborhood) : null,
             address: row.address ? String(row.address) : null,
             price: row.price ? String(row.price) : null,
@@ -125,7 +141,7 @@ export async function getPropertyById(id: string) {
             parkingSpots: row.parking_spots !== null ? Number(row.parking_spots) : null,
             standard: row.standard ? String(row.standard) : 'medio',
             targetAudience: Array.isArray(row.target_audience) ? row.target_audience : [],
-            status: String(row.status),
+            status: String(row.status || ''),
             photos: Array.isArray(row.photos) ? row.photos : [],
             minhaCasaMinhaVida: Boolean(row.minha_casa_minha_vida),
             allowsFinancing: Boolean(row.allows_financing),
@@ -135,6 +151,6 @@ export async function getPropertyById(id: string) {
         };
     } catch (error) {
         console.error("Critical Error fetching property by ID:", error);
-        return null; // Silent catch - let the component handle `null`
+        return null;
     }
 }

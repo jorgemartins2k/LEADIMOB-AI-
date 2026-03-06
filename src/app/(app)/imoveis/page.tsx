@@ -3,17 +3,19 @@
 import { useState, useEffect } from "react";
 
 export const dynamic = "force-dynamic";
-import { Plus, Search, Filter, Home, MapPin, Maximize2, BedDouble, Car, ChevronRight, X } from "lucide-react";
+import { Plus, Search, Filter, Home, MapPin, Maximize2, BedDouble, Car, ChevronRight, X, Trash2, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
-import { getProperties } from "@/lib/actions/properties";
+import { getProperties, deleteProperty } from "@/lib/actions/properties";
+import { toast } from "sonner";
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogFooter,
@@ -43,6 +45,11 @@ export default function PropertiesPage() {
     });
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
+    // Delete state
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [propertyToDelete, setPropertyToDelete] = useState<{ id: string, title: string } | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     useEffect(() => {
         const fetchProperties = async () => {
             try {
@@ -56,6 +63,32 @@ export default function PropertiesPage() {
         };
         fetchProperties();
     }, []);
+
+    const confirmDelete = (e: React.MouseEvent, id: string, title: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setPropertyToDelete({ id, title });
+        setIsDeleteDialogOpen(true);
+    };
+
+    const handleDelete = async () => {
+        if (!propertyToDelete) return;
+        setIsDeleting(true);
+        try {
+            const result = await deleteProperty(propertyToDelete.id);
+            if (result.success) {
+                toast.success(`Imóvel "${propertyToDelete.title}" excluído com sucesso.`);
+                setProperties(prev => prev.filter(p => p.id !== propertyToDelete.id));
+                setIsDeleteDialogOpen(false);
+            } else {
+                toast.error("Erro ao excluir imóvel.");
+            }
+        } catch (error) {
+            toast.error("Erro ao excluir imóvel.");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     const filteredProperties = properties.filter(p => {
         const matchesSearch =
@@ -222,9 +255,19 @@ export default function PropertiesPage() {
                                                 R$ {Number(property.price).toLocaleString('pt-BR')}
                                             </p>
                                         </div>
-                                        <Badge variant="outline" className="rounded-full border-border/50 text-[9px] font-bold px-3">
-                                            {property.standard}
-                                        </Badge>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="outline" className="rounded-full border-border/50 text-[9px] font-bold px-3">
+                                                {property.standard}
+                                            </Badge>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={(e) => confirmDelete(e, property.id, property.title)}
+                                                className="h-9 w-9 rounded-xl hover:bg-destructive/10 hover:text-destructive text-muted-foreground/40 transition-all"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -348,6 +391,53 @@ export default function PropertiesPage() {
                                 Aplicar Filtros
                             </Button>
                         </DialogFooter>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal de Exclusão Premium */}
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent className="max-w-md p-0 overflow-hidden border-none bg-transparent shadow-2xl">
+                    <div className="relative bg-card/90 backdrop-blur-2xl border border-white/10 rounded-[40px] overflow-hidden p-10 animate-in zoom-in duration-300">
+                        {/* Background Decoration */}
+                        <div className="absolute -top-24 -right-24 w-48 h-48 bg-destructive/10 blur-[80px] rounded-full" />
+
+                        <div className="relative z-10 space-y-8">
+                            <div className="w-20 h-20 rounded-3xl bg-destructive/10 flex items-center justify-center mx-auto shadow-inner border border-destructive/20 rotate-3 group-hover:rotate-0 transition-transform">
+                                <AlertTriangle className="w-10 h-10 text-destructive animate-pulse" />
+                            </div>
+
+                            <div className="space-y-3 text-center">
+                                <DialogTitle className="text-2xl font-black text-foreground uppercase tracking-tighter leading-none">
+                                    Confirmar Exclusão
+                                </DialogTitle>
+                                <DialogDescription className="text-muted-foreground font-medium leading-relaxed">
+                                    Você está prestes a remover o imóvel <span className="text-foreground font-bold italic">"{propertyToDelete?.title}"</span>. Esta ação não poderá ser desfeita.
+                                </DialogDescription>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => setIsDeleteDialogOpen(false)}
+                                    className="h-16 rounded-2xl font-black uppercase tracking-widest text-[10px] text-muted-foreground hover:bg-muted/50"
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    onClick={handleDelete}
+                                    disabled={isDeleting}
+                                    className="h-16 rounded-2xl bg-destructive text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-destructive/20 hover:scale-105 active:scale-95 transition-all gap-2"
+                                >
+                                    {isDeleting ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Trash2 className="w-4 h-4" />
+                                    )}
+                                    Excluir Agora
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                 </DialogContent>
             </Dialog>
