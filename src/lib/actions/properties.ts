@@ -3,7 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { properties, users } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -90,9 +90,41 @@ export async function deleteProperty(id: string) {
 export async function getPropertyById(id: string) {
     try {
         const user = await getOrCreateInternalUser();
-        return await db.query.properties.findFirst({
-            where: and(eq(properties.id, id), eq(properties.userId, user.id)),
-        });
+        // Fallback robusto para Edge/Serveless onde o Drizzle às vezes falha ao serializar datas/arrays
+        const result = await db.execute(sql`
+            SELECT * FROM properties 
+            WHERE id = ${id} AND user_id = ${user.id}
+            LIMIT 1
+        `);
+
+        if (result.length === 0) return null;
+
+        // Converter snake_case para camelCase
+        const row = result[0];
+        return {
+            id: row.id,
+            userId: row.user_id,
+            title: row.title,
+            description: row.description,
+            type: row.type,
+            city: row.city,
+            neighborhood: row.neighborhood,
+            address: row.address,
+            price: row.price,
+            areaSqm: row.area_sqm,
+            bedrooms: row.bedrooms,
+            bathrooms: row.bathrooms,
+            parkingSpots: row.parking_spots,
+            standard: row.standard,
+            targetAudience: row.target_audience,
+            status: row.status,
+            photos: row.photos,
+            minhaCasaMinhaVida: row.minha_casa_minha_vida,
+            allowsFinancing: row.allows_financing,
+            downPayment: row.down_payment,
+            condoFee: row.condo_fee,
+            isCondo: row.is_condo,
+        };
     } catch (error) {
         console.error("Error fetching property by ID:", error);
         return null;
