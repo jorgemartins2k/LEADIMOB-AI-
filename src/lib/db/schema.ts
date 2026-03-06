@@ -2,7 +2,7 @@ import {
     pgTable, text, timestamp, uuid, numeric, smallint,
     boolean, date, time, uniqueIndex
 } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
+import { sql, relations } from 'drizzle-orm';
 
 export const users = pgTable('users', {
     id: uuid('id').primaryKey().defaultRandom(),
@@ -181,3 +181,14 @@ export const appointments = pgTable('appointments', {
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
+
+export const launchesRelations = relations(launches, ({ many }) => ({
+    units: many(launchUnits),
+}));
+
+export const launchUnitsRelations = relations(launchUnits, ({ one }) => ({
+    launch: one(launches, {
+        fields: [launchUnits.launchId],
+        references: [launches.id],
+    }),
+}));
