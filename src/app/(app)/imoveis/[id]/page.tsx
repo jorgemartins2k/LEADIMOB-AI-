@@ -1,5 +1,7 @@
 import { getPropertyById } from "@/lib/actions/properties";
 import { notFound } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 import {
     ChevronLeft,
     MapPin,

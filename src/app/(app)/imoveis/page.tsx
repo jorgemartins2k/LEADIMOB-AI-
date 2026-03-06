@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+
+export const dynamic = "force-dynamic";
 import { Plus, Search, Filter, Home, MapPin, Maximize2, BedDouble, Car, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
