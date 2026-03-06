@@ -45,7 +45,7 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
             )
         }
 
-        const photos = property?.photos?.length > 0
+        const photos = Array.isArray(property?.photos) && property.photos.length > 0
             ? property.photos
             : ["https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1000&auto=format&fit=crop"];
 
