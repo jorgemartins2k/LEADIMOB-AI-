@@ -38,10 +38,10 @@ export default function DashboardPage() {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div className="space-y-2">
-                    <h1 className="heading-xl text-foreground">
+                    <h1 className="text-3xl md:text-[40px] lg:text-[48px] font-bold tracking-tight text-foreground">
                         Olá, <span className="text-gradient-accent">Jorge Martins</span>
                     </h1>
-                    <p className="text-body font-medium">Seu ecossistema de inteligência imobiliária está pronto.</p>
+                    <p className="text-sm md:text-base text-muted-foreground font-medium">Seu ecossistema de inteligência imobiliária está pronto.</p>
                 </div>
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" className="relative h-14 w-14 rounded-2xl bg-card border border-border/50 shadow-sm hover:shadow-md hover:bg-muted btn-interactive" asChild>
@@ -65,9 +65,9 @@ export default function DashboardPage() {
                             className="group card-premium p-8 flex items-center justify-between"
                         >
                             <div className="space-y-3">
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground group-hover:text-accent transition-colors">{stat.title}</p>
+                                <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground group-hover:text-accent transition-colors">{stat.title}</p>
                                 <div className="flex items-baseline gap-2">
-                                    <h3 className="text-4xl font-bold text-foreground tracking-tighter">{stat.value}</h3>
+                                    <h3 className="text-3xl md:text-4xl font-bold text-foreground tracking-tighter">{stat.value}</h3>
                                 </div>
                             </div>
                             <div className={cn(
@@ -91,7 +91,7 @@ export default function DashboardPage() {
                                     <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
                                     Qualificação Ativa
                                 </div>
-                                <h3 className="text-3xl font-bold text-white leading-tight uppercase tracking-tighter">
+                                <h3 className="text-2xl md:text-3xl font-bold text-white leading-tight uppercase tracking-tighter">
                                     Raquel está <br />
                                     <span className="text-accent">Convertendo Leads</span>
                                 </h3>
@@ -137,9 +137,9 @@ export default function DashboardPage() {
                                     )}>
                                         <Calendar className="w-6 h-6" />
                                     </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-base font-black text-foreground">{item.title}</span>
-                                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1.5">{item.time} • {item.client}</span>
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-sm md:text-base font-black text-foreground truncate">{item.title}</span>
+                                        <span className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1 md:mt-1.5">{item.time} • {item.client}</span>
                                     </div>
                                 </Link>
                             ))}

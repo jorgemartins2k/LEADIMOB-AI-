@@ -96,9 +96,9 @@ export default function LaunchesPage() {
         <div className="space-y-12 animate-in fade-in slide-in-from-top-4 duration-1000 pb-20">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-                <div className="space-y-3">
-                    <h1 className="heading-xl text-foreground">Novos <span className="text-gradient-accent">Lançamentos</span></h1>
-                    <p className="text-body font-medium leading-relaxed">Gerencie unidades e materiais de venda dos seus empreendimentos em destaque.</p>
+                <div className="space-y-2">
+                    <h1 className="text-3xl md:text-[40px] lg:text-[48px] font-bold tracking-tight text-foreground">Novos <span className="text-gradient-accent">Lançamentos</span></h1>
+                    <p className="text-sm md:text-base text-muted-foreground font-medium leading-relaxed">Gerencie unidades e materiais de venda dos seus empreendimentos em destaque.</p>
                 </div>
                 <Button className="btn-primary h-16 px-10 font-black uppercase text-[10px] tracking-[0.2em] gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all" asChild>
                     <Link href="/lancamentos/novo">
@@ -116,9 +116,9 @@ export default function LaunchesPage() {
                     { label: "Pré", value: launches.filter(l => l.status === 'pre_launch').length },
                     { label: "Investindo", value: "8" },
                 ].map((stat) => (
-                    <div key={stat.label} className="card-premium p-8 flex flex-col gap-3">
-                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest block">{stat.label}</span>
-                        <div className="text-4xl font-black text-foreground tracking-tighter">{stat.value}</div>
+                    <div key={stat.label} className="card-premium p-4 sm:p-6 md:p-8 flex flex-col gap-2 sm:gap-3">
+                        <span className="text-[8px] sm:text-[9px] font-black text-muted-foreground uppercase tracking-widest block">{stat.label}</span>
+                        <div className="text-2xl sm:text-3xl md:text-4xl font-black text-foreground tracking-tighter">{stat.value}</div>
                     </div>
                 ))}
             </div>
@@ -195,43 +195,43 @@ export default function LaunchesPage() {
                                 </div>
 
                                 {/* Content */}
-                                <div className="p-8 space-y-6 flex-1 flex flex-col">
+                                <div className="p-6 md:p-8 space-y-4 md:space-y-6 flex-1 flex flex-col">
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-start">
-                                            <h3 className="text-xl font-bold tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-1">
+                                            <h3 className="text-lg md:text-xl font-bold tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-1">
                                                 {launch.name}
                                             </h3>
                                             <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-all group-hover:translate-x-1" />
                                         </div>
-                                        <p className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium italic opacity-70">
+                                        <p className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground font-medium italic opacity-70">
                                             <MapPin className="h-3 w-3" /> {launch.neighborhood}, {launch.city}
                                         </p>
                                     </div>
 
-                                    <div className="flex items-center justify-between border-y border-border/50 py-5">
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Incorporadora</span>
-                                            <p className="text-sm font-bold truncate max-w-[120px]">
+                                    <div className="flex items-center justify-between border-y border-border/50 py-4 md:py-5">
+                                        <div className="flex flex-col gap-0.5 md:gap-1">
+                                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Incorporadora</span>
+                                            <p className="text-xs md:text-sm font-bold truncate max-w-[100px] md:max-w-[120px]">
                                                 {launch.developer || "Premium"}
                                             </p>
                                         </div>
-                                        <div className="flex flex-col gap-1 items-end text-right">
-                                            <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Entrega</span>
-                                            <p className="text-sm font-bold flex items-center gap-1.5">
+                                        <div className="flex flex-col gap-0.5 md:gap-1 items-end text-right">
+                                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Entrega</span>
+                                            <p className="text-xs md:text-sm font-bold flex items-center gap-1.5">
                                                 <Calendar className="h-3 w-3 text-accent" /> {launch.deliveryDate ? new Date(launch.deliveryDate).toLocaleDateString('pt-BR', { month: '2-digit', year: '2-digit' }) : '-'}
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="pt-2 flex justify-between items-end mt-auto">
-                                        <div className="space-y-1">
-                                            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-accent">A partir de</p>
-                                            <p className="text-2xl font-black text-foreground tracking-tighter">
+                                    <div className="pt-1 md:pt-2 flex justify-between items-end mt-auto">
+                                        <div className="space-y-0.5 md:space-y-1">
+                                            <p className="text-[7px] md:text-[8px] font-black uppercase tracking-[0.2em] text-accent">A partir de</p>
+                                            <p className="text-xl md:text-2xl font-black text-foreground tracking-tighter">
                                                 R$ {Number(launch.priceFrom).toLocaleString('pt-BR')}
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <Badge variant="outline" className="rounded-full border-border/50 text-[9px] font-bold px-3">
+                                            <Badge variant="outline" className="rounded-full border-border/50 text-[8px] md:text-[9px] font-bold px-2 md:px-3">
                                                 {launch.standard}
                                             </Badge>
                                         </div>

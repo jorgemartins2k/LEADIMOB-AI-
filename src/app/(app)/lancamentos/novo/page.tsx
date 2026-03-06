@@ -179,9 +179,9 @@ export default function NewLaunchPage() {
                     </div>
 
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="p-10 space-y-12">
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 sm:p-6 md:p-10 space-y-8 md:space-y-12">
                             {/* Dados Básicos */}
-                            <div className="space-y-8">
+                            <div className="space-y-6 md:space-y-8">
                                 <FormField
                                     name="name"
                                     render={({ field }) => (
@@ -195,7 +195,7 @@ export default function NewLaunchPage() {
                                     )}
                                 />
 
-                                <div className="grid grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <FormField
                                         name="developer"
                                         render={({ field }) => (
@@ -223,7 +223,7 @@ export default function NewLaunchPage() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-6 pt-6 border-t border-border">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-border">
                                 <FormField
                                     name="city"
                                     render={({ field }) => (
@@ -252,7 +252,7 @@ export default function NewLaunchPage() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-6 pt-6 border-t border-border">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-border">
                                 <FormField
                                     name="status"
                                     render={({ field }) => (
@@ -401,12 +401,12 @@ export default function NewLaunchPage() {
                                                 </button>
                                             )}
 
-                                            <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <FormField
                                                     name={`units.${index}.name`}
                                                     render={({ field }) => (
                                                         <FormItem className="space-y-3">
-                                                            <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Nome da Planta / Modelo</FormLabel>
+                                                            <FormLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Nome da Planta / Modelo</FormLabel>
                                                             <FormControl>
                                                                 <Input placeholder="Ex: Loft Concept - 45m²" {...field} className="bg-white/5 border-border h-12 rounded-xl font-bold" />
                                                             </FormControl>
@@ -417,7 +417,7 @@ export default function NewLaunchPage() {
                                                     name={`units.${index}.price`}
                                                     render={({ field }) => (
                                                         <FormItem className="space-y-3">
-                                                            <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Valor da Unidade (R$)</FormLabel>
+                                                            <FormLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Valor da Unidade (R$)</FormLabel>
                                                             <FormControl>
                                                                 <Input placeholder="Ex: 450000" {...field} className="bg-white/5 border-accent/30 h-12 rounded-xl font-bold text-accent" />
                                                             </FormControl>
@@ -426,7 +426,7 @@ export default function NewLaunchPage() {
                                                 />
                                             </div>
 
-                                            <div className="grid grid-cols-4 gap-4">
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                                 <FormField
                                                     name={`units.${index}.areaSqm`}
                                                     render={({ field }) => (
@@ -686,15 +686,15 @@ export default function NewLaunchPage() {
                             />
 
                             {/* Action Buttons */}
-                            <div className="flex items-center gap-4 pt-10 border-t border-border">
-                                <Link href="/lancamentos" className="flex-1">
+                            <div className="flex flex-col sm:flex-row items-center gap-4 pt-10 border-t border-border">
+                                <Link href="/lancamentos" className="w-full sm:flex-1">
                                     <Button type="button" variant="outline" className="w-full h-16 rounded-[24px] border-border/50 font-bold text-muted-foreground hover:bg-muted">
                                         Cancelar
                                     </Button>
                                 </Link>
                                 <Button
                                     type="submit"
-                                    className="flex-[2] h-16 rounded-[24px] bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold transition-all shadow-xl shadow-black/10 active:scale-95 disabled:opacity-50"
+                                    className="w-full sm:flex-[2] h-16 rounded-[24px] bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold transition-all shadow-xl shadow-black/10 active:scale-95 disabled:opacity-50"
                                     disabled={isSaving}
                                 >
                                     {isSaving ? (

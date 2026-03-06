@@ -77,25 +77,25 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
                             className="object-cover transition-transform duration-700 group-hover:scale-105"
                             priority
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
-
-                        <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between">
-                            <div className="space-y-2">
-                                <Badge className="bg-primary hover:bg-primary text-white border-none px-4 py-1.5 rounded-full text-[10px] uppercase font-bold tracking-widest shadow-xl">
-                                    {property.standard === 'alto' ? 'Alto Padrão' : property.standard === 'medio' ? 'Padrão Médio' : 'Econômico'}
-                                </Badge>
-                                <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-md">
-                                    {property.title}
-                                </h1>
-                                <p className="flex items-center gap-2 text-white/80 font-medium">
-                                    <MapPin className="h-4 w-4" /> {property.neighborhood}, {property.city}
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Preço Sugerido</p>
-                                <p className="text-4xl font-black text-white tracking-tighter">
-                                    R$ {property.price ? Number(property.price).toLocaleString('pt-BR') : 'Consulte'}
-                                </p>
+                        <div className="absolute inset-x-0 bottom-0 p-6 md:p-8 bg-gradient-to-t from-black/90 via-black/30 to-transparent">
+                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                                <div className="space-y-2">
+                                    <Badge className="bg-primary hover:bg-primary text-white border-none px-4 py-1.5 rounded-full text-[9px] md:text-[10px] uppercase font-bold tracking-widest shadow-xl">
+                                        {property.standard === 'alto' ? 'Alto Padrão' : property.standard === 'medio' ? 'Padrão Médio' : 'Econômico'}
+                                    </Badge>
+                                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight drop-shadow-md">
+                                        {property.title}
+                                    </h1>
+                                    <p className="flex items-center gap-2 text-white/80 font-medium text-xs md:text-sm">
+                                        <MapPin className="h-4 w-4" /> {property.neighborhood}, {property.city}
+                                    </p>
+                                </div>
+                                <div className="text-left md:text-right">
+                                    <p className="text-white/60 text-[10px] md:text-xs font-bold uppercase tracking-widest mb-1">Preço Sugerido</p>
+                                    <p className="text-3xl md:text-4xl font-black text-white tracking-tighter">
+                                        R$ {property.price ? Number(property.price).toLocaleString('pt-BR') : 'Consulte'}
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -108,13 +108,13 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
                             { label: "Vagas", val: property.parkingSpots, icon: Car, desc: "Estacionamento" },
                             { label: "Tipo", val: property.type, icon: Building, desc: "Categoria" },
                         ].map((spec, i) => (
-                            <div key={i} className="card-premium p-6 flex flex-col gap-3 group hover:border-primary/30 transition-all">
-                                <spec.icon className="h-5 w-5 text-primary opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all" />
+                            <div key={i} className="card-premium p-4 md:p-6 flex flex-col gap-2 md:gap-3 group hover:border-primary/30 transition-all">
+                                <spec.icon className="h-4 w-4 md:h-5 md:w-5 text-primary opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all" />
                                 <div className="space-y-0.5">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{spec.label}</p>
-                                    <p className="text-xl font-bold tracking-tight text-foreground">{spec.val || '-'}</p>
+                                    <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-muted-foreground">{spec.label}</p>
+                                    <p className="text-lg md:text-xl font-bold tracking-tight text-foreground">{spec.val || '-'}</p>
                                 </div>
-                                <p className="text-[9px] text-muted-foreground italic font-medium opacity-50">{spec.desc}</p>
+                                <p className="text-[8px] md:text-[9px] text-muted-foreground italic font-medium opacity-50">{spec.desc}</p>
                             </div>
                         ))}
                     </div>

@@ -152,7 +152,7 @@ export default function NewPropertyPage() {
                     </div>
 
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="p-10 space-y-10">
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 sm:p-8 md:p-10 space-y-8 md:space-y-10">
                             {/* Título */}
                             <FormField
                                 name="title"
@@ -172,7 +172,7 @@ export default function NewPropertyPage() {
                             />
 
                             {/* Tipo e Preço */}
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <FormField
                                     name="type"
                                     render={({ field }) => (
@@ -214,7 +214,7 @@ export default function NewPropertyPage() {
                             </div>
 
                             {/* Financiamento e MCMV */}
-                            <div className="grid grid-cols-2 gap-6 pt-6 border-t border-border">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-border">
                                 <FormField
                                     name="minhaCasaMinhaVida"
                                     render={({ field }) => (
@@ -348,27 +348,29 @@ export default function NewPropertyPage() {
                                 render={({ field }) => (
                                     <FormItem className="space-y-4">
                                         <FormLabel className="text-sm font-bold text-foreground">Padrão do Imóvel</FormLabel>
-                                        <div className="grid grid-cols-3 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                             {standards.map((std) => (
                                                 <button
                                                     key={std.id}
                                                     type="button"
                                                     onClick={() => field.onChange(std.id)}
                                                     className={cn(
-                                                        "flex flex-col items-center justify-center p-6 rounded-[24px] border-2 transition-all duration-300 group",
+                                                        "flex sm:flex-col items-center sm:justify-center p-4 sm:p-6 rounded-[20px] sm:rounded-[24px] border-2 transition-all duration-300 group gap-4 sm:gap-0",
                                                         field.value === std.id
                                                             ? "bg-primary/5 border-primary shadow-lg shadow-primary/5"
                                                             : "bg-muted/10 border-transparent hover:border-border hover:bg-muted/20"
                                                     )}
                                                 >
                                                     <div className={cn(
-                                                        "w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300",
+                                                        "w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center sm:mb-4 transition-all duration-300",
                                                         field.value === std.id ? "bg-primary text-white scale-110" : "bg-muted/30 text-muted-foreground group-hover:scale-105"
                                                     )}>
-                                                        <std.icon className="w-6 h-6" />
+                                                        <std.icon className="w-5 h-5 sm:w-6 sm:h-6" />
                                                     </div>
-                                                    <span className={cn("text-sm font-bold", field.value === std.id ? "text-primary" : "text-foreground")}>{std.label}</span>
-                                                    <span className="text-[10px] text-muted-foreground mt-1 text-center font-medium opacity-60 leading-tight">{std.description}</span>
+                                                    <div className="flex flex-col sm:items-center">
+                                                        <span className={cn("text-xs sm:text-sm font-bold", field.value === std.id ? "text-primary" : "text-foreground")}>{std.label}</span>
+                                                        <span className="text-[9px] sm:text-[10px] text-muted-foreground sm:mt-1 sm:text-center font-medium opacity-60 leading-tight">{std.description}</span>
+                                                    </div>
                                                 </button>
                                             ))}
                                         </div>
@@ -382,7 +384,7 @@ export default function NewPropertyPage() {
                                 render={({ field }) => (
                                     <FormItem className="space-y-6">
                                         <FormLabel className="text-sm font-bold text-foreground">Perfil do Cliente (múltipla escolha)</FormLabel>
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             {audiences.map((audience) => (
                                                 <button
                                                     key={audience}
@@ -396,19 +398,19 @@ export default function NewPropertyPage() {
                                                         }
                                                     }}
                                                     className={cn(
-                                                        "flex items-center gap-4 p-5 rounded-2xl border-2 transition-all duration-200 text-left",
+                                                        "flex items-center gap-3 md:gap-4 p-4 md:p-5 rounded-xl md:rounded-2xl border-2 transition-all duration-200 text-left",
                                                         field.value?.includes(audience)
                                                             ? "bg-primary/5 border-primary"
                                                             : "bg-muted/10 border-transparent hover:border-border hover:bg-muted/20"
                                                     )}
                                                 >
                                                     <div className={cn(
-                                                        "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
+                                                        "w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center transition-colors shrink-0",
                                                         field.value?.includes(audience) ? "bg-primary border-primary" : "border-muted-foreground/30"
                                                     )}>
-                                                        {field.value?.includes(audience) && <CheckCircle2 className="w-4 h-4 text-white" />}
+                                                        {field.value?.includes(audience) && <CheckCircle2 className="w-3 h-3 md:w-4 md:h-4 text-white" />}
                                                     </div>
-                                                    <span className={cn("text-xs font-bold", field.value?.includes(audience) ? "text-primary" : "text-muted-foreground")}>
+                                                    <span className={cn("text-[11px] md:text-xs font-bold", field.value?.includes(audience) ? "text-primary" : "text-muted-foreground")}>
                                                         {audience}
                                                     </span>
                                                 </button>
@@ -470,12 +472,12 @@ export default function NewPropertyPage() {
                             </div>
 
                             {/* Specs */}
-                            <div className="grid grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 <FormField
                                     name="areaSqm"
                                     render={({ field }) => (
                                         <FormItem className="space-y-3">
-                                            <FormLabel className="text-sm font-bold text-foreground text-center block">M²</FormLabel>
+                                            <FormLabel className="text-[10px] md:text-sm font-bold text-foreground text-center block uppercase tracking-widest">M²</FormLabel>
                                             <FormControl>
                                                 <Input {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-4 text-center font-bold text-lg" />
                                             </FormControl>
@@ -486,7 +488,7 @@ export default function NewPropertyPage() {
                                     name="bedrooms"
                                     render={({ field }) => (
                                         <FormItem className="space-y-3">
-                                            <FormLabel className="text-sm font-bold text-foreground text-center block">Quartos</FormLabel>
+                                            <FormLabel className="text-[10px] md:text-sm font-bold text-foreground text-center block uppercase tracking-widest">Quartos</FormLabel>
                                             <FormControl>
                                                 <Input type="number" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-4 text-center font-bold text-lg" />
                                             </FormControl>
@@ -497,7 +499,7 @@ export default function NewPropertyPage() {
                                     name="bathrooms"
                                     render={({ field }) => (
                                         <FormItem className="space-y-3">
-                                            <FormLabel className="text-sm font-bold text-foreground text-center block">Banh.</FormLabel>
+                                            <FormLabel className="text-[10px] md:text-sm font-bold text-foreground text-center block uppercase tracking-widest">Banh.</FormLabel>
                                             <FormControl>
                                                 <Input type="number" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-4 text-center font-bold text-lg" />
                                             </FormControl>
@@ -508,7 +510,7 @@ export default function NewPropertyPage() {
                                     name="parkingSpots"
                                     render={({ field }) => (
                                         <FormItem className="space-y-3">
-                                            <FormLabel className="text-sm font-bold text-foreground text-center block">Vagas</FormLabel>
+                                            <FormLabel className="text-[10px] md:text-sm font-bold text-foreground text-center block uppercase tracking-widest">Vagas</FormLabel>
                                             <FormControl>
                                                 <Input type="number" {...field} className="bg-muted/20 border-border/50 h-14 rounded-2xl px-4 text-center font-bold text-lg" />
                                             </FormControl>
@@ -541,15 +543,15 @@ export default function NewPropertyPage() {
                             />
 
                             {/* Action Buttons */}
-                            <div className="flex items-center gap-4 pt-10">
-                                <Link href="/imoveis" className="flex-1">
+                            <div className="flex flex-col sm:flex-row items-center gap-4 pt-10">
+                                <Link href="/imoveis" className="w-full sm:flex-1">
                                     <Button type="button" variant="outline" className="w-full h-16 rounded-[24px] border-border/50 font-bold text-muted-foreground hover:bg-muted btn-interactive">
                                         Cancelar
                                     </Button>
                                 </Link>
                                 <Button
                                     type="submit"
-                                    className="flex-[2] h-16 rounded-[24px] bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold transition-all shadow-xl shadow-black/10 active:scale-95 disabled:opacity-50"
+                                    className="w-full sm:flex-[2] h-16 rounded-[24px] bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold transition-all shadow-xl shadow-black/10 active:scale-95 disabled:opacity-50"
                                     disabled={isSaving}
                                 >
                                     {isSaving ? (

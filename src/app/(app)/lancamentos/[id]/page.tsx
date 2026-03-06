@@ -94,26 +94,26 @@ export default async function LaunchDetailsPage({ params }: LaunchDetailsPagePro
                             className="object-cover transition-transform duration-1000 group-hover:scale-105"
                             priority
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90" />
-
-                        <div className="absolute bottom-10 left-10 right-10 flex items-end justify-between">
-                            <div className="space-y-3">
-                                <Badge className={cn("border-none px-4 py-1.5 rounded-full text-[10px] uppercase font-bold tracking-widest shadow-xl", currentStatus.bg, currentStatus.color)}>
-                                    <currentStatus.icon className="h-3 w-3 mr-2" />
-                                    {currentStatus.label}
-                                </Badge>
-                                <h1 className="text-5xl font-black text-white tracking-tighter drop-shadow-2xl">
-                                    {launch.name}
-                                </h1>
-                                <p className="flex items-center gap-2 text-white/80 font-bold uppercase text-[10px] tracking-widest">
-                                    <MapPin className="h-4 w-4 text-accent" /> {launch.neighborhood}, {launch.city}
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">Valores a partir de</p>
-                                <p className="text-5xl font-black text-white tracking-tighter shadow-black">
-                                    R$ {launch.priceFrom ? Number(launch.priceFrom).toLocaleString('pt-BR') : 'Consulte'}
-                                </p>
+                        <div className="absolute inset-x-0 bottom-0 p-6 md:p-10 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                                <div className="space-y-2 md:space-y-3">
+                                    <Badge className={cn("border-none px-4 py-1.5 rounded-full text-[9px] md:text-[10px] uppercase font-bold tracking-widest shadow-xl", currentStatus.bg, currentStatus.color)}>
+                                        <currentStatus.icon className="h-3 w-3 mr-2" />
+                                        {currentStatus.label}
+                                    </Badge>
+                                    <h1 className="text-3xl md:text-5xl font-black text-white tracking-tighter drop-shadow-2xl">
+                                        {launch.name}
+                                    </h1>
+                                    <p className="flex items-center gap-2 text-white/80 font-bold uppercase text-[9px] md:text-[10px] tracking-widest">
+                                        <MapPin className="h-3.5 w-3.5 text-accent" /> {launch.neighborhood}, {launch.city}
+                                    </p>
+                                </div>
+                                <div className="text-left md:text-right">
+                                    <p className="text-white/50 text-[8px] md:text-[10px] font-black uppercase tracking-widest mb-1">Valores a partir de</p>
+                                    <p className="text-3xl md:text-5xl font-black text-white tracking-tighter shadow-black">
+                                        R$ {launch.priceFrom ? Number(launch.priceFrom).toLocaleString('pt-BR') : 'Consulte'}
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -126,11 +126,11 @@ export default async function LaunchDetailsPage({ params }: LaunchDetailsPagePro
                             { label: "Público", val: launch.targetAudience?.[0] || 'Todos', icon: Users },
                             { label: "Entrega", val: launch.deliveryDate ? new Date(launch.deliveryDate).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) : 'Em breve', icon: Calendar },
                         ].map((spec, i) => (
-                            <div key={i} className="card-premium p-6 flex flex-col gap-3 group hover:border-accent/30 transition-all">
-                                <spec.icon className="h-5 w-5 text-accent opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                            <div key={i} className="card-premium p-4 md:p-6 flex flex-col gap-2 md:gap-3 group hover:border-accent/30 transition-all">
+                                <spec.icon className="h-4 w-4 md:h-5 md:w-5 text-accent opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                                 <div className="space-y-0.5">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{spec.label}</p>
-                                    <p className="text-lg font-bold tracking-tight text-foreground capitalize truncate">{spec.val}</p>
+                                    <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-muted-foreground">{spec.label}</p>
+                                    <p className="text-base md:text-lg font-bold tracking-tight text-foreground capitalize truncate">{spec.val}</p>
                                 </div>
                             </div>
                         ))}
@@ -178,14 +178,14 @@ export default async function LaunchDetailsPage({ params }: LaunchDetailsPagePro
                                             <div className="p-8 space-y-6">
                                                 <div className="flex justify-between items-start">
                                                     <div>
-                                                        <h4 className="text-xl font-black tracking-tight">{unit.name}</h4>
-                                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+                                                        <h4 className="text-lg md:text-xl font-black tracking-tight">{unit.name}</h4>
+                                                        <p className="text-[9px] md:text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
                                                             {unit.bedrooms} Quartos • {unit.parkingSpots} Vagas
                                                         </p>
                                                     </div>
                                                     <div className="text-right">
-                                                        <span className="block text-[8px] font-black text-muted-foreground uppercase tracking-widest">Valor da Unidade</span>
-                                                        <span className="text-lg font-black text-accent">R$ {unit.price ? Number(unit.price).toLocaleString('pt-BR') : 'Consulte'}</span>
+                                                        <span className="block text-[7px] md:text-[8px] font-black text-muted-foreground uppercase tracking-widest">Valor da Unidade</span>
+                                                        <span className="text-base md:text-lg font-black text-accent">R$ {unit.price ? Number(unit.price).toLocaleString('pt-BR') : 'Consulte'}</span>
                                                     </div>
                                                 </div>
 

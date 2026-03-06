@@ -119,9 +119,9 @@ export default function PropertiesPage() {
         <div className="space-y-12 animate-in fade-in slide-in-from-top-4 duration-1000">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-                <div className="space-y-3">
-                    <h1 className="heading-xl text-foreground">Gestão de <span className="text-gradient-accent">Portfólio</span></h1>
-                    <p className="text-body font-normal leading-relaxed">Organize e disponibilize seus imóveis para a <span className="text-foreground font-semibold">Raquel</span> oferecer via WhatsApp.</p>
+                <div className="space-y-2">
+                    <h1 className="text-3xl md:text-[40px] lg:text-[48px] font-bold tracking-tight text-foreground">Gestão de <span className="text-gradient-accent">Portfólio</span></h1>
+                    <p className="text-sm md:text-base text-muted-foreground font-medium leading-relaxed">Organize e disponibilize seus imóveis para a <span className="text-foreground font-semibold">Raquel</span> oferecer via WhatsApp.</p>
                 </div>
                 <Button className="btn-primary h-16 px-10 font-semibold uppercase text-[10px] tracking-wider gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all" asChild>
                     <Link href="/imoveis/novo">
@@ -138,9 +138,9 @@ export default function PropertiesPage() {
                     { l: "Média Preço", v: properties.length > 0 ? `R$ ${(properties.reduce((acc, p) => acc + Number(p.price), 0) / properties.length / 1000).toFixed(0)}k` : '-', c: "text-purple" },
                     { l: "MCMV", v: properties.filter(p => p.minhaCasaMinhaVida).length, c: "text-success" },
                 ].map((s, i) => (
-                    <div key={i} className="card-premium p-6 flex flex-col gap-3">
-                        <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">{s.l}</span>
-                        <span className={cn("text-3xl font-bold tracking-tighter", s.c)}>{s.v}</span>
+                    <div key={i} className="card-premium p-4 md:p-6 flex flex-col gap-2 md:gap-3">
+                        <span className="text-[8px] md:text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">{s.l}</span>
+                        <span className={cn("text-2xl md:text-3xl font-bold tracking-tighter", s.c)}>{s.v}</span>
                     </div>
                 ))}
             </div>
@@ -159,7 +159,7 @@ export default function PropertiesPage() {
                 <Button
                     variant="outline"
                     className={cn(
-                        "h-[74px] px-8 rounded-[24px] border-border/50 gap-3 btn-interactive relative",
+                        "h-14 md:h-[74px] px-6 md:px-8 rounded-[20px] md:rounded-[24px] border-border/50 gap-3 btn-interactive relative",
                         activeFiltersCount > 0 && "border-accent bg-accent/5 text-accent"
                     )}
                     onClick={() => setIsFilterModalOpen(true)}
@@ -222,49 +222,49 @@ export default function PropertiesPage() {
                                 </div>
 
                                 {/* Content */}
-                                <div className="p-8 space-y-6 flex-1 flex flex-col">
+                                <div className="p-6 md:p-8 space-y-4 md:space-y-6 flex-1 flex flex-col">
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-start">
-                                            <h3 className="text-xl font-bold tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-1">
+                                            <h3 className="text-lg md:text-xl font-bold tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-1">
                                                 {property.title}
                                             </h3>
                                             <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-all group-hover:translate-x-1" />
                                         </div>
-                                        <p className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium italic opacity-70">
+                                        <p className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground font-medium italic opacity-70">
                                             <MapPin className="h-3 w-3" /> {property.neighborhood}, {property.city}
                                         </p>
                                     </div>
 
-                                    <div className="flex items-center justify-between border-y border-border/50 py-5">
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Área</span>
-                                            <p className="text-sm font-bold flex items-center gap-1.5">
-                                                <Maximize2 className="h-3 w-3 text-primary" /> {property.areaSqm}m²
+                                    <div className="flex items-center justify-between border-y border-border/50 py-4 md:py-5">
+                                        <div className="flex flex-col gap-0.5 md:gap-1">
+                                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Área</span>
+                                            <p className="text-xs md:text-sm font-bold flex items-center gap-1 md:gap-1.5">
+                                                <Maximize2 className="h-2.5 w-2.5 md:h-3 md:w-3 text-primary" /> {property.areaSqm}m²
                                             </p>
                                         </div>
-                                        <div className="flex flex-col gap-1 items-center">
-                                            <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Dorms</span>
-                                            <p className="text-sm font-bold flex items-center gap-1.5">
-                                                <BedDouble className="h-3 w-3 text-primary" /> {property.bedrooms}
+                                        <div className="flex flex-col gap-0.5 md:gap-1 items-center">
+                                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Dorms</span>
+                                            <p className="text-xs md:text-sm font-bold flex items-center gap-1 md:gap-1.5">
+                                                <BedDouble className="h-2.5 w-2.5 md:h-3 md:w-3 text-primary" /> {property.bedrooms}
                                             </p>
                                         </div>
-                                        <div className="flex flex-col gap-1 items-end">
-                                            <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Vagas</span>
-                                            <p className="text-sm font-bold flex items-center gap-1.5">
-                                                <Car className="h-3 w-3 text-primary" /> {property.parkingSpots}
+                                        <div className="flex flex-col gap-0.5 md:gap-1 items-end">
+                                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Vagas</span>
+                                            <p className="text-xs md:text-sm font-bold flex items-center gap-1 md:gap-1.5">
+                                                <Car className="h-2.5 w-2.5 md:h-3 md:w-3 text-primary" /> {property.parkingSpots}
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="pt-2 flex justify-between items-end mt-auto">
-                                        <div className="space-y-1">
-                                            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-accent">Valor Total</p>
-                                            <p className="text-2xl font-black text-foreground tracking-tighter">
+                                    <div className="pt-1 md:pt-2 flex justify-between items-end mt-auto">
+                                        <div className="space-y-0.5 md:space-y-1">
+                                            <p className="text-[7px] md:text-[8px] font-black uppercase tracking-[0.2em] text-accent">Valor Total</p>
+                                            <p className="text-xl md:text-2xl font-black text-foreground tracking-tighter">
                                                 R$ {Number(property.price).toLocaleString('pt-BR')}
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <Badge variant="outline" className="rounded-full border-border/50 text-[9px] font-bold px-3">
+                                            <Badge variant="outline" className="rounded-full border-border/50 text-[8px] md:text-[9px] font-bold px-2 md:px-3">
                                                 {property.standard}
                                             </Badge>
                                         </div>
