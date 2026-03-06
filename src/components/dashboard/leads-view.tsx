@@ -60,7 +60,7 @@ export function LeadsView() {
                 // Se estiver no expediente, processa automação para leads que ficaram aguardando
                 if (businessStatus) {
                     processAutomation().then(result => {
-                        if (result.success && result.contacted > 0) {
+                        if (result.success && result.contacted && result.contacted > 0) {
                             toast.success(`Automação: ${result.contacted} leads contactados agora.`);
                         }
                     });
