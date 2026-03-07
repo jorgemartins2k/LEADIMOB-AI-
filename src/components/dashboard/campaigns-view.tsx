@@ -158,14 +158,22 @@ export function CampaignsView() {
                     text: `Confira este anúncio: ${title}`,
                     url: link,
                 });
+                return;
             } catch (error) {
-                if ((error as Error).name !== 'AbortError') {
-                    console.error('Error sharing:', error);
-                }
+                // If it's an AbortError (user cancelled), we don't need a fallback
+                if ((error as Error).name === 'AbortError') return;
+
+                console.error('Error sharing:', error);
+                // For other errors (like NotAllowedError in some browsers), fall through to clipboard
             }
-        } else {
-            navigator.clipboard.writeText(link);
+        }
+
+        // Fallback for desktop or when navigator.share fails
+        try {
+            await navigator.clipboard.writeText(link);
             toast.info("Link copiado para compartilhar!");
+        } catch (err) {
+            toast.error("Não foi possível copiar o link.");
         }
     };
 
@@ -350,17 +358,6 @@ export function CampaignsView() {
                             return (
                                 <div key={camp.id} className="card-premium p-6 sm:p-8 hover:border-primary/40 transition-all group relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-2xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
-
-                                    {/* Top Left Share Button - Matching requested design */}
-                                    <Button
-                                        onClick={() => handleShare(camp.title, camp.trackingLink)}
-                                        variant="ghost"
-                                        size="icon"
-                                        className="absolute top-4 left-4 h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-muted/20 border border-border/30 hover:bg-primary/10 hover:border-primary/30 transition-all z-20"
-                                    >
-                                        <Share2 className="w-5 h-5 text-foreground/70" />
-                                    </Button>
-
                                     <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 items-start lg:items-center">
                                         <div className={cn("w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform", style.bg)}>
                                             <style.icon className={cn("w-6 h-6 sm:w-8 h-8", style.color)} />
