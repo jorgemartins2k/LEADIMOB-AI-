@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, MapPin, Building, Rocket, User, MessageSquare } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, Trash2, Loader2, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { deleteAppointment } from "@/lib/actions/appointments";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface Appointment {
     id: string;
@@ -25,6 +27,8 @@ interface AgendaViewProps {
 
 export function AgendaView({ initialAppointments }: AgendaViewProps) {
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
+    const router = useRouter();
 
     const appointments = initialAppointments;
 
@@ -57,14 +61,12 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
             }
         }).length;
 
-        const confirmedCount = appointments.filter(a => a.status === 'scheduled' || a.status === 'completed').length;
-        const pendingCount = appointments.filter(a => a.status === 'scheduled').length;
+        const totalCount = appointments.length;
 
         return [
             { label: "Hoje", value: todayCount.toString() },
             { label: "Esta Semana", value: weekCount.toString() },
-            { label: "Confirmadas", value: confirmedCount.toString(), color: "text-success" },
-            { label: "Pendentes", value: pendingCount.toString(), color: "text-warm" },
+            { label: "Total Geral", value: totalCount.toString(), color: "text-primary" },
         ];
     }, [appointments]);
 
@@ -117,7 +119,7 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
                 if (dateCompare !== 0) return dateCompare;
                 return (a.appointmentTime || '').localeCompare(b.appointmentTime || '');
             })
-            .slice(0, 5);
+            .slice(0, 10); // Show more since we have space now
     }, [appointments]);
 
     const changeMonth = (offset: number) => {
@@ -126,10 +128,25 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
         setCurrentDate(next);
     };
 
+    const handleDelete = async (id: string) => {
+        if (!confirm("Tem certeza que deseja excluir este agendamento?")) return;
+
+        setIsDeleting(id);
+        try {
+            await deleteAppointment(id);
+            toast.success("Agendamento excluído com sucesso.");
+            router.refresh();
+        } catch (error) {
+            toast.error("Erro ao excluir agendamento.");
+        } finally {
+            setIsDeleting(null);
+        }
+    };
+
     return (
         <div className="space-y-12">
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 {stats.map((stat) => (
                     <div key={stat.label} className="card-premium p-8 flex flex-col gap-3 group hover:border-primary/20 transition-all">
                         <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest block opacity-60 group-hover:opacity-100 transition-opacity">{stat.label}</span>
@@ -212,20 +229,30 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
                         <div className="p-3 bg-card rounded-2xl border border-border/50 shadow-sm">
                             <CalendarIcon className="w-6 h-6 text-muted-foreground" />
                         </div>
-                        <h3 className="font-display font-black text-xl text-foreground uppercase tracking-tight">Próximas Visitas</h3>
+                        <h3 className="font-display font-black text-xl text-foreground uppercase tracking-tight">Agenda Próxima</h3>
                     </div>
 
                     <div className="space-y-4 flex-1 overflow-y-auto no-scrollbar pr-2">
                         {upcomingAppointments.length > 0 ? (
                             upcomingAppointments.map((app) => (
-                                <div key={app.id} className="p-5 rounded-[28px] bg-card border border-border/40 hover:border-primary/30 transition-all group/item shadow-sm">
+                                <div key={app.id} className="p-5 rounded-[28px] bg-card border border-border/40 hover:border-primary/30 transition-all group/item shadow-sm relative">
                                     <div className="flex items-start justify-between gap-3 mb-3">
                                         <h4 className="text-sm font-black uppercase tracking-tight text-foreground line-clamp-1 group-hover/item:text-primary transition-colors">
                                             {app.title}
                                         </h4>
-                                        <Badge variant="outline" className="rounded-full text-[8px] font-black px-2 py-0 h-5 border-border/50 opacity-60">
-                                            {app.status === 'scheduled' ? 'Agendado' : app.status === 'completed' ? 'Concluído' : 'Cancelado'}
-                                        </Badge>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => handleDelete(app.id)}
+                                            disabled={isDeleting === app.id}
+                                            className="h-8 w-8 rounded-full text-muted-foreground hover:text-hot hover:bg-hot/10 transition-colors"
+                                        >
+                                            {isDeleting === app.id ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Trash2 className="h-4 w-4" />
+                                            )}
+                                        </Button>
                                     </div>
                                     <div className="space-y-2">
                                         <div className="flex items-center gap-2 text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-70">
@@ -249,7 +276,7 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
 
                     <Button variant="link" className="text-primary font-black uppercase tracking-widest text-[9px] hover:no-underline group/btn flex items-center gap-2 mt-8 w-fit mx-auto" asChild>
                         <Link href="/leads">
-                            Gerar Agenda com IA <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                            Gerar Agenda com IA <ChevronRightIcon className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                         </Link>
                     </Button>
                 </div>

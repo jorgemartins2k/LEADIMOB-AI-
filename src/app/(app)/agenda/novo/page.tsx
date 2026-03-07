@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X, Loader2, Save, Calendar, Clock, Sparkles, CheckCircle2, AlertCircle, User, Home, Rocket } from "lucide-react";
+import { X, Loader2, Calendar, Clock, User, Home, Rocket } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import { createAppointment } from "@/lib/actions/appointments";
 import { getLeads } from "@/lib/actions/leads";
 import { getProperties } from "@/lib/actions/properties";
@@ -114,12 +113,6 @@ export default function NewAppointmentPage() {
             setIsSaving(false);
         }
     }
-
-    const statuses = [
-        { id: "scheduled", label: "Agendado", icon: Sparkles, color: "text-primary", bg: "bg-primary/10" },
-        { id: "completed", label: "Concluído", icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-        { id: "cancelled", label: "Cancelado", icon: AlertCircle, color: "text-hot", bg: "bg-hot/10" },
-    ];
 
     return (
         <div className="min-h-screen bg-muted/30 py-12 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-700">
@@ -264,39 +257,6 @@ export default function NewAppointmentPage() {
                                     )}
                                 />
                             </div>
-
-                            {/* Status */}
-                            <FormField
-                                name="status"
-                                render={({ field }) => (
-                                    <FormItem className="space-y-4 pt-6 border-t border-border">
-                                        <FormLabel className="text-sm font-bold text-foreground uppercase tracking-widest opacity-70">Status</FormLabel>
-                                        <div className="grid grid-cols-3 gap-4">
-                                            {statuses.map((stat) => (
-                                                <button
-                                                    key={stat.id}
-                                                    type="button"
-                                                    onClick={() => field.onChange(stat.id)}
-                                                    className={cn(
-                                                        "flex flex-col items-center justify-center p-6 rounded-[24px] border-2 transition-all duration-300 group",
-                                                        field.value === stat.id
-                                                            ? "bg-primary/5 border-primary shadow-lg shadow-primary/5"
-                                                            : "bg-muted/10 border-transparent hover:border-border hover:bg-muted/20"
-                                                    )}
-                                                >
-                                                    <div className={cn(
-                                                        "w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300",
-                                                        field.value === stat.id ? cn(stat.bg, stat.color, "scale-110") : "bg-muted/30 text-muted-foreground group-hover:scale-105"
-                                                    )}>
-                                                        <stat.icon className="w-6 h-6" />
-                                                    </div>
-                                                    <span className={cn("text-sm font-bold", field.value === stat.id ? "text-primary" : "text-foreground")}>{stat.label}</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </FormItem>
-                                )}
-                            />
 
                             {/* Observações / Notas */}
                             <FormField
