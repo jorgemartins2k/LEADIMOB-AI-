@@ -1,5 +1,5 @@
 {
-    "name": "Raquel Master - Strategist Version",
+    "name": "Raquel Master - Scalable Multi-Broker",
     "nodes": [
         {
             "parameters": {
@@ -12,9 +12,29 @@
             "type": "n8n-nodes-base.webhook",
             "typeVersion": 1,
             "position": [
-                100,
+                0,
                 240
             ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "SELECT u.whatsapp as broker_whatsapp, u.name as broker_name, u.id as user_id, l.name as lead_name \nFROM leads l \nJOIN users u ON l.user_id = u.id \nWHERE l.phone = '{{$node[\"Webhook Z-API\"].json[\"phone\"]}}' \nLIMIT 1;"
+            },
+            "id": "lookup-broker",
+            "name": "Lookup Broker & Lead",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                200,
+                240
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "postgres-credential-id",
+                    "name": "Supabase DB"
+                }
+            }
         },
         {
             "parameters": {
@@ -25,7 +45,7 @@
             "type": "@n8n/n8n-nodes-langchain.agent",
             "typeVersion": 1,
             "position": [
-                320,
+                450,
                 240
             ]
         },
@@ -41,7 +61,7 @@
             "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
             "typeVersion": 1,
             "position": [
-                200,
+                300,
                 460
             ],
             "credentials": {
@@ -61,7 +81,7 @@
             "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
             "typeVersion": 1,
             "position": [
-                350,
+                450,
                 460
             ],
             "credentials": {
@@ -87,19 +107,19 @@
             "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
             "typeVersion": 1,
             "position": [
-                500,
+                600,
                 460
             ]
         },
         {
             "parameters": {
-                "name": "alertar_corretor",
-                "description": "Notifica o corretor no WhatsApp quando o lead quer visitar ou é MUITO quente.",
+                "name": "alertar_corretor_deste_lead",
+                "description": "Notifica o CORRETOR ESPECÍFICO deste lead quando ele quer visitar o imóvel.",
                 "url": "https://api.z-api.io/instances/3EF563F4DD4551A0224EDEEAB9125F18/token/6E1D394248DA536C5C45C297/send-text",
                 "method": "POST",
                 "sendBody": true,
                 "specifyBody": "json",
-                "jsonBody": "{\n  \"phone\": \"CORRETOR_WHATSAPP_AQUI\",\n  \"message\": \"🚨 *LEAD QUENTE IDENTIFICADO*\\n\\nNome: {{$node[\"Webhook Z-API\"].json[\"senderName\"]}}\\nTelefone: {{$node[\"Webhook Z-API\"].json[\"phone\"]}}\\n\\nEle(a) demonstrou interesse em visita! Assuma o controle.\"\n}",
+                "jsonBody": "{\n  \"phone\": \"{{$node[\"Lookup Broker \u0026 Lead\"].json[\"broker_whatsapp\"]}}\",\n  \"message\": \"🚨 *VISITA SOLICITADA*\\n\\nO lead *{{$node[\"Lookup Broker \u0026 Lead\"].json[\"lead_name\"]}}* quer visitar um imóvel!\\n\\nResumo do interesse: {{$placeholder}}\\n\\nFavor assumir o contato agora.\"\n}",
                 "options": {}
             },
             "id": "notify-tool",
@@ -107,15 +127,15 @@
             "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
             "typeVersion": 1,
             "position": [
-                650,
+                750,
                 460
             ]
         },
         {
             "parameters": {
-                "name": "buscar_imoveis",
-                "description": "Busca imóveis e lançamentos no banco de dados para sugerir ao cliente.",
-                "url": "https://wwwtuduxxcslpcpgjzya.supabase.co/rest/v1/properties?select=*",
+                "name": "buscar_portfolion_deste_corretor",
+                "description": "Busca apenas os imóveis que pertencem ao corretor deste lead.",
+                "url": "https://wwwtuduxxcslpcpgjzya.supabase.co/rest/v1/properties?user_id=eq.{{$node[\"Lookup Broker \u0026 Lead\"].json[\"user_id\"]}}",
                 "method": "GET",
                 "sendHeaders": true,
                 "headerParameters": {
@@ -137,16 +157,16 @@
             "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
             "typeVersion": 1,
             "position": [
-                800,
+                900,
                 460
             ]
         },
         {
             "parameters": {
                 "promptType": "define",
-                "text": "Você é Raquel, a assistente virtual oficial. Siga rigorosamente este manual:\n\n1. IDENTIDADE: Assistente do corretor. Profissional, acolhedora e empática. Não revele ser IA espontaneamente.\n\n2. OBJETIVO: Despertar interesse genuíno e conduzir até o desejo de visita presencial. VOCÊ NÃO AGENDA A VISITA, apenas identifica o desejo e usa a ferramenta 'alertar_corretor'.\n\n3. QUALIFICAÇÃO FINANCEIRA: Pergunte sobre financiamento pré-aprovado. Se não tiver, incentive a fazer e explique a importância para o processo.\n\n4. PERFIS:\n   - Comprador Moradia: Foco em conforto, família e localização.\n   - Investidor: Foco em valorização, ROI e demanda locatícia.\n\n5. FOLLOW-UP: Retome conversas de forma natural baseando-se no histórico.\n\n6. REGRAS GERAIS: Empatia, sem pressão agressiva. Consulte sempre o portfólio via 'buscar_imoveis'. Use 'responder_lead' para enviar a resposta final ao cliente.",
+                "text": "Você é Raquel, a assistente oficial do corretor {{$node[\"Lookup Broker \u0026 Lead\"].json[\"broker_name\"]}}.\n\nSiga o manual de atendimento estratégico e use as ferramentas disponíveis:\n1. Sempre se apresente como assistente do {{$node[\"Lookup Broker \u0026 Lead\"].json[\"broker_name\"]}}.\n2. Quando o lead {{$node[\"Lookup Broker \u0026 Lead\"].json[\"lead_name\"]}} quiser visitar, use 'alertar_corretor_deste_lead' imediatamente.\n3. Busque os imóveis do corretor usando 'buscar_portfolion_deste_corretor'.\n4. Use 'responder_lead' para todas as respostas finais no WhatsApp.",
                 "options": {
-                    "systemMessage": "Você é a Raquel, a estrategista digital imobilidária do Leadimob-AI."
+                    "systemMessage": "Você é Raquel, a estrategista digital do Leadimob-AI."
                 }
             },
             "id": "master-prompt",
@@ -161,6 +181,17 @@
     ],
     "connections": {
         "Webhook Z-API": {
+            "main": [
+                [
+                    {
+                        "node": "Lookup Broker \u0026 Lead",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Lookup Broker \u0026 Lead": {
             "main": [
                 [
                     {
