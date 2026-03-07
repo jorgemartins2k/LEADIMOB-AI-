@@ -65,11 +65,11 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
             </div>
 
             {/* Main Content Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10 px-1 sm:px-0">
                 {/* Left: Gallery & Description */}
-                <div className="lg:col-span-2 space-y-10">
+                <div className="lg:col-span-2 space-y-8 sm:space-y-10">
                     {/* Gallery Carousel (Simplified for now) */}
-                    <div className="relative aspect-[16/9] w-full rounded-[40px] overflow-hidden shadow-2xl group">
+                    <div className="relative aspect-[4/3] sm:aspect-[16/9] w-full rounded-[32px] sm:rounded-[40px] overflow-hidden shadow-2xl group">
                         <Image
                             src={photos[0]}
                             alt={property.title}
@@ -77,22 +77,22 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
                             className="object-cover transition-transform duration-700 group-hover:scale-105"
                             priority
                         />
-                        <div className="absolute inset-x-0 bottom-0 p-6 md:p-8 bg-gradient-to-t from-black/90 via-black/30 to-transparent">
-                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                                <div className="space-y-2">
-                                    <Badge className="bg-primary hover:bg-primary text-white border-none px-4 py-1.5 rounded-full text-[9px] md:text-[10px] uppercase font-bold tracking-widest shadow-xl">
+                        <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8 bg-gradient-to-t from-black/95 via-black/40 to-transparent">
+                            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                                <div className="space-y-1.5 sm:space-y-2">
+                                    <Badge className="bg-primary hover:bg-primary text-white border-none px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[8px] sm:text-[10px] uppercase font-black tracking-widest shadow-xl">
                                         {property.standard === 'alto' ? 'Alto Padrão' : property.standard === 'medio' ? 'Padrão Médio' : 'Econômico'}
                                     </Badge>
-                                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight drop-shadow-md">
+                                    <h1 className="text-xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight drop-shadow-md line-clamp-2">
                                         {property.title}
                                     </h1>
-                                    <p className="flex items-center gap-2 text-white/80 font-medium text-xs md:text-sm">
-                                        <MapPin className="h-4 w-4" /> {property.neighborhood}, {property.city}
+                                    <p className="flex items-center gap-1.5 text-white/90 font-bold text-[10px] sm:text-sm">
+                                        <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" /> {property.neighborhood}, {property.city}
                                     </p>
                                 </div>
-                                <div className="text-left md:text-right">
-                                    <p className="text-white/60 text-[10px] md:text-xs font-bold uppercase tracking-widest mb-1">Preço Sugerido</p>
-                                    <p className="text-3xl md:text-4xl font-black text-white tracking-tighter">
+                                <div className="text-left sm:text-right shrink-0">
+                                    <p className="text-white/60 text-[8px] sm:text-[10px] font-black uppercase tracking-widest mb-0.5 sm:mb-1">Valor Sugerido</p>
+                                    <p className="text-2xl sm:text-4xl font-black text-white tracking-tighter">
                                         R$ {property.price ? Number(property.price).toLocaleString('pt-BR') : 'Consulte'}
                                     </p>
                                 </div>
@@ -101,29 +101,29 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
                     </div>
 
                     {/* Quick Specs Bento Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                         {[
                             { label: "Área Total", val: `${property.areaSqm}m²`, icon: Maximize2, desc: "Espaço total" },
                             { label: "Quartos", val: property.bedrooms, icon: BedDouble, desc: "Dormitórios" },
                             { label: "Vagas", val: property.parkingSpots, icon: Car, desc: "Estacionamento" },
                             { label: "Tipo", val: property.type, icon: Building, desc: "Categoria" },
                         ].map((spec, i) => (
-                            <div key={i} className="card-premium p-4 md:p-6 flex flex-col gap-2 md:gap-3 group hover:border-primary/30 transition-all">
-                                <spec.icon className="h-4 w-4 md:h-5 md:w-5 text-primary opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all" />
+                            <div key={i} className="card-premium p-4 sm:p-6 flex flex-col gap-2 sm:gap-3 group hover:border-primary/30 transition-all">
+                                <spec.icon className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-primary opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all font-black" />
                                 <div className="space-y-0.5">
-                                    <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-muted-foreground">{spec.label}</p>
-                                    <p className="text-lg md:text-xl font-bold tracking-tight text-foreground">{spec.val || '-'}</p>
+                                    <p className="text-[7px] sm:text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-60">{spec.label}</p>
+                                    <p className="text-base sm:text-xl font-black tracking-tight text-foreground">{spec.val || '-'}</p>
                                 </div>
-                                <p className="text-[8px] md:text-[9px] text-muted-foreground italic font-medium opacity-50">{spec.desc}</p>
+                                <p className="text-[7px] sm:text-[9px] text-muted-foreground italic font-medium opacity-40 hidden sm:block">{spec.desc}</p>
                             </div>
                         ))}
                     </div>
 
                     {/* Description */}
-                    <div className="space-y-4">
-                        <h2 className="text-xl font-bold uppercase tracking-widest text-foreground opacity-80">Sobre o Imóvel</h2>
+                    <div className="space-y-4 px-1">
+                        <h2 className="text-sm sm:text-xl font-black uppercase tracking-widest text-foreground opacity-80 border-l-4 border-accent pl-4">Sobre o Imóvel</h2>
                         <div className="prose prose-invert max-w-none">
-                            <p className="text-muted-foreground leading-relaxed font-medium">
+                            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed font-medium opacity-90">
                                 {property.description || "Este imóvel não possui uma descrição formal ainda, mas nossa IA pode gerar uma apresentação exclusiva para você enviar aos seus leads."}
                             </p>
                         </div>
@@ -131,55 +131,55 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
                 </div>
 
                 {/* Right: Financial & Actions */}
-                <div className="space-y-8">
+                <div className="space-y-6 sm:space-y-8">
                     {/* Financial Summary Card */}
-                    <div className="card-premium p-8 space-y-8 bg-muted/10 border-border/40 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-4 opacity-5">
-                            <DollarSign className="h-32 w-32 rotate-12" />
+                    <div className="card-premium p-6 sm:p-8 space-y-6 sm:space-y-8 bg-muted/10 border-border/40 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none">
+                            <DollarSign className="h-24 w-24 sm:h-32 sm:w-32 rotate-12" />
                         </div>
 
-                        <h3 className="text-sm font-black uppercase tracking-[0.2em] text-primary">Resumo Financeiro</h3>
+                        <h3 className="text-[10px] sm:text-sm font-black uppercase tracking-[0.2em] text-primary">Resumo Financeiro</h3>
 
-                        <div className="space-y-6 relative z-10">
+                        <div className="space-y-4 sm:space-y-6 relative z-10">
                             {/* Down Payment Card */}
-                            <div className="flex items-center gap-5 p-5 rounded-2xl bg-white/5 border border-white/10 group hover:border-accent/30 transition-all">
-                                <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center text-accent shadow-inner">
-                                    <HandCoins className="h-6 w-6" />
+                            <div className="flex items-center gap-4 sm:gap-5 p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 group hover:border-accent/30 transition-all">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-accent/20 flex items-center justify-center text-accent shadow-inner flex-shrink-0">
+                                    <HandCoins className="h-5 w-5 sm:h-6 sm:w-6" />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Entrada Mínima</p>
-                                    <p className="text-lg font-bold">R$ {property.downPayment ? Number(property.downPayment).toLocaleString('pt-BR') : 'Sob consulta'}</p>
+                                    <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Entrada Mínima</p>
+                                    <p className="text-base sm:text-lg font-black">R$ {property.downPayment ? Number(property.downPayment).toLocaleString('pt-BR') : 'Sob consulta'}</p>
                                 </div>
                             </div>
 
                             {/* Condo Fee Card */}
                             {property.isCondo && (
-                                <div className="flex items-center gap-5 p-5 rounded-2xl bg-white/5 border border-white/10 group hover:border-purple/30 transition-all">
-                                    <div className="w-12 h-12 rounded-xl bg-purple/20 flex items-center justify-center text-purple shadow-inner">
-                                        <Building className="h-6 w-6" />
+                                <div className="flex items-center gap-4 sm:gap-5 p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 group hover:border-purple/30 transition-all">
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple/20 flex items-center justify-center text-purple shadow-inner flex-shrink-0">
+                                        <Building className="h-5 w-5 sm:h-6 sm:w-6" />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Taxa Condomínio</p>
-                                        <p className="text-lg font-bold">R$ {property.condoFee ? Number(property.condoFee).toLocaleString('pt-BR') : '0,00'}</p>
+                                        <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Taxa Condomínio</p>
+                                        <p className="text-base sm:text-lg font-black">R$ {property.condoFee ? Number(property.condoFee).toLocaleString('pt-BR') : '0,00'}</p>
                                     </div>
                                 </div>
                             )}
 
                             {/* Indicators Grid */}
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-3 sm:gap-4">
                                 <div className={cn(
-                                    "p-4 rounded-xl border flex flex-col gap-2 transition-all",
-                                    property.minhaCasaMinhaVida ? "bg-success/10 border-success/30" : "bg-muted/30 border-border/50 grayscale opacity-50"
+                                    "p-3 sm:p-4 rounded-xl border flex flex-col gap-1.5 sm:gap-2 transition-all",
+                                    property.minhaCasaMinhaVida ? "bg-success/10 border-success/30" : "bg-muted/30 border-border/50 grayscale opacity-40"
                                 )}>
-                                    <ShieldCheck className={cn("h-4 w-4", property.minhaCasaMinhaVida ? "text-success" : "text-muted-foreground")} />
-                                    <span className="text-[9px] font-black uppercase tracking-widest">MCMV</span>
+                                    <ShieldCheck className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4", property.minhaCasaMinhaVida ? "text-success" : "text-muted-foreground")} />
+                                    <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest">MCMV</span>
                                 </div>
                                 <div className={cn(
-                                    "p-4 rounded-xl border flex flex-col gap-2 transition-all",
-                                    property.allowsFinancing ? "bg-primary/10 border-primary/30" : "bg-muted/30 border-border/50 grayscale opacity-50"
+                                    "p-3 sm:p-4 rounded-xl border flex flex-col gap-1.5 sm:gap-2 transition-all",
+                                    property.allowsFinancing ? "bg-primary/10 border-primary/30" : "bg-muted/30 border-border/50 grayscale opacity-40"
                                 )}>
-                                    <CreditCard className={cn("h-4 w-4", property.allowsFinancing ? "text-primary" : "text-muted-foreground")} />
-                                    <span className="text-[9px] font-black uppercase tracking-widest">Financiável</span>
+                                    <CreditCard className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4", property.allowsFinancing ? "text-primary" : "text-muted-foreground")} />
+                                    <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest">Financiável</span>
                                 </div>
                             </div>
                         </div>
@@ -187,16 +187,18 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
                     </div>
 
                     {/* Extra Info Card */}
-                    <div className="card-premium p-8 space-y-4">
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Localização Exata</h4>
-                        <p className="text-sm font-bold text-foreground leading-relaxed">
+                    <div className="card-premium p-6 sm:p-8 space-y-4 sm:space-y-6">
+                        <h4 className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Localização Exata</h4>
+                        <p className="text-xs sm:text-sm font-bold text-foreground leading-relaxed">
                             {property.address || "Endereço completo disponível sob solicitação ao corretor."}
                         </p>
-                        <PropertyMap
-                            address={property.address}
-                            neighborhood={property.neighborhood}
-                            city={property.city}
-                        />
+                        <div className="rounded-2xl overflow-hidden border border-border/40 shadow-inner">
+                            <PropertyMap
+                                address={property.address}
+                                neighborhood={property.neighborhood}
+                                city={property.city}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

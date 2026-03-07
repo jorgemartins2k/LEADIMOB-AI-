@@ -116,14 +116,14 @@ export default function PropertiesPage() {
     ].filter(Boolean).length;
 
     return (
-        <div className="space-y-12 animate-in fade-in slide-in-from-top-4 duration-1000">
+        <div className="space-y-8 sm:space-y-12 animate-in fade-in slide-in-from-top-4 duration-1000 px-1 sm:px-0">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 sm:gap-8">
                 <div className="space-y-2">
-                    <h1 className="text-3xl md:text-[40px] lg:text-[48px] font-bold tracking-tight text-foreground">Gestão de <span className="text-gradient-accent">Portfólio</span></h1>
-                    <p className="text-sm md:text-base text-muted-foreground font-medium leading-relaxed">Organize e disponibilize seus imóveis para a <span className="text-foreground font-semibold">Raquel</span> oferecer via WhatsApp.</p>
+                    <h1 className="heading-xl text-foreground">Gestão de <span className="text-gradient-accent">Portfólio</span></h1>
+                    <p className="text-body font-medium leading-relaxed">Organize e disponibilize seus imóveis para a <span className="text-foreground font-black">Raquel</span> oferecer via WhatsApp.</p>
                 </div>
-                <Button className="btn-primary h-16 px-10 font-semibold uppercase text-[10px] tracking-wider gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all" asChild>
+                <Button className="btn-primary h-14 sm:h-16 px-8 sm:px-10 font-black uppercase text-[10px] tracking-widest gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all w-full lg:w-auto" asChild>
                     <Link href="/imoveis/novo">
                         <Plus className="h-5 w-5" /> Adicionar Imóvel
                     </Link>
@@ -131,43 +131,45 @@ export default function PropertiesPage() {
             </div>
 
             {/* Stats/Filter Section */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                 {[
                     { l: "Total Ativos", v: properties.length, c: "text-primary" },
                     { l: "Alto Padrão", v: properties.filter(p => p.standard === 'alto').length, c: "text-accent" },
                     { l: "Média Preço", v: properties.length > 0 ? `R$ ${(properties.reduce((acc, p) => acc + Number(p.price), 0) / properties.length / 1000).toFixed(0)}k` : '-', c: "text-purple" },
                     { l: "MCMV", v: properties.filter(p => p.minhaCasaMinhaVida).length, c: "text-success" },
                 ].map((s, i) => (
-                    <div key={i} className="card-premium p-4 md:p-6 flex flex-col gap-2 md:gap-3">
-                        <span className="text-[8px] md:text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">{s.l}</span>
-                        <span className={cn("text-2xl md:text-3xl font-bold tracking-tighter", s.c)}>{s.v}</span>
+                    <div key={i} className="card-premium p-3.5 sm:p-6 flex flex-col gap-1.5 sm:gap-3">
+                        <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-60 line-clamp-1">{s.l}</span>
+                        <span className={cn("text-xl sm:text-3xl font-black tracking-tighter", s.c)}>{s.v}</span>
                     </div>
                 ))}
             </div>
 
             {/* Search & Filter */}
-            <div className="flex flex-col md:flex-row gap-6">
-                <div className="card-premium p-4 flex-1 flex items-center gap-4 bg-muted/20">
-                    <Search className="w-5 h-5 text-muted-foreground ml-2" />
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                <div className="card-premium p-1.5 sm:p-2 flex-1 flex items-center gap-2 sm:gap-3 bg-card border-border/40 shadow-sm focus-within:border-accent/40 transition-colors">
+                    <div className="p-2 sm:p-3 bg-muted/10 rounded-xl">
+                        <Search className="w-3.5 h-3.5 sm:w-5 h-5 text-muted-foreground" />
+                    </div>
                     <Input
-                        placeholder="Buscar por código, rua ou condomínio..."
+                        placeholder="Buscar por código, rua..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="bg-transparent border-none h-10 font-bold focus-visible:ring-0 placeholder:opacity-50"
+                        className="bg-transparent border-none h-10 sm:h-12 font-bold text-xs sm:text-base focus-visible:ring-0 placeholder:opacity-50"
                     />
                 </div>
                 <Button
                     variant="outline"
                     className={cn(
-                        "h-14 md:h-[74px] px-6 md:px-8 rounded-[20px] md:rounded-[24px] border-border/50 gap-3 btn-interactive relative",
+                        "h-12 sm:h-[68px] px-5 sm:px-8 rounded-xl sm:rounded-[24px] border-border/50 gap-2 sm:gap-3 btn-interactive relative font-black uppercase text-[9px] sm:text-[10px] tracking-widest",
                         activeFiltersCount > 0 && "border-accent bg-accent/5 text-accent"
                     )}
                     onClick={() => setIsFilterModalOpen(true)}
                 >
-                    <Filter className="w-4 h-4" />
-                    Filtros Avançados
+                    <Filter className="w-3.5 h-3.5 sm:w-4 h-4" />
+                    Filtros
                     {activeFiltersCount > 0 && (
-                        <Badge className="absolute -top-2 -right-2 h-6 w-6 flex items-center justify-center p-0 rounded-full bg-accent text-white border-white animate-in zoom-in">
+                        <Badge className="absolute -top-1.5 -right-1.5 h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center p-0 rounded-full bg-accent text-white border-2 border-background animate-in zoom-in">
                             {activeFiltersCount}
                         </Badge>
                     )}
@@ -176,98 +178,96 @@ export default function PropertiesPage() {
 
             {/* Marketplace Grid */}
             {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                     {[1, 2, 3].map(i => (
-                        <div key={i} className="h-[450px] rounded-[40px] bg-muted/20 animate-pulse" />
+                        <div key={i} className="h-[360px] sm:h-[450px] rounded-[28px] sm:rounded-[40px] bg-muted/20 animate-pulse" />
                     ))}
                 </div>
             ) : filteredProperties.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                     {filteredProperties.map((property) => (
                         <Link key={property.id} href={`/imoveis/${property.id}`} className="group h-full flex flex-col">
                             <div className="card-premium overflow-hidden flex flex-col h-full hover:border-accent/40 transition-all duration-500 hover:shadow-2xl hover:shadow-accent/5">
                                 {/* Image Container */}
-                                <div className="relative aspect-[4/3] w-full overflow-hidden">
+                                <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden">
                                     <Image
                                         src={property.photos?.[0] || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1000&auto=format&fit=crop"}
                                         alt={property.title}
                                         fill
                                         className="object-cover group-hover:scale-110 transition-transform duration-700"
                                     />
-                                    <div className="absolute top-4 right-4 flex gap-2">
-                                        <Badge className="bg-white/90 text-black border-none font-black text-[8px] px-3 py-1 uppercase rounded-full shadow-lg">
+                                    <div className="absolute top-2.5 sm:top-4 right-2.5 sm:right-4 flex gap-1.5 sm:gap-2">
+                                        <Badge className="bg-white/95 text-black border-none font-black text-[7px] sm:text-[8px] px-2 sm:px-3 py-0.5 sm:py-1 uppercase rounded-full shadow-lg">
                                             {property.type}
                                         </Badge>
                                         <Button
                                             variant="ghost"
                                             size="icon"
                                             onClick={(e) => confirmDelete(e, property.id, property.title)}
-                                            className="h-8 w-8 rounded-full bg-white/90 text-destructive hover:bg-destructive hover:text-white transition-all shadow-xl"
+                                            className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-white/95 text-destructive hover:bg-destructive hover:text-white transition-all shadow-xl"
                                         >
-                                            <Trash2 className="h-3.5 w-3.5" />
+                                            <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                                         </Button>
                                     </div>
-                                    <div className="absolute bottom-4 left-4 flex gap-2">
+                                    <div className="absolute bottom-2.5 sm:bottom-4 left-2.5 sm:left-4 flex gap-1.5 sm:gap-2">
                                         {property.minhaCasaMinhaVida && (
-                                            <div className="w-8 h-8 rounded-full bg-success/90 text-white flex items-center justify-center shadow-lg border border-white/20">
-                                                <Home className="h-4 w-4" />
+                                            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-success/95 text-white flex items-center justify-center shadow-lg border border-white/20">
+                                                <Home className="h-3 w-3 sm:h-4 sm:w-4" />
                                             </div>
                                         )}
                                         {property.allowsFinancing && (
-                                            <div className="w-8 h-8 rounded-full bg-primary/90 text-white flex items-center justify-center shadow-lg border border-white/20">
-                                                <Car className="h-4 w-4" />
+                                            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary/95 text-white flex items-center justify-center shadow-lg border border-white/20">
+                                                <Car className="h-3 w-3 sm:h-4 sm:w-4" />
                                             </div>
                                         )}
                                     </div>
                                 </div>
 
                                 {/* Content */}
-                                <div className="p-6 md:p-8 space-y-4 md:space-y-6 flex-1 flex flex-col">
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between items-start">
-                                            <h3 className="text-lg md:text-xl font-bold tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-1">
+                                <div className="p-5 sm:p-8 space-y-4 sm:space-y-6 flex-1 flex flex-col">
+                                    <div className="space-y-1 sm:space-y-2">
+                                        <div className="flex justify-between items-start gap-2">
+                                            <h3 className="text-sm sm:text-lg lg:text-xl font-black tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-1">
                                                 {property.title}
                                             </h3>
-                                            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-all group-hover:translate-x-1" />
+                                            <ChevronRight className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-muted-foreground group-hover:text-accent transition-all group-hover:translate-x-1 shrink-0" />
                                         </div>
-                                        <p className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground font-medium italic opacity-70">
-                                            <MapPin className="h-3 w-3" /> {property.neighborhood}, {property.city}
+                                        <p className="flex items-center gap-1 text-[8px] sm:text-[10px] text-muted-foreground font-bold uppercase tracking-widest opacity-60">
+                                            <MapPin className="h-2 w-2 sm:h-2.5 sm:w-2.5" /> {property.neighborhood}, {property.city}
                                         </p>
                                     </div>
 
-                                    <div className="flex items-center justify-between border-y border-border/50 py-4 md:py-5">
-                                        <div className="flex flex-col gap-0.5 md:gap-1">
-                                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Área</span>
-                                            <p className="text-xs md:text-sm font-bold flex items-center gap-1 md:gap-1.5">
-                                                <Maximize2 className="h-2.5 w-2.5 md:h-3 md:w-3 text-primary" /> {property.areaSqm}m²
+                                    <div className="flex items-center justify-between border-y border-border/40 py-3 sm:py-5">
+                                        <div className="flex flex-col gap-0.5 sm:gap-1">
+                                            <span className="text-[6px] sm:text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Área</span>
+                                            <p className="text-[10px] sm:text-sm font-black flex items-center gap-1 sm:gap-1.5">
+                                                <Maximize2 className="h-2 w-2 sm:h-3 sm:w-3 text-primary" /> {property.areaSqm}m²
                                             </p>
                                         </div>
-                                        <div className="flex flex-col gap-0.5 md:gap-1 items-center">
-                                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Dorms</span>
-                                            <p className="text-xs md:text-sm font-bold flex items-center gap-1 md:gap-1.5">
-                                                <BedDouble className="h-2.5 w-2.5 md:h-3 md:w-3 text-primary" /> {property.bedrooms}
+                                        <div className="flex flex-col gap-0.5 sm:gap-1 items-center">
+                                            <span className="text-[6px] sm:text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Dorms</span>
+                                            <p className="text-[10px] sm:text-sm font-black flex items-center gap-1 sm:gap-1.5">
+                                                <BedDouble className="h-2 w-2 sm:h-3 sm:w-3 text-primary" /> {property.bedrooms}
                                             </p>
                                         </div>
-                                        <div className="flex flex-col gap-0.5 md:gap-1 items-end">
-                                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Vagas</span>
-                                            <p className="text-xs md:text-sm font-bold flex items-center gap-1 md:gap-1.5">
-                                                <Car className="h-2.5 w-2.5 md:h-3 md:w-3 text-primary" /> {property.parkingSpots}
+                                        <div className="flex flex-col gap-0.5 sm:gap-1 items-end">
+                                            <span className="text-[6px] sm:text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Vagas</span>
+                                            <p className="text-[10px] sm:text-sm font-black flex items-center gap-1 sm:gap-1.5">
+                                                <Car className="h-2 w-2 sm:h-3 sm:w-3 text-primary" /> {property.parkingSpots}
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="pt-1 md:pt-2 flex justify-between items-end mt-auto">
-                                        <div className="space-y-0.5 md:space-y-1">
-                                            <p className="text-[7px] md:text-[8px] font-black uppercase tracking-[0.2em] text-accent">Valor Total</p>
-                                            <p className="text-xl md:text-2xl font-black text-foreground tracking-tighter">
+                                    <div className="pt-2 sm:pt-4 flex justify-between items-end mt-auto gap-2">
+                                        <div className="space-y-0.5 sm:space-y-1">
+                                            <p className="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.2em] text-accent">Valor de Venda</p>
+                                            <p className="text-lg sm:text-2xl font-black text-foreground tracking-tighter">
                                                 R$ {Number(property.price).toLocaleString('pt-BR')}
                                             </p>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant="outline" className="rounded-full border-border/50 text-[8px] md:text-[9px] font-bold px-2 md:px-3">
-                                                {property.standard}
-                                            </Badge>
-                                        </div>
+                                        <Badge variant="outline" className="rounded-full border-border/50 text-[7px] sm:text-[9px] font-black px-1.5 sm:px-3 py-0.5 sm:py-1 uppercase tracking-widest shrink-0">
+                                            {property.standard}
+                                        </Badge>
                                     </div>
                                 </div>
                             </div>
@@ -295,22 +295,22 @@ export default function PropertiesPage() {
             )}
             {/* Advanced Filters Modal */}
             <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
-                <DialogContent className="max-w-2xl p-0 overflow-hidden border-none bg-transparent shadow-2xl">
-                    <div className="relative bg-card/90 backdrop-blur-2xl border border-white/10 rounded-[40px] overflow-hidden p-10">
-                        <DialogHeader className="mb-8">
+                <DialogContent className="sm:max-w-2xl p-0 overflow-hidden border-none bg-transparent shadow-2xl">
+                    <div className="relative bg-card/95 backdrop-blur-2xl border border-white/10 rounded-[32px] sm:rounded-[40px] overflow-hidden p-6 sm:p-10">
+                        <DialogHeader className="mb-6 sm:mb-8">
                             <div className="flex items-center justify-between">
                                 <div className="space-y-1">
-                                    <DialogTitle className="text-2xl font-black text-foreground uppercase tracking-tighter">Filtros Avançados</DialogTitle>
-                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Refine sua busca no portfólio</p>
+                                    <DialogTitle className="text-xl sm:text-2xl font-black text-foreground uppercase tracking-tighter">Filtros Avançados</DialogTitle>
+                                    <p className="text-[9px] sm:text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Refine sua busca no portfólio</p>
                                 </div>
                             </div>
                         </DialogHeader>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                            <div className="space-y-4">
-                                <Label className="text-[10px] font-black uppercase tracking-widest opacity-50">Tipo de Imóvel</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-10">
+                            <div className="space-y-3 sm:space-y-4">
+                                <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest opacity-50 ml-2">Tipo de Imóvel</Label>
                                 <Select value={filters.type} onValueChange={(v) => setFilters(f => ({ ...f, type: v }))}>
-                                    <SelectTrigger className="w-full h-14 rounded-2xl border-border/50 bg-muted/20 font-bold">
+                                    <SelectTrigger className="w-full h-12 sm:h-14 rounded-2xl border-border/50 bg-muted/20 font-bold text-sm">
                                         <SelectValue placeholder="Todos os tipos" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -323,10 +323,10 @@ export default function PropertiesPage() {
                                 </Select>
                             </div>
 
-                            <div className="space-y-4">
-                                <Label className="text-[10px] font-black uppercase tracking-widest opacity-50">Padrão</Label>
+                            <div className="space-y-3 sm:space-y-4">
+                                <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest opacity-50 ml-2">Padrão</Label>
                                 <Select value={filters.standard} onValueChange={(v) => setFilters(f => ({ ...f, standard: v }))}>
-                                    <SelectTrigger className="w-full h-14 rounded-2xl border-border/50 bg-muted/20 font-bold">
+                                    <SelectTrigger className="w-full h-12 sm:h-14 rounded-2xl border-border/50 bg-muted/20 font-bold text-sm">
                                         <SelectValue placeholder="Todos os padrões" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -338,26 +338,26 @@ export default function PropertiesPage() {
                                 </Select>
                             </div>
 
-                            <div className="space-y-6 md:col-span-2">
-                                <div className="flex justify-between items-center mb-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-50">Faixa de Preço (Até)</Label>
-                                    <span className="text-lg font-black text-accent tracking-tighter">
+                            <div className="space-y-5 sm:space-y-6 md:col-span-2">
+                                <div className="flex justify-between items-center mb-2 px-2">
+                                    <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest opacity-50">Preço Máximo</Label>
+                                    <span className="text-base sm:text-lg font-black text-accent tracking-tighter">
                                         {filters.maxPrice === Infinity ? "Qualquer valor" : `R$ ${filters.maxPrice.toLocaleString('pt-BR')}`}
                                     </span>
                                 </div>
                                 <Slider
                                     defaultValue={[0]}
                                     max={10000000}
-                                    step={50000}
+                                    step={100000}
                                     onValueChange={(v) => setFilters(f => ({ ...f, maxPrice: v[0] === 0 ? Infinity : v[0] }))}
                                     className="py-4"
                                 />
                             </div>
 
-                            <div className="flex items-center justify-between p-6 rounded-3xl bg-muted/20 border border-border/30 md:col-span-2">
+                            <div className="flex items-center justify-between p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-muted/20 border border-border/30 md:col-span-2">
                                 <div className="space-y-1">
-                                    <p className="font-bold text-foreground tracking-tight">Minha Casa Minha Vida</p>
-                                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60">Filtrar apenas imóveis MCMV</p>
+                                    <p className="font-bold text-sm sm:text-base text-foreground tracking-tight">Minha Casa Minha Vida</p>
+                                    <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase tracking-widest font-black opacity-60">Apenas imóveis MCMV</p>
                                 </div>
                                 <Switch
                                     checked={filters.mcmv}
@@ -380,15 +380,15 @@ export default function PropertiesPage() {
                                     });
                                     setSearchTerm("");
                                 }}
-                                className="h-16 rounded-2xl font-black uppercase tracking-widest text-[10px] text-muted-foreground border-border/50"
+                                className="h-14 sm:h-16 rounded-2xl font-black uppercase tracking-widest text-[9px] sm:text-[10px] text-muted-foreground border-border/50"
                             >
-                                Limpar Tudo
+                                Limpar
                             </Button>
                             <Button
                                 onClick={() => setIsFilterModalOpen(false)}
-                                className="h-16 rounded-2xl bg-foreground text-background font-black uppercase tracking-widest text-[10px] hover:scale-105 active:scale-95 transition-all"
+                                className="h-14 sm:h-16 rounded-2xl bg-foreground text-background font-black uppercase tracking-widest text-[9px] sm:text-[10px] hover:scale-105 active:scale-95 transition-all"
                             >
-                                Aplicar Filtros
+                                Aplicar
                             </Button>
                         </DialogFooter>
                     </div>
@@ -397,22 +397,22 @@ export default function PropertiesPage() {
 
             {/* Modal de Exclusão Premium */}
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <DialogContent className="max-w-md p-0 overflow-hidden border-none bg-transparent shadow-2xl">
-                    <div className="relative bg-card/90 backdrop-blur-2xl border border-white/10 rounded-[40px] overflow-hidden p-10 animate-in zoom-in duration-300">
+                <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none bg-transparent shadow-2xl">
+                    <div className="relative bg-card/95 backdrop-blur-2xl border border-white/10 rounded-[32px] sm:rounded-[40px] overflow-hidden p-8 sm:p-10 animate-in zoom-in duration-300">
                         {/* Background Decoration */}
                         <div className="absolute -top-24 -right-24 w-48 h-48 bg-destructive/10 blur-[80px] rounded-full" />
 
-                        <div className="relative z-10 space-y-8">
-                            <div className="w-20 h-20 rounded-3xl bg-destructive/10 flex items-center justify-center mx-auto shadow-inner border border-destructive/20 rotate-3 group-hover:rotate-0 transition-transform">
-                                <AlertTriangle className="w-10 h-10 text-destructive animate-pulse" />
+                        <div className="relative z-10 space-y-6 sm:space-y-8">
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-destructive/10 flex items-center justify-center mx-auto shadow-inner border border-destructive/20 rotate-3 transition-transform">
+                                <AlertTriangle className="w-8 h-8 sm:w-10 sm:h-10 text-destructive animate-pulse" />
                             </div>
 
                             <div className="space-y-3 text-center">
-                                <DialogTitle className="text-2xl font-black text-foreground uppercase tracking-tighter leading-none">
+                                <DialogTitle className="text-xl sm:text-2xl font-black text-foreground uppercase tracking-tighter leading-none">
                                     Confirmar Exclusão
                                 </DialogTitle>
-                                <DialogDescription className="text-muted-foreground font-medium leading-relaxed">
-                                    Você está prestes a remover o imóvel <span className="text-foreground font-bold italic">"{propertyToDelete?.title}"</span>. Esta ação não poderá ser desfeita.
+                                <DialogDescription className="text-xs sm:text-sm text-muted-foreground font-medium leading-relaxed">
+                                    Deseja remover o imóvel <span className="text-foreground font-black italic">"{propertyToDelete?.title}"</span>? Esta ação não pode ser desfeita.
                                 </DialogDescription>
                             </div>
 
@@ -420,21 +420,21 @@ export default function PropertiesPage() {
                                 <Button
                                     variant="ghost"
                                     onClick={() => setIsDeleteDialogOpen(false)}
-                                    className="h-16 rounded-2xl font-black uppercase tracking-widest text-[10px] text-muted-foreground hover:bg-muted/50"
+                                    className="h-14 sm:h-16 rounded-2xl font-black uppercase tracking-widest text-[9px] sm:text-[10px] text-muted-foreground hover:bg-muted/50"
                                 >
-                                    Cancelar
+                                    Voltar
                                 </Button>
                                 <Button
                                     onClick={handleDelete}
                                     disabled={isDeleting}
-                                    className="h-16 rounded-2xl bg-destructive text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-destructive/20 hover:scale-105 active:scale-95 transition-all gap-2"
+                                    className="h-14 sm:h-16 rounded-2xl bg-destructive text-white font-black uppercase tracking-widest text-[9px] sm:text-[10px] shadow-lg shadow-destructive/20 hover:scale-105 active:scale-95 transition-all gap-2"
                                 >
                                     {isDeleting ? (
                                         <Loader2 className="w-4 h-4 animate-spin" />
                                     ) : (
                                         <Trash2 className="w-4 h-4" />
                                     )}
-                                    Excluir Agora
+                                    Excluir
                                 </Button>
                             </div>
                         </div>

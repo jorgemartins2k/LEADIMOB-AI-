@@ -6,49 +6,49 @@ import Link from 'next/link';
 
 export function Hero() {
     return (
-        <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
+        <section className="relative pt-24 pb-16 md:pt-48 md:pb-32 overflow-hidden">
             {/* Decorative Background Elements */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 overflow-hidden">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent/10 blur-[120px] rounded-full animate-pulse" />
-                <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[30%] bg-purple/10 blur-[100px] rounded-full" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 overflow-hidden pointer-events-none">
+                <div className="absolute top-[-10%] left-[-10%] w-[60%] sm:w-[40%] h-[40%] bg-accent/10 blur-[80px] sm:blur-[120px] rounded-full animate-pulse" />
+                <div className="absolute bottom-[10%] right-[-5%] w-[50%] sm:w-[30%] h-[30%] bg-purple/10 blur-[70px] sm:blur-[100px] rounded-full" />
             </div>
 
-            <div className="container mx-auto px-6">
-                <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="container mx-auto px-4 sm:px-6">
+                <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
                     {/* Content */}
-                    <div className="animate-fade-in text-center lg:text-left">
-                        <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-4 py-2 rounded-full text-sm font-extrabold mb-8 ring-1 ring-accent/20">
+                    <div className="animate-fade-in text-center lg:text-left flex flex-col items-center lg:items-start">
+                        <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-4 py-2 rounded-full text-[10px] sm:text-xs font-black mb-6 sm:mb-8 ring-1 ring-accent/20 uppercase tracking-widest pointer-events-none">
                             <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
                             IA para Corretores de Imóveis
                         </div>
 
-                        <h1 className="heading-hero text-foreground mb-8">
+                        <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-foreground mb-6 sm:mb-8 max-w-[15ch] lg:max-w-none leading-[1.1] tracking-tight">
                             Transforme 3.000 leads em{' '}
                             <span className="text-gradient-accent">
                                 até 8 vendas por mês
                             </span>
                         </h1>
 
-                        <p className="text-body text-lg md:text-xl mb-12 max-w-xl mx-auto lg:mx-0 font-normal leading-relaxed">
+                        <p className="text-base sm:text-lg lg:text-xl text-muted-foreground mb-8 sm:mb-12 max-w-xl mx-auto lg:mx-0 font-medium leading-relaxed">
                             A Raquel é a sua assistente de IA que prospecta, qualifica e entrega o lead quente direto no seu WhatsApp.
-                            <span className="text-foreground font-semibold"> Você só se preocupa em fechar.</span>
+                            <span className="text-foreground font-bold italic"> Você só se preocupa em fechar.</span>
                         </p>
 
-                        <div className="flex flex-col sm:flex-row gap-6 mb-16 justify-center lg:justify-start">
+                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-12 sm:mb-16 w-full sm:w-auto justify-center lg:justify-start">
                             <Button
                                 size="lg"
-                                className="btn-primary group h-16 px-10 text-base font-semibold uppercase tracking-wider shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                                className="btn-primary group h-14 sm:h-16 px-8 sm:px-10 text-[11px] sm:text-xs font-black uppercase tracking-widest shadow-2xl shadow-primary/30 active:scale-95 transition-all w-full sm:min-w-[240px]"
                                 asChild
                             >
                                 <Link href="/sign-up">
                                     Começar agora
-                                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
+                                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform" />
                                 </Link>
                             </Button>
                             <Button
                                 variant="outline"
                                 size="lg"
-                                className="h-16 px-10 text-base font-semibold uppercase tracking-wider border-2 border-border/50 hover:bg-muted/50 hover:border-accent transition-all rounded-[24px] btn-interactive"
+                                className="h-14 sm:h-16 px-8 sm:px-10 text-[11px] sm:text-xs font-black uppercase tracking-widest border-2 border-border/50 hover:bg-muted/50 hover:border-accent transition-all rounded-[20px] sm:rounded-[24px] btn-interactive w-full sm:min-w-[200px]"
                                 onClick={() => {
                                     document.getElementById('calculadora')?.scrollIntoView({ behavior: 'smooth' });
                                 }}
@@ -57,9 +57,9 @@ export function Hero() {
                             </Button>
                         </div>
 
-                        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-8 text-sm text-muted-foreground font-semibold uppercase tracking-wider">
+                        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-8 text-[10px] sm:text-xs text-muted-foreground font-black uppercase tracking-widest">
                             <div className="flex items-center gap-2">
-                                <Clock className="w-5 h-5 text-accent" />
+                                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
                                 Setup Rápido
                             </div>
                             <div className="flex items-center gap-2">

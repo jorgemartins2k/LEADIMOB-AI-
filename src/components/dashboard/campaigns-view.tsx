@@ -132,20 +132,20 @@ export function CampaignsView() {
     ];
 
     return (
-        <div className="space-y-12 animate-in fade-in duration-1000 pb-20">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-                <div className="space-y-3">
+        <div className="space-y-8 sm:space-y-12 animate-in fade-in duration-1000 pb-20 px-1 sm:px-0">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+                <div className="space-y-2 sm:space-y-3">
                     <h1 className="heading-xl text-foreground">Campanhas <span className="text-gradient-accent">Inteligentes</span></h1>
-                    <p className="text-body font-normal leading-relaxed">Links rastreáveis que conectam seus anúncios diretamente à <span className="text-foreground font-semibold">Raquel</span>.</p>
+                    <p className="text-body font-medium leading-relaxed">Links rastreáveis que conectam seus anúncios diretamente à <span className="text-foreground font-black">Raquel</span>.</p>
                 </div>
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogTrigger asChild>
-                        <Button className="btn-primary h-16 px-10 font-semibold uppercase text-[10px] tracking-wider gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all">
+                        <Button className="btn-primary h-14 sm:h-16 px-8 sm:px-10 font-black uppercase text-[10px] tracking-widest gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all w-full lg:w-auto">
                             <Rocket className="w-5 h-5" /> Nova Campanha
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="bg-card border-border sm:max-w-[425px] rounded-[32px]">
+                    <DialogContent className="bg-card/95 backdrop-blur-xl border-border sm:max-w-[425px] rounded-[32px] p-6 sm:p-8">
                         <DialogHeader>
                             <DialogTitle className="text-xl font-black uppercase tracking-tight">Criar Nova Campanha</DialogTitle>
                             <DialogDescription className="text-muted-foreground font-medium">
@@ -160,13 +160,13 @@ export function CampaignsView() {
                                     value={newTitle}
                                     onChange={(e) => setNewTitle(e.target.value)}
                                     placeholder="Ex: Campanha Instagram Lançamento"
-                                    className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium"
+                                    className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-bold text-sm"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="type" className="text-[10px] font-black uppercase tracking-widest ml-2">Plataforma / Formato</Label>
                                 <Select value={newType} onValueChange={setNewType}>
-                                    <SelectTrigger className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-medium">
+                                    <SelectTrigger className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-bold text-sm">
                                         <SelectValue placeholder="Selecione o formato" />
                                     </SelectTrigger>
                                     <SelectContent className="bg-card border-border">
@@ -186,7 +186,7 @@ export function CampaignsView() {
                                 className="w-full h-16 rounded-2xl bg-foreground text-background font-black uppercase text-[10px] tracking-widest gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all"
                             >
                                 {isCreating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-                                Criar Campanha Real
+                                Criar Campanha Agora
                             </Button>
                         </DialogFooter>
                     </DialogContent>
@@ -194,139 +194,139 @@ export function CampaignsView() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {stats.map((stat) => (
-                    <div key={stat.label} className="card-premium p-8 flex flex-col gap-3">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{stat.label}</p>
-                        <p className={cn("text-4xl font-bold tracking-tighter", stat.color)}>{stat.value}</p>
+                    <div key={stat.label} className="card-premium p-6 sm:p-8 flex flex-col gap-2 sm:gap-3">
+                        <p className="text-[9px] sm:text-[10px] font-black text-muted-foreground uppercase tracking-widest">{stat.label}</p>
+                        <p className={cn("text-3xl sm:text-4xl font-black tracking-tighter", stat.color)}>{stat.value}</p>
                     </div>
                 ))}
             </div>
 
             {/* Tutorial / Insight */}
-            <div className="card-premium p-10 bg-accent/5 border-accent/20 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 blur-3xl rounded-full -z-10 group-hover:bg-accent/20 transition-all" />
+            <div className="card-premium p-6 sm:p-10 bg-accent/5 border-accent/20 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 blur-3xl rounded-full -z-10 group-hover:bg-accent/20 transition-all opacity-50 sm:opacity-100" />
 
-                <div className="relative z-10 flex flex-col md:flex-row gap-10 items-center">
-                    <div className="w-20 h-20 rounded-3xl bg-accent text-white flex items-center justify-center shrink-0 shadow-lg shadow-accent/20 group-hover:scale-110 group-hover:rotate-3 transition-all">
-                        <Lightbulb className="w-10 h-10" />
+                <div className="relative z-10 flex flex-col md:flex-row gap-6 sm:gap-10 items-center">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-accent text-white flex items-center justify-center shrink-0 shadow-lg shadow-accent/20 group-hover:scale-110 transition-transform">
+                        <Lightbulb className="w-8 h-8 sm:w-10 sm:h-10" />
                     </div>
-                    <div className="space-y-4 flex-1">
-                        <h3 className="text-lg font-bold text-foreground uppercase tracking-tight">Otimize seu Investimento em Tráfego</h3>
-                        <p className="text-muted-foreground font-normal leading-relaxed max-w-2xl">
-                            Use links únicos para cada plataforma (Instagram, Facebook, Google) e descubra exatamente de onde vêm seus clientes mais lucrativos. A <span className="text-foreground font-semibold">Raquel</span> identifica a origem e adapta a abordagem.
+                    <div className="space-y-3 sm:space-y-4 flex-1 text-center md:text-left">
+                        <h3 className="text-base sm:text-lg font-black text-foreground uppercase tracking-tight">Otimize seu Investimento em Tráfego</h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground font-medium leading-relaxed max-w-2xl">
+                            Use links únicos para cada plataforma e descubra exatamente de onde vêm seus clientes mais lucrativos. A <span className="text-foreground font-black">Raquel</span> identifica a origem e adapta a abordagem.
                         </p>
                     </div>
-                    <Button variant="outline" className="h-14 px-8 rounded-2xl border-accent/20 text-accent font-semibold uppercase text-[10px] tracking-wider btn-interactive">
-                        Ver Tutorial Completo
+                    <Button variant="outline" className="h-12 sm:h-14 px-6 sm:px-8 rounded-2xl border-accent/20 text-accent font-black uppercase text-[10px] tracking-widest btn-interactive w-full md:w-auto">
+                        Ver Tutorial
                     </Button>
                 </div>
             </div>
 
             {/* Campaigns Grid */}
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] flex items-center gap-3">
-                        <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
+                    <h3 className="text-[9px] sm:text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] sm:tracking-[0.3em] flex items-center gap-3">
+                        <div className="w-2 h-2 bg-success rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
                         Campanhas Rodando
                     </h3>
                     <Button
                         onClick={loadCampaigns}
                         variant="ghost"
-                        className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground"
+                        className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground h-10 px-4"
                     >
-                        Atualizar Lista
+                        Atualizar
                     </Button>
                 </div>
 
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-4">
                         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                        <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Carregando campanhas...</p>
+                        <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Carregando...</p>
                     </div>
                 ) : campaigns.length === 0 ? (
-                    <div className="card-premium p-20 flex flex-col items-center justify-center gap-6 border-dashed opacity-60">
-                        <Megaphone className="w-16 h-16 text-muted-foreground opacity-20" />
+                    <div className="card-premium p-12 sm:p-20 flex flex-col items-center justify-center gap-6 border-dashed opacity-60">
+                        <Megaphone className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground opacity-20" />
                         <div className="text-center space-y-2">
-                            <p className="text-lg font-black text-foreground uppercase tracking-tight">Nenhuma campanha ativa</p>
-                            <p className="text-sm font-medium text-muted-foreground">Clique em "Nova Campanha" para começar a rastrear seus leads.</p>
+                            <p className="text-base sm:text-lg font-black text-foreground uppercase tracking-tight">Nenhuma campanha</p>
+                            <p className="text-xs sm:text-sm font-medium text-muted-foreground">Crie sua primeira campanha para rastrear leads.</p>
                         </div>
                     </div>
                 ) : (
-                    <div className="grid gap-6">
+                    <div className="grid gap-4 sm:gap-6">
                         {campaigns.map((camp) => {
                             const style = getTypeStyle(camp.contentType);
                             return (
-                                <div key={camp.id} className="card-premium p-8 hover:border-primary/40 transition-all group relative overflow-hidden">
+                                <div key={camp.id} className="card-premium p-6 sm:p-8 hover:border-primary/40 transition-all group relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-2xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                                    <div className="flex flex-col lg:flex-row gap-8 items-start lg:items-center">
-                                        <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform", style.bg)}>
-                                            <style.icon className={cn("w-8 h-8", style.color)} />
+                                    <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 items-start lg:items-center">
+                                        <div className={cn("w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform", style.bg)}>
+                                            <style.icon className={cn("w-6 h-6 sm:w-8 h-8", style.color)} />
                                         </div>
 
-                                        <div className="flex-1 space-y-5">
-                                            <div className="flex items-center gap-4">
-                                                <h4 className="text-2xl font-black text-foreground tracking-tighter group-hover:text-primary transition-colors">{camp.title}</h4>
-                                                <span className="bg-success/10 text-success text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest border border-success/20">Ativa</span>
+                                        <div className="flex-1 space-y-4 sm:space-y-5 w-full">
+                                            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                                                <h4 className="text-xl sm:text-2xl font-black text-foreground tracking-tighter group-hover:text-primary transition-colors truncate max-w-[200px] sm:max-w-none">{camp.title}</h4>
+                                                <span className="bg-success/10 text-success text-[8px] sm:text-[9px] font-black px-3 sm:px-4 py-1 sm:py-1.5 rounded-full uppercase tracking-widest border border-success/20">Ativa</span>
                                             </div>
 
-                                            <div className="flex items-center gap-3 bg-muted/20 p-2.5 rounded-2xl group-hover:bg-muted/40 transition-colors border border-border/50">
-                                                <code className="text-[11px] font-semibold text-muted-foreground truncate flex-1 px-4">{camp.trackingLink}</code>
+                                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-muted/20 p-2 rounded-2xl group-hover:bg-muted/40 transition-colors border border-border/50">
+                                                <code className="text-[10px] sm:text-[11px] font-bold text-muted-foreground truncate flex-1 px-4 py-2 sm:py-0">{camp.trackingLink}</code>
                                                 <Button
                                                     size="sm"
                                                     onClick={() => handleCopy(camp.trackingLink, camp.id)}
                                                     className={cn(
-                                                        "rounded-xl h-11 px-8 font-semibold text-[10px] uppercase tracking-wider transition-all shadow-lg",
+                                                        "rounded-xl h-10 sm:h-11 px-6 sm:px-8 font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all shadow-lg",
                                                         copiedLink === camp.id ? "bg-success hover:bg-success scale-105" : "bg-primary hover:scale-105 active:scale-95"
                                                     )}
                                                 >
-                                                    {copiedLink === camp.id ? <Check className="w-5 h-5" /> : <><Copy className="w-4 h-4 mr-2" /> Copiar Link</>}
+                                                    {copiedLink === camp.id ? <Check className="w-4 h-4" /> : <><Copy className="w-3.5 h-3.5 mr-2" /> Copiar Link</>}
                                                 </Button>
                                             </div>
 
-                                            <div className="flex flex-wrap gap-10 pt-2">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="p-2.5 bg-muted/30 rounded-xl">
-                                                        <Eye className="w-5 h-5 text-muted-foreground" />
+                                            <div className="grid grid-cols-3 gap-4 sm:gap-10 pt-2 border-t border-border/10">
+                                                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4">
+                                                    <div className="p-2 sm:p-2.5 bg-muted/30 rounded-lg sm:rounded-xl hidden xs:block">
+                                                        <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                                                     </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-lg font-black text-foreground leading-none">{camp.totalClicks || 0}</span>
-                                                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">Cliques</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-4">
-                                                    <div className="p-2.5 bg-primary/10 rounded-xl">
-                                                        <Users className="w-5 h-5 text-primary" />
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-lg font-black text-foreground leading-none">{camp.totalLeads || 0}</span>
-                                                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">Leads</span>
+                                                    <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
+                                                        <span className="text-base sm:text-lg font-black text-foreground leading-none">{camp.totalClicks || 0}</span>
+                                                        <span className="text-[8px] sm:text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">Cliques</span>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-4">
-                                                    <div className="p-2.5 bg-accent/10 rounded-xl">
-                                                        <Target className="w-5 h-5 text-accent" />
+                                                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4 border-l border-border/10 sm:border-none pl-4 sm:pl-0">
+                                                    <div className="p-2 sm:p-2.5 bg-primary/10 rounded-lg sm:rounded-xl hidden xs:block">
+                                                        <Users className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                                                     </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-lg font-black text-foreground leading-none">{camp.totalConversions || 0}</span>
-                                                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">Visitas</span>
+                                                    <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
+                                                        <span className="text-base sm:text-lg font-black text-foreground leading-none">{camp.totalLeads || 0}</span>
+                                                        <span className="text-[8px] sm:text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">Leads</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4 border-l border-border/10 sm:border-none pl-4 sm:pl-0">
+                                                    <div className="p-2 sm:p-2.5 bg-accent/10 rounded-lg sm:rounded-xl hidden xs:block">
+                                                        <Target className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
+                                                    </div>
+                                                    <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
+                                                        <span className="text-base sm:text-lg font-black text-foreground leading-none">{camp.totalConversions || 0}</span>
+                                                        <span className="text-[8px] sm:text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">Visitas</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-3">
-                                            <Button variant="ghost" size="icon" className="h-14 w-14 rounded-2xl hover:bg-muted btn-interactive border border-transparent hover:border-border/50">
-                                                <Share2 className="w-5 h-5 text-muted-foreground" />
+                                        <div className="flex sm:flex-col lg:flex-row gap-2 sm:gap-3 w-full lg:w-auto border-t border-border/10 lg:border-none pt-4 lg:pt-0">
+                                            <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl hover:bg-muted btn-interactive border border-border/30 lg:border-transparent flex-1 lg:flex-none">
+                                                <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                                             </Button>
                                             <Button
                                                 onClick={() => handleDelete(camp.id)}
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-14 w-14 rounded-2xl hover:bg-hot/10 hover:text-hot btn-interactive border border-transparent hover:border-hot/20"
+                                                className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl hover:bg-hot/10 hover:text-hot btn-interactive border border-border/30 lg:border-transparent flex-1 lg:flex-none"
                                             >
-                                                <Trash2 className="w-5 h-5" />
+                                                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                                             </Button>
                                         </div>
                                     </div>

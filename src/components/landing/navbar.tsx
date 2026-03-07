@@ -97,10 +97,10 @@ export function Navbar() {
             </div>
           </div>
 
-          {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 text-foreground"
+            className="md:hidden p-2 text-foreground min-w-[48px] min-h-[48px] flex items-center justify-center transition-transform active:scale-90"
             onClick={() => setIsOpen(!isOpen)}
+            aria-label="Menu"
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -108,40 +108,40 @@ export function Navbar() {
 
         {/* Mobile Navigation */}
         <div className={cn(
-          "md:hidden fixed inset-x-0 top-0 pt-24 pb-10 bg-background/98 backdrop-blur-2xl border-b border-border transition-all duration-500 ease-in-out transform z-[40]",
+          "md:hidden fixed inset-x-0 top-0 pt-24 pb-10 bg-background/98 backdrop-blur-xl border-b border-border/50 shadow-[0_20px_50px_rgba(0,0,0,0.1)] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] transform z-[40]",
           isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"
         )}>
-          <div className="container mx-auto px-6 space-y-2">
+          <div className="container mx-auto px-4 space-y-2">
             <button
               onClick={() => scrollToSection('funcionalidades')}
-              className="flex items-center w-full px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all"
+              className="flex items-center w-full px-6 py-5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all min-h-[48px]"
             >
               Funcionalidades
             </button>
             <button
               onClick={() => scrollToSection('calculadora')}
-              className="flex items-center w-full px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all"
+              className="flex items-center w-full px-6 py-5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all min-h-[48px]"
             >
               Calculadora de Vendas
             </button>
             <button
               onClick={() => scrollToSection('precos')}
-              className="flex items-center w-full px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all"
+              className="flex items-center w-full px-6 py-5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all min-h-[48px]"
             >
               Preços
             </button>
 
-            <div className="pt-6 mt-4 border-t border-border/50 space-y-3 px-2">
+            <div className="pt-8 mt-6 border-t border-border/50 space-y-4 px-2">
               {isSignedIn ? (
-                <Button className="w-full btn-primary font-black uppercase tracking-widest text-[10px] h-14 rounded-2xl" asChild>
+                <Button className="w-full btn-primary font-black uppercase tracking-widest text-[11px] h-16 rounded-2xl" asChild>
                   <Link href="/dashboard">Meu Painel</Link>
                 </Button>
               ) : (
-                <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" className="font-black uppercase tracking-widest text-[10px] h-14 rounded-2xl border-border/50" asChild>
+                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4">
+                  <Button variant="outline" className="w-full font-black uppercase tracking-widest text-[11px] h-16 rounded-max border-border/50 bg-background" asChild>
                     <Link href="/sign-in">Entrar</Link>
                   </Button>
-                  <Button className="btn-primary font-black uppercase tracking-widest text-[10px] h-14 rounded-2xl shadow-lg shadow-primary/20" asChild>
+                  <Button className="w-full btn-primary font-black uppercase tracking-widest text-[11px] h-16 rounded-max shadow-xl shadow-primary/20" asChild>
                     <Link href="/sign-up">Teste Grátis</Link>
                   </Button>
                 </div>
