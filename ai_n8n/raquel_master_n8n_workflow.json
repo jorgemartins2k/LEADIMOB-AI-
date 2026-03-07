@@ -1,0 +1,230 @@
+{
+    "name": "Raquel Master - Strategist Version",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "raquel-webhook",
+                "options": {}
+            },
+            "id": "webhook-zapi",
+            "name": "Webhook Z-API",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                100,
+                240
+            ]
+        },
+        {
+            "parameters": {
+                "options": {}
+            },
+            "id": "ai-agent-raquel",
+            "name": "AI Agent Raquel",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 1,
+            "position": [
+                320,
+                240
+            ]
+        },
+        {
+            "parameters": {
+                "model": "gpt-4o",
+                "options": {
+                    "temperature": 0.7
+                }
+            },
+            "id": "openai-model",
+            "name": "OpenAI Chat Model",
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "typeVersion": 1,
+            "position": [
+                200,
+                460
+            ],
+            "credentials": {
+                "openAiApi": {
+                    "id": "openai-credential-id",
+                    "name": "OpenAI Account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "tableName": "conversations",
+                "options": {}
+            },
+            "id": "postgres-memory",
+            "name": "Postgres Chat Memory",
+            "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+            "typeVersion": 1,
+            "position": [
+                350,
+                460
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "postgres-credential-id",
+                    "name": "Supabase DB"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "name": "responder_lead",
+                "description": "Ferramenta para enviar a resposta final para o cliente no WhatsApp.",
+                "url": "https://api.z-api.io/instances/3EF563F4DD4551A0224EDEEAB9125F18/token/6E1D394248DA536C5C45C297/send-text",
+                "method": "POST",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "{\n  \"phone\": \"{{$node[\"Webhook Z-API\"].json[\"phone\"]}}\",\n  \"message\": \"{{$placeholder}}\"\n}",
+                "options": {}
+            },
+            "id": "response-tool",
+            "name": "Responder Lead Tool",
+            "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+            "typeVersion": 1,
+            "position": [
+                500,
+                460
+            ]
+        },
+        {
+            "parameters": {
+                "name": "alertar_corretor",
+                "description": "Notifica o corretor no WhatsApp quando o lead quer visitar ou é MUITO quente.",
+                "url": "https://api.z-api.io/instances/3EF563F4DD4551A0224EDEEAB9125F18/token/6E1D394248DA536C5C45C297/send-text",
+                "method": "POST",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "{\n  \"phone\": \"CORRETOR_WHATSAPP_AQUI\",\n  \"message\": \"🚨 *LEAD QUENTE IDENTIFICADO*\\n\\nNome: {{$node[\"Webhook Z-API\"].json[\"senderName\"]}}\\nTelefone: {{$node[\"Webhook Z-API\"].json[\"phone\"]}}\\n\\nEle(a) demonstrou interesse em visita! Assuma o controle.\"\n}",
+                "options": {}
+            },
+            "id": "notify-tool",
+            "name": "Broker Alert Tool",
+            "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+            "typeVersion": 1,
+            "position": [
+                650,
+                460
+            ]
+        },
+        {
+            "parameters": {
+                "name": "buscar_imoveis",
+                "description": "Busca imóveis e lançamentos no banco de dados para sugerir ao cliente.",
+                "url": "https://wwwtuduxxcslpcpgjzya.supabase.co/rest/v1/properties?select=*",
+                "method": "GET",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "apikey",
+                            "value": "sb_publishable_lRPKRo4prFynd6c3qpWmng_ntBS9oAW"
+                        },
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer sb_publishable_lRPKRo4prFynd6c3qpWmng_ntBS9oAW"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "portfolio-tool",
+            "name": "Buscar Portfólio Tool",
+            "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+            "typeVersion": 1,
+            "position": [
+                800,
+                460
+            ]
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "Você é Raquel, a assistente virtual oficial. Siga rigorosamente este manual:\n\n1. IDENTIDADE: Assistente do corretor. Profissional, acolhedora e empática. Não revele ser IA espontaneamente.\n\n2. OBJETIVO: Despertar interesse genuíno e conduzir até o desejo de visita presencial. VOCÊ NÃO AGENDA A VISITA, apenas identifica o desejo e usa a ferramenta 'alertar_corretor'.\n\n3. QUALIFICAÇÃO FINANCEIRA: Pergunte sobre financiamento pré-aprovado. Se não tiver, incentive a fazer e explique a importância para o processo.\n\n4. PERFIS:\n   - Comprador Moradia: Foco em conforto, família e localização.\n   - Investidor: Foco em valorização, ROI e demanda locatícia.\n\n5. FOLLOW-UP: Retome conversas de forma natural baseando-se no histórico.\n\n6. REGRAS GERAIS: Empatia, sem pressão agressiva. Consulte sempre o portfólio via 'buscar_imoveis'. Use 'responder_lead' para enviar a resposta final ao cliente.",
+                "options": {
+                    "systemMessage": "Você é a Raquel, a estrategista digital imobilidária do Leadimob-AI."
+                }
+            },
+            "id": "master-prompt",
+            "name": "Raquel Master Prompt",
+            "type": "@n8n/n8n-nodes-langchain.chainRetrievalQa",
+            "typeVersion": 1,
+            "position": [
+                100,
+                460
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook Z-API": {
+            "main": [
+                [
+                    {
+                        "node": "AI Agent Raquel",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI Chat Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "AI Agent Raquel",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Postgres Chat Memory": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "AI Agent Raquel",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Responder Lead Tool": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "AI Agent Raquel",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Broker Alert Tool": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "AI Agent Raquel",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Buscar Portfólio Tool": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "AI Agent Raquel",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}
