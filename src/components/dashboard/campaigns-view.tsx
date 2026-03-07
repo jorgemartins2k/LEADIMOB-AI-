@@ -17,10 +17,12 @@ import {
     Share2,
     Trash2,
     Plus,
-    Loader2
+    Loader2,
+    Home
 } from 'lucide-react';
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import {
@@ -42,6 +44,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { getCampaigns, createCampaign, deleteCampaign } from '@/lib/actions/campaigns';
+import { getProperties } from '@/lib/actions/properties';
+import { getLaunches } from '@/lib/actions/launches';
 
 export function CampaignsView() {
     const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -53,10 +57,26 @@ export function CampaignsView() {
     // Form states
     const [newTitle, setNewTitle] = useState("");
     const [newType, setNewType] = useState("instagram_feed");
+    const [linkType, setLinkType] = useState<"none" | "property" | "launch">("none");
+    const [linkId, setLinkId] = useState<string>("");
+
+    const [availableProperties, setAvailableProperties] = useState<any[]>([]);
+    const [availableLaunches, setAvailableLaunches] = useState<any[]>([]);
 
     useEffect(() => {
         loadCampaigns();
+        loadLinkables();
     }, []);
+
+    async function loadLinkables() {
+        try {
+            const [p, l] = await Promise.all([getProperties(), getLaunches()]);
+            setAvailableProperties(p);
+            setAvailableLaunches(l);
+        } catch (error) {
+            console.error("Error loading linkables:", error);
+        }
+    }
 
     async function loadCampaigns() {
         setIsLoading(true);
@@ -82,7 +102,9 @@ export function CampaignsView() {
         try {
             const result = await createCampaign({
                 title: newTitle,
-                contentType: newType
+                contentType: newType,
+                propertyId: linkType === "property" ? linkId : null,
+                launchId: linkType === "launch" ? linkId : null
             });
             if (result.error) {
                 toast.error(result.error, { duration: 3000 });
@@ -90,6 +112,8 @@ export function CampaignsView() {
                 toast.success("Campanha criada com sucesso! 🚀", { duration: 3000 });
                 setIsModalOpen(false);
                 setNewTitle("");
+                setLinkType("none");
+                setLinkId("");
                 loadCampaigns();
             }
         } catch (error) {
@@ -178,6 +202,44 @@ export function CampaignsView() {
                                     </SelectContent>
                                 </Select>
                             </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="linkType" className="text-[10px] font-black uppercase tracking-widest ml-2">Vincular a:</Label>
+                                <Select value={linkType} onValueChange={(v: any) => { setLinkType(v); setLinkId(""); }}>
+                                    <SelectTrigger className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-bold text-sm">
+                                        <SelectValue placeholder="Selecione o tipo de vínculo" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-card border-border">
+                                        <SelectItem value="none">Nenhum / Geral</SelectItem>
+                                        <SelectItem value="property">Imóvel</SelectItem>
+                                        <SelectItem value="launch">Lançamento</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {linkType !== "none" && (
+                                <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                                    <Label htmlFor="linkId" className="text-[10px] font-black uppercase tracking-widest ml-2">
+                                        {linkType === "property" ? "Selecione o Imóvel" : "Selecione o Lançamento"}
+                                    </Label>
+                                    <Select value={linkId} onValueChange={setLinkId}>
+                                        <SelectTrigger className="bg-muted/20 border-border/50 h-14 rounded-2xl px-6 font-bold text-sm">
+                                            <SelectValue placeholder={`Escolha um ${linkType === "property" ? "imóvel" : "lançamento"}`} />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-card border-border">
+                                            {linkType === "property" ? (
+                                                availableProperties.map(p => (
+                                                    <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                                                ))
+                                            ) : (
+                                                availableLaunches.map(l => (
+                                                    <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                                                ))
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
                         </div>
                         <DialogFooter className="pt-4">
                             <Button
@@ -269,6 +331,16 @@ export function CampaignsView() {
                                             <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                                                 <h4 className="text-xl sm:text-2xl font-black text-foreground tracking-tighter group-hover:text-primary transition-colors truncate max-w-[200px] sm:max-w-none">{camp.title}</h4>
                                                 <span className="bg-success/10 text-success text-[8px] sm:text-[9px] font-black px-3 sm:px-4 py-1 sm:py-1.5 rounded-full uppercase tracking-widest border border-success/20">Ativa</span>
+                                                {camp.property && (
+                                                    <Badge variant="outline" className="rounded-full text-[8px] font-black px-3 py-1 border-primary/30 text-primary">
+                                                        <Home className="w-3 h-3 mr-1" /> {camp.property.title}
+                                                    </Badge>
+                                                )}
+                                                {camp.launch && (
+                                                    <Badge variant="outline" className="rounded-full text-[8px] font-black px-3 py-1 border-accent/30 text-accent">
+                                                        <Rocket className="w-3 h-3 mr-1" /> {camp.launch.name}
+                                                    </Badge>
+                                                )}
                                             </div>
 
                                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-muted/20 p-2 rounded-2xl group-hover:bg-muted/40 transition-colors border border-border/50">

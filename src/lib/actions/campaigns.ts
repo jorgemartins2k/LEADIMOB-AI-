@@ -15,6 +15,10 @@ export async function getCampaigns() {
         return await db.query.campaigns.findMany({
             where: eq(campaigns.userId, user.id),
             orderBy: [desc(campaigns.createdAt)],
+            with: {
+                property: true,
+                launch: true,
+            }
         });
     } catch (e: any) {
         console.error("Error fetching campaigns:", e);

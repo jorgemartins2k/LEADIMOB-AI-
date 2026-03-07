@@ -183,6 +183,17 @@ export const appointments = pgTable('appointments', {
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
+export const campaignsRelations = relations(campaigns, ({ one }) => ({
+    property: one(properties, {
+        fields: [campaigns.propertyId],
+        references: [properties.id],
+    }),
+    launch: one(launches, {
+        fields: [campaigns.launchId],
+        references: [launches.id],
+    }),
+}));
+
 export const launchesRelations = relations(launches, ({ many }) => ({
     units: many(launchUnits),
 }));

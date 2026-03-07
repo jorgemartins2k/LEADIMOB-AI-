@@ -33,9 +33,30 @@ export async function GET(
             .set({ totalClicks: sql`${campaigns.totalClicks} + 1` })
             .where(eq(campaigns.id, campaign.id));
 
-        // 4. Redirect to WhatsApp with pre-filled message
-        // Identifying the campaign helps Raquel know where the lead came from if they send the message.
-        const message = encodeURIComponent(`Olá ${broker.name}, vi seu anúncio "${campaign.title}" e gostaria de mais informações. [REF:${campaign.id}]`);
+        // 4. Fetch linked item details if exists
+        let contextMessage = `seu anúncio "${campaign.title}"`;
+        let refCode = `REF:${campaign.id}`;
+
+        if (campaign.propertyId) {
+            const property = await db.query.properties.findFirst({
+                where: eq(sql`id`, campaign.propertyId),
+            });
+            if (property) {
+                contextMessage = `o imóvel "${property.title}" em ${property.neighborhood || property.city}`;
+                refCode = `REF_IMOV:${property.id}`;
+            }
+        } else if (campaign.launchId) {
+            const launch = await db.query.launches.findFirst({
+                where: eq(sql`id`, campaign.launchId),
+            });
+            if (launch) {
+                contextMessage = `o lançamento "${launch.name}" em ${launch.neighborhood || launch.city}`;
+                refCode = `REF_LANC:${launch.id}`;
+            }
+        }
+
+        // 5. Redirect to WhatsApp with pre-filled message
+        const message = encodeURIComponent(`Olá ${broker.name}, vi ${contextMessage} e gostaria de mais informações. [${refCode}]`);
         const cleanPhone = broker.whatsapp.replace(/\D/g, "");
         const whatsappUrl = `https://wa.me/${cleanPhone}?text=${message}`;
 
