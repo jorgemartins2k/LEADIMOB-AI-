@@ -1,5 +1,5 @@
 {
-    "name": "Raquel Master - GESTÃO VISUAL",
+    "name": "Raquel Master - FINAL FIX",
     "nodes": [
         {
             "parameters": {
@@ -78,7 +78,11 @@
         },
         {
             "parameters": {
-                "options": {}
+                "promptType": "define",
+                "text": "=VOCÊ É RAQUEL, ASSISTENTE VIRTUAL DO CORRETOR: {{$node[\"DB: Dados do Lead (Reativo)\"].json[\"broker_name\"] || $node[\"DB: Leads para acompanhamento\"].json[\"broker_name\"]}}\n\nMANUAL ESTRATÉGICO:\n1. IDENTIDADE: Profissional, acolhedora e empática. Nunca revele espontaneamente ser IA.\n2. OBJETIVO: Despertar interesse genuíno e levar à visita. VOCÊ NÃO AGENDA VISITAS. Use 'alertar_corretor_quente' quando o lead quiser visitar.\n3. QUALIFICAÇÃO FINANCEIRA: Pergunte sobre financiamento pré-aprovado. Incentive a fazer se não tiver.\n4. PERFIS: Comprador (conforto/família) vs Investidor (ROI/valorização).\n5. FOLLOW-UP: Retome conversas de forma natural usando o histórico.\n\nREGRAS TÉCNICAS:\n- Use 'buscar_portfolio' para oferecer imóveis.\n- Use 'enviar_mensagem_whatsapp' para responder ao cliente.",
+                "options": {
+                    "systemMessage": "Você é Raquel, a inteligência estratégica do Leadimob-AI."
+                }
             },
             "id": "ai-agent-raquel",
             "name": "Raquel Agente IA",
@@ -134,7 +138,7 @@
         {
             "parameters": {
                 "name": "enviar_mensagem_whatsapp",
-                "description": "Envia a mensagem de resposta para o cliente no WhatsApp.",
+                "description": "Envia a mensagem final para o cliente no WhatsApp.",
                 "url": "https://api.z-api.io/instances/3EF563F4DD4551A0224EDEEAB9125F18/token/6E1D394248DA536C5C45C297/send-text",
                 "method": "POST",
                 "sendBody": true,
@@ -154,12 +158,12 @@
         {
             "parameters": {
                 "name": "alertar_corretor_quente",
-                "description": "Avisa o corretor quando um lead quer visitar ou tem alto interesse.",
+                "description": "Notifica o corretor dono do lead sobre o interesse em visita.",
                 "url": "https://api.z-api.io/instances/3EF563F4DD4551A0224EDEEAB9125F18/token/6E1D394248DA536C5C45C297/send-text",
                 "method": "POST",
                 "sendBody": true,
                 "specifyBody": "json",
-                "jsonBody": "{\n  \"phone\": \"{{$node[\"DB: Dados do Lead (Reativo)\"].json[\"broker_whatsapp\"] || $node[\"DB: Leads para acompanhamento\"].json[\"broker_whatsapp\"]}}\",\n  \"message\": \"🚨 *LEAD QUENTE*\\n\\nO lead *{{$node[\"DB: Dados do Lead (Reativo)\"].json[\"lead_name\"] || $node[\"DB: Leads para acompanhamento\"].json[\"lead_name\"]}}* demonstrou alto interesse.\\n\\nAssuma a conversa!\"\n}",
+                "jsonBody": "{\n  \"phone\": \"{{$node[\"DB: Dados do Lead (Reativo)\"].json[\"broker_whatsapp\"] || $node[\"DB: Leads para acompanhamento\"].json[\"broker_whatsapp\"]}}\",\n  \"message\": \"🚨 *LEAD QUENTE IDENTIFICADO*\\n\\nO lead *{{$node[\"DB: Dados do Lead (Reativo)\"].json[\"lead_name\"] || $node[\"DB: Leads para acompanhamento\"].json[\"lead_name\"]}}* quer visitar um imóvel!\\n\\nAssuma o atendimento agora.\"\n}",
                 "options": {}
             },
             "id": "alert-tool",
@@ -173,15 +177,32 @@
         },
         {
             "parameters": {
-                "systemMessage": "=DADOS DO CORRETOR:\nNome: {{$node[\"DB: Dados do Lead (Reativo)\"].json[\"broker_name\"] || $node[\"DB: Leads para acompanhamento\"].json[\"broker_name\"]}}\n\nIDENTIDADE E APRESENTAÇÃO:\nVocê é Raquel, assistente virtual oficial do corretor {{$node[\"DB: Dados do Lead (Reativo)\"].json[\"broker_name\"] || $node[\"DB: Leads para acompanhamento\"].json[\"broker_name\"]}}. Apresente-se sempre assim. Nunca revele ser IA espontaneamente.\n\nOBJETIVO:\nDespertar interesse genuíno e conduzir à visita presencial. VOCÊ NÃO AGENDA VISITAS. Quando o lead {{$node[\"DB: Dados do Lead (Reativo)\"].json[\"lead_name\"] || $node[\"DB: Leads para acompanhamento\"].json[\"lead_name\"]}} demonstrar interesse real, use 'alertar_corretor_quente'.\n\nREGRAS TÉCNICAS:\n- Pergunte sobre financiamento pré-aprovado.\n- Identifique se é Comprador ou Investidor.\n- Mantenha tom profissional e empático.\n- Use sempre 'enviar_mensagem_whatsapp' para responder."
+                "name": "buscar_portfolio",
+                "description": "Busca imóveis do corretor conforme o interesse do lead.",
+                "url": "https://wwwtuduxxcslpcpgjzya.supabase.co/rest/v1/properties?user_id=eq.{{$node[\"DB: Dados do Lead (Reativo)\"].json[\"user_id\"] || $node[\"DB: Leads para acompanhamento\"].json[\"user_id\"]}}",
+                "method": "GET",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "apikey",
+                            "value": "sb_publishable_lRPKRo4prFynd6c3qpWmng_ntBS9oAW"
+                        },
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer sb_publishable_lRPKRo4prFynd6c3qpWmng_ntBS9oAW"
+                        }
+                    ]
+                },
+                "options": {}
             },
-            "id": "master-instructions-node",
-            "name": "Instruções principais",
-            "type": "@n8n/n8n-nodes-langchain.messageSystem",
+            "id": "portfolio-tool",
+            "name": "Ferramenta Portfólio",
+            "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
             "typeVersion": 1,
             "position": [
-                400,
-                30
+                1100,
+                420
             ]
         }
     ],
@@ -274,12 +295,12 @@
                 ]
             ]
         },
-        "Instruções principais": {
-            "ai_memory": [
+        "Ferramenta Portfólio": {
+            "ai_tool": [
                 [
                     {
                         "node": "Raquel Agente IA",
-                        "type": "ai_memory",
+                        "type": "ai_tool",
                         "index": 0
                     }
                 ]
