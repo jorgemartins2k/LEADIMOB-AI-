@@ -62,7 +62,7 @@ export default function NewEventPage() {
                 return;
             }
             toast.success("Evento agendado com sucesso! 📅", { duration: 3000 });
-            form.reset();
+            router.push("/eventos");
         } catch (error) {
             console.error(error);
             toast.error("Erro inesperado ao salvar evento.", { duration: 3000 });
