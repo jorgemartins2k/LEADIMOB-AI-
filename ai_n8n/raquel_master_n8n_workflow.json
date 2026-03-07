@@ -1,5 +1,5 @@
 {
-    "name": "Raquel Master - FINAL ALL-IN-ONE",
+    "name": "Raquel Master - GESTÃO VISUAL",
     "nodes": [
         {
             "parameters": {
@@ -28,7 +28,7 @@
                 }
             },
             "id": "schedule-followup",
-            "name": "Cron: Check Follow-up (1h)",
+            "name": "Cronograma: Verificar acompanhamento (1h)",
             "type": "n8n-nodes-base.scheduleTrigger",
             "typeVersion": 1,
             "position": [
@@ -62,7 +62,7 @@
                 "query": "SELECT u.whatsapp as broker_whatsapp, u.name as broker_name, u.id as user_id, l.name as lead_name, l.phone as lead_phone, l.status as lead_status \nFROM leads l \nJOIN users u ON l.user_id = u.id \nWHERE l.status = 'awaiting_followup' \nOR (l.last_ai_interaction < NOW() - INTERVAL '24 hours' AND l.status = 'active')\nLIMIT 5;"
             },
             "id": "db-lookup-proactive",
-            "name": "DB: Leads para Follow-up",
+            "name": "DB: Leads para acompanhamento",
             "type": "n8n-nodes-base.postgres",
             "typeVersion": 1,
             "position": [
@@ -134,15 +134,16 @@
         {
             "parameters": {
                 "name": "enviar_mensagem_whatsapp",
+                "description": "Envia a mensagem de resposta para o cliente no WhatsApp.",
                 "url": "https://api.z-api.io/instances/3EF563F4DD4551A0224EDEEAB9125F18/token/6E1D394248DA536C5C45C297/send-text",
                 "method": "POST",
                 "sendBody": true,
                 "specifyBody": "json",
-                "jsonBody": "{\n  \"phone\": \"{{$node[\"DB: Dados do Lead (Reativo)\"].json[\"lead_phone\"] || $node[\"DB: Leads para Follow-up\"].json[\"lead_phone\"]}}\",\n  \"message\": \"{{$placeholder}}\"\n}",
+                "jsonBody": "{\n  \"phone\": \"{{$node[\"DB: Dados do Lead (Reativo)\"].json[\"lead_phone\"] || $node[\"DB: Leads para acompanhamento\"].json[\"lead_phone\"]}}\",\n  \"message\": \"{{$placeholder}}\"\n}",
                 "options": {}
             },
             "id": "whatsapp-tool",
-            "name": "Z-API Tool",
+            "name": "Ferramenta Z-API",
             "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
             "typeVersion": 1,
             "position": [
@@ -153,15 +154,16 @@
         {
             "parameters": {
                 "name": "alertar_corretor_quente",
+                "description": "Avisa o corretor quando um lead quer visitar ou tem alto interesse.",
                 "url": "https://api.z-api.io/instances/3EF563F4DD4551A0224EDEEAB9125F18/token/6E1D394248DA536C5C45C297/send-text",
                 "method": "POST",
                 "sendBody": true,
                 "specifyBody": "json",
-                "jsonBody": "{\n  \"phone\": \"{{$node[\"DB: Dados do Lead (Reativo)\"].json[\"broker_whatsapp\"] || $node[\"DB: Leads para Follow-up\"].json[\"broker_whatsapp\"]}}\",\n  \"message\": \"🚨 *LEAD QUENTE*\\n\\nO lead *{{$node[\"DB: Dados do Lead (Reativo)\"].json[\"lead_name\"] || $node[\"DB: Leads para Follow-up\"].json[\"lead_name\"]}}* demonstrou alto interesse.\\n\\nAssuma a conversa!\"\n}",
+                "jsonBody": "{\n  \"phone\": \"{{$node[\"DB: Dados do Lead (Reativo)\"].json[\"broker_whatsapp\"] || $node[\"DB: Leads para acompanhamento\"].json[\"broker_whatsapp\"]}}\",\n  \"message\": \"🚨 *LEAD QUENTE*\\n\\nO lead *{{$node[\"DB: Dados do Lead (Reativo)\"].json[\"lead_name\"] || $node[\"DB: Leads para acompanhamento\"].json[\"lead_name\"]}}* demonstrou alto interesse.\\n\\nAssuma a conversa!\"\n}",
                 "options": {}
             },
             "id": "alert-tool",
-            "name": "Alert Tool",
+            "name": "Ferramenta de alerta",
             "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
             "typeVersion": 1,
             "position": [
@@ -171,19 +173,15 @@
         },
         {
             "parameters": {
-                "promptType": "define",
-                "text": "VOCÊ É RAQUEL, ASSISTENTE DO CORRETOR {{$node[\"DB: Dados do Lead (Reativo)\"].json[\"broker_name\"] || $node[\"DB: Leads para Follow-up\"].json[\"broker_name\"]}}.\n\nDIRETRIZES MESTRES:\n1. IDENTIDADE: Profissional, acolhedora. Nunca diga que é IA espontaneamente.\n2. OBJETIVO: Gerar interesse e levar à visita. VOCÊ NÃO AGENDA. Use 'alertar_corretor_quente' quando o lead quiser visitar.\n3. QUALIFICAÇÃO: Pergunte sobre financiamento pré-aprovado. Se não tiver, incentive a fazer.\n4. FOLLOW-UP: Se estiver retomando uma conversa antiga, faça de forma natural: 'Olá, {{$node[\"DB: Dados do Lead (Reativo)\"].json[\"lead_name\"] || $node[\"DB: Leads para Follow-up\"].json[\"lead_name\"]}}, estou passando para ver se conseguiu avançar com...' \n5. REGRAS: Nunca invente informações. Use sempre 'enviar_mensagem_whatsapp' para responder.",
-                "options": {
-                    "systemMessage": "Você é Raquel, a estrategista digital do Leadimob-AI."
-                }
+                "systemMessage": "=DADOS DO CORRETOR:\nNome: {{$node[\"DB: Dados do Lead (Reativo)\"].json[\"broker_name\"] || $node[\"DB: Leads para acompanhamento\"].json[\"broker_name\"]}}\n\nIDENTIDADE E APRESENTAÇÃO:\nVocê é Raquel, assistente virtual oficial do corretor {{$node[\"DB: Dados do Lead (Reativo)\"].json[\"broker_name\"] || $node[\"DB: Leads para acompanhamento\"].json[\"broker_name\"]}}. Apresente-se sempre assim. Nunca revele ser IA espontaneamente.\n\nOBJETIVO:\nDespertar interesse genuíno e conduzir à visita presencial. VOCÊ NÃO AGENDA VISITAS. Quando o lead {{$node[\"DB: Dados do Lead (Reativo)\"].json[\"lead_name\"] || $node[\"DB: Leads para acompanhamento\"].json[\"lead_name\"]}} demonstrar interesse real, use 'alertar_corretor_quente'.\n\nREGRAS TÉCNICAS:\n- Pergunte sobre financiamento pré-aprovado.\n- Identifique se é Comprador ou Investidor.\n- Mantenha tom profissional e empático.\n- Use sempre 'enviar_mensagem_whatsapp' para responder."
             },
-            "id": "master-instructions",
-            "name": "Master Instructions",
-            "type": "@n8n/n8n-nodes-langchain.chainRetrievalQa",
+            "id": "master-instructions-node",
+            "name": "Instruções principais",
+            "type": "@n8n/n8n-nodes-langchain.messageSystem",
             "typeVersion": 1,
             "position": [
-                200,
-                550
+                400,
+                30
             ]
         }
     ],
@@ -199,11 +197,11 @@
                 ]
             ]
         },
-        "Cron: Check Follow-up (1h)": {
+        "Cronograma: Verificar acompanhamento (1h)": {
             "main": [
                 [
                     {
-                        "node": "DB: Leads para Follow-up",
+                        "node": "DB: Leads para acompanhamento",
                         "type": "main",
                         "index": 0
                     }
@@ -221,7 +219,7 @@
                 ]
             ]
         },
-        "DB: Leads para Follow-up": {
+        "DB: Leads para acompanhamento": {
             "main": [
                 [
                     {
@@ -254,7 +252,7 @@
                 ]
             ]
         },
-        "Z-API Tool": {
+        "Ferramenta Z-API": {
             "ai_tool": [
                 [
                     {
@@ -265,12 +263,23 @@
                 ]
             ]
         },
-        "Alert Tool": {
+        "Ferramenta de alerta": {
             "ai_tool": [
                 [
                     {
                         "node": "Raquel Agente IA",
                         "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Instruções principais": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "Raquel Agente IA",
+                        "type": "ai_memory",
                         "index": 0
                     }
                 ]
