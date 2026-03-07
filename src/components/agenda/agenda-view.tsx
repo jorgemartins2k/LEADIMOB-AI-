@@ -5,6 +5,7 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, MapPin, Bui
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 
 interface Appointment {
     id: string;
@@ -29,33 +30,35 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
 
     // Calculate stats
     const stats = useMemo(() => {
-        const todayStr = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const todayStr = now.toLocaleDateString('en-CA'); // YYYY-MM-DD local
+
         const todayCount = appointments.filter(a => {
             try {
-                return new Date(a.appointmentDate).toISOString().split('T')[0] === todayStr;
+                return a.appointmentDate === todayStr;
             } catch (e) {
                 return false;
             }
         }).length;
 
         // This week calculation
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-        const nextWeek = new Date();
-        nextWeek.setDate(now.getDate() + 7);
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const nextWeek = new Date(startOfToday);
+        nextWeek.setDate(startOfToday.getDate() + 7);
         nextWeek.setHours(23, 59, 59, 999);
 
         const weekCount = appointments.filter(a => {
             try {
-                const date = new Date(a.appointmentDate);
-                return date >= now && date <= nextWeek;
+                const [y, m, d] = a.appointmentDate.split('-').map(Number);
+                const date = new Date(y, m - 1, d);
+                return date >= startOfToday && date <= nextWeek;
             } catch (e) {
                 return false;
             }
         }).length;
 
         const confirmedCount = appointments.filter(a => a.status === 'scheduled' || a.status === 'completed').length;
-        const pendingCount = appointments.filter(a => a.status === 'scheduled').length; // Standardized for now
+        const pendingCount = appointments.filter(a => a.status === 'scheduled').length;
 
         return [
             { label: "Hoje", value: todayCount.toString() },
@@ -82,18 +85,11 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
 
         // Fill actual days
         const lastDay = new Date(year, month + 1, 0).getDate();
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = new Date().toLocaleDateString('en-CA');
 
         for (let i = 1; i <= lastDay; i++) {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-            const hasAppointment = appointments.some(a => {
-                try {
-                    const appDate = new Date(a.appointmentDate);
-                    return appDate.toISOString().split('T')[0] === dateStr;
-                } catch (e) {
-                    return false;
-                }
-            });
+            const hasAppointment = appointments.some(a => a.appointmentDate === dateStr);
             days.push({
                 day: i,
                 dateStr,
@@ -105,23 +101,21 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
     }, [currentDate, appointments]);
 
     const upcomingAppointments = useMemo(() => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const now = new Date();
+        const todayStr = now.toLocaleDateString('en-CA');
 
         return appointments
             .filter(a => {
                 try {
-                    const appDate = new Date(a.appointmentDate);
-                    appDate.setHours(0, 0, 0, 0);
-                    return appDate >= today;
+                    return a.appointmentDate >= todayStr;
                 } catch (e) {
                     return false;
                 }
             })
             .sort((a, b) => {
-                const dateA = new Date(a.appointmentDate).getTime();
-                const dateB = new Date(b.appointmentDate).getTime();
-                return dateA - dateB;
+                const dateCompare = a.appointmentDate.localeCompare(b.appointmentDate);
+                if (dateCompare !== 0) return dateCompare;
+                return (a.appointmentTime || '').localeCompare(b.appointmentTime || '');
             })
             .slice(0, 5);
     }, [appointments]);
@@ -236,7 +230,10 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
                                     <div className="space-y-2">
                                         <div className="flex items-center gap-2 text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-70">
                                             <Clock className="w-3 h-3 text-primary" />
-                                            {new Date(app.appointmentDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                                            {(() => {
+                                                const [y, m, d] = app.appointmentDate.split('-').map(Number);
+                                                return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+                                            })()}
                                             {app.appointmentTime && ` • ${app.appointmentTime.slice(0, 5)}`}
                                         </div>
                                     </div>
@@ -260,5 +257,3 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
         </div>
     );
 }
-
-import Link from "next/link";

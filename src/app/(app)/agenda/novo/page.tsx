@@ -1,13 +1,12 @@
 "use client";
 
 import { toast } from "sonner";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X, Loader2, Save, Calendar, Clock, Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
+import { X, Loader2, Save, Calendar, Clock, Sparkles, CheckCircle2, AlertCircle, User, Home, Rocket } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -21,13 +20,26 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { createAppointment } from "@/lib/actions/appointments";
+import { getLeads } from "@/lib/actions/leads";
+import { getProperties } from "@/lib/actions/properties";
+import { getLaunches } from "@/lib/actions/launches";
 
 const appointmentSchema = z.object({
     title: z.string().min(3, "O título deve ter pelo menos 3 caracteres"),
     appointmentDate: z.string().min(1, "Informe a data do agendamento"),
     appointmentTime: z.string().optional(),
+    leadId: z.string().optional(),
+    propertyId: z.string().optional(),
+    launchId: z.string().optional(),
     notes: z.string().optional(),
     status: z.enum(["scheduled", "completed", "cancelled"]),
 });
@@ -37,28 +49,64 @@ type AppointmentFormValues = z.infer<typeof appointmentSchema>;
 export default function NewAppointmentPage() {
     const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
+    const [leads, setLeads] = useState<any[]>([]);
+    const [properties, setProperties] = useState<any[]>([]);
+    const [launches, setLaunches] = useState<any[]>([]);
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     const form = useForm<AppointmentFormValues>({
         resolver: zodResolver(appointmentSchema),
         defaultValues: {
             title: "",
-            appointmentDate: "",
+            appointmentDate: new Date().toLocaleDateString('en-CA'),
             appointmentTime: "",
+            leadId: "",
+            propertyId: "",
+            launchId: "",
             notes: "",
             status: "scheduled",
         },
     });
 
+    useEffect(() => {
+        async function loadData() {
+            try {
+                const [l, p, ln] = await Promise.all([
+                    getLeads(),
+                    getProperties(),
+                    getLaunches()
+                ]);
+                setLeads(l);
+                setProperties(p);
+                setLaunches(ln);
+            } catch (error) {
+                console.error("Error loading selection data:", error);
+                toast.error("Erro ao carregar dados de seleção.");
+            } finally {
+                setIsLoadingData(false);
+            }
+        }
+        loadData();
+    }, []);
+
     async function onSubmit(data: AppointmentFormValues) {
         setIsSaving(true);
         try {
-            const result = await createAppointment(data);
+            // Convert empty strings back to undefined for the action
+            const submitData = {
+                ...data,
+                leadId: data.leadId || undefined,
+                propertyId: data.propertyId || undefined,
+                launchId: data.launchId || undefined,
+            };
+
+            const result = await createAppointment(submitData as any);
             if (result.error) {
                 toast.error(result.error, { duration: 3000 });
                 return;
             }
             toast.success("Compromisso agendado com sucesso! ⏰", { duration: 3000 });
-            form.reset();
+            router.push("/agenda");
         } catch (error) {
             console.error(error);
             toast.error("Erro inesperado ao agendar compromisso.", { duration: 3000 });
@@ -91,7 +139,7 @@ export default function NewAppointmentPage() {
                     </div>
 
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="p-10 space-y-12">
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="p-10 space-y-10">
                             {/* Título */}
                             <FormField
                                 name="title"
@@ -105,6 +153,82 @@ export default function NewAppointmentPage() {
                                     </FormItem>
                                 )}
                             />
+
+                            {/* Vínculos (Lead, Imóvel, Lançamento) */}
+                            <div className="space-y-6 pt-6 border-t border-border">
+                                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground opacity-70">Vincular a (Opcional)</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <FormField
+                                        name="leadId"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-3">
+                                                <FormLabel className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                                                    <User className="w-3 h-3 text-primary" /> Lead
+                                                </FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="bg-muted/10 border-border/50 h-12 rounded-xl px-4 font-bold text-xs ring-0 focus:ring-1 focus:ring-primary/20">
+                                                            <SelectValue placeholder="Selecione o Lead" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent className="bg-card border-border">
+                                                        <SelectItem value="none">Nenhum</SelectItem>
+                                                        {leads.map(lead => (
+                                                            <SelectItem key={lead.id} value={lead.id}>{lead.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        name="propertyId"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-3">
+                                                <FormLabel className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                                                    <Home className="w-3 h-3 text-success" /> Imóvel
+                                                </FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="bg-muted/10 border-border/50 h-12 rounded-xl px-4 font-bold text-xs ring-0 focus:ring-1 focus:ring-primary/20">
+                                                            <SelectValue placeholder="Selecione o Imóvel" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent className="bg-card border-border">
+                                                        <SelectItem value="none">Nenhum</SelectItem>
+                                                        {properties.map(p => (
+                                                            <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        name="launchId"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-3">
+                                                <FormLabel className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                                                    <Rocket className="w-3 h-3 text-accent" /> Lançamento
+                                                </FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="bg-muted/10 border-border/50 h-12 rounded-xl px-4 font-bold text-xs ring-0 focus:ring-1 focus:ring-primary/20">
+                                                            <SelectValue placeholder="Selecione o Lançamento" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent className="bg-card border-border">
+                                                        <SelectItem value="none">Nenhum</SelectItem>
+                                                        {launches.map(l => (
+                                                            <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </div>
 
                             {/* Data e Hora */}
                             <div className="grid grid-cols-2 gap-6 pt-6 border-t border-border">
