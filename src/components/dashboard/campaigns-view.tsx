@@ -43,6 +43,17 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { getCampaigns, createCampaign, deleteCampaign } from '@/lib/actions/campaigns';
 import { getProperties } from '@/lib/actions/properties';
 import { getLaunches } from '@/lib/actions/launches';
@@ -125,18 +136,36 @@ export function CampaignsView() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Tem certeza que deseja excluir esta campanha?")) return;
         try {
             const result = await deleteCampaign(id);
             if (result.error) {
                 toast.error(result.error, { duration: 3000 });
             } else {
-                toast.success("Campanha excluída.", { duration: 3000 });
+                toast.success("Campanha excluída com sucesso.", { duration: 3000 });
                 loadCampaigns();
             }
         } catch (error) {
             console.error(error);
             toast.error("Erro ao excluir campanha.", { duration: 3000 });
+        }
+    };
+
+    const handleShare = async (title: string, link: string) => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: title,
+                    text: `Confira este anúncio: ${title}`,
+                    url: link,
+                });
+            } catch (error) {
+                if ((error as Error).name !== 'AbortError') {
+                    console.error('Error sharing:', error);
+                }
+            }
+        } else {
+            navigator.clipboard.writeText(link);
+            toast.info("Link copiado para compartilhar!");
         }
     };
 
@@ -322,6 +351,16 @@ export function CampaignsView() {
                                 <div key={camp.id} className="card-premium p-6 sm:p-8 hover:border-primary/40 transition-all group relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-2xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
 
+                                    {/* Top Left Share Button - Matching requested design */}
+                                    <Button
+                                        onClick={() => handleShare(camp.title, camp.trackingLink)}
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute top-4 left-4 h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-muted/20 border border-border/30 hover:bg-primary/10 hover:border-primary/30 transition-all z-20"
+                                    >
+                                        <Share2 className="w-5 h-5 text-foreground/70" />
+                                    </Button>
+
                                     <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 items-start lg:items-center">
                                         <div className={cn("w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform", style.bg)}>
                                             <style.icon className={cn("w-6 h-6 sm:w-8 h-8", style.color)} />
@@ -344,7 +383,14 @@ export function CampaignsView() {
                                             </div>
 
                                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-muted/20 p-2 rounded-2xl group-hover:bg-muted/40 transition-colors border border-border/50">
-                                                <code className="text-[10px] sm:text-[11px] font-bold text-muted-foreground truncate flex-1 px-4 py-2 sm:py-0">{camp.trackingLink}</code>
+                                                <a
+                                                    href={camp.trackingLink}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-[10px] sm:text-[11px] font-bold text-muted-foreground truncate flex-1 px-4 py-2 sm:py-0 hover:text-primary transition-colors underline underline-offset-4 decoration-primary/20"
+                                                >
+                                                    {camp.trackingLink}
+                                                </a>
                                                 <Button
                                                     size="sm"
                                                     onClick={() => handleCopy(camp.trackingLink, camp.id)}
@@ -389,17 +435,46 @@ export function CampaignsView() {
                                         </div>
 
                                         <div className="flex sm:flex-col lg:flex-row gap-2 sm:gap-3 w-full lg:w-auto border-t border-border/10 lg:border-none pt-4 lg:pt-0">
-                                            <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl hover:bg-muted btn-interactive border border-border/30 lg:border-transparent flex-1 lg:flex-none">
-                                                <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
-                                            </Button>
                                             <Button
-                                                onClick={() => handleDelete(camp.id)}
+                                                onClick={() => handleShare(camp.title, camp.trackingLink)}
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl hover:bg-hot/10 hover:text-hot btn-interactive border border-border/30 lg:border-transparent flex-1 lg:flex-none"
+                                                className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl hover:bg-muted btn-interactive border border-border/30 lg:border-transparent flex-1 lg:flex-none"
                                             >
-                                                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                                             </Button>
+
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl hover:bg-hot/10 hover:text-hot btn-interactive border border-border/30 lg:border-transparent flex-1 lg:flex-none"
+                                                    >
+                                                        <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent className="rounded-[32px] border-border/50 bg-card p-8">
+                                                    <AlertDialogHeader className="space-y-4">
+                                                        <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center text-destructive mb-2">
+                                                            <Trash2 className="h-8 w-8" />
+                                                        </div>
+                                                        <AlertDialogTitle className="text-2xl font-black uppercase tracking-tight">Excluir Campanha?</AlertDialogTitle>
+                                                        <AlertDialogDescription className="text-muted-foreground font-medium">
+                                                            Esta ação não pode ser desfeita. A campanha <span className="text-foreground font-black">"{camp.title}"</span> será removida permanentemente.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter className="mt-8 gap-3">
+                                                        <AlertDialogCancel className="h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] border-border/50 bg-muted/10">Cancelar</AlertDialogCancel>
+                                                        <AlertDialogAction
+                                                            onClick={() => handleDelete(camp.id)}
+                                                            className="h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] bg-destructive text-white hover:bg-destructive/90 transition-all active:scale-95"
+                                                        >
+                                                            Confirmar Exclusão
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </div>
                                     </div>
                                 </div>
