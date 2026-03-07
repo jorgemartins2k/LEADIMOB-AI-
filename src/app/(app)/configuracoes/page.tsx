@@ -272,7 +272,7 @@ export default function ConfiguraçõesPage() {
             </div>
 
             {/* Tabs */}
-            <div className="flex items-center gap-4 bg-muted/20 p-2.5 rounded-[32px] w-fit overflow-x-auto no-scrollbar border border-border/50">
+            <div className="flex items-center gap-4 bg-muted/20 p-2.5 rounded-[32px] w-full max-w-full overflow-x-auto no-scrollbar border border-border/50">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}

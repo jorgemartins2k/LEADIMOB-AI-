@@ -132,12 +132,14 @@ EVENTOS: ${JSON.stringify(brokerEvents.map(e => ({ name: e.name, date: e.eventDa
             .set({ status: "warm", updatedAt: new Date() })
             .where(eq(leads.id, lead.id));
 
-        // Notify broker
-        await notifyBrokerByWhatsApp({
-            lead,
-            broker,
-            reason: isPassBroker ? "pass_broker" : "warm"
-        });
+        // Notify broker only if preference is enabled
+        if (broker.hotLeadAlert) {
+            await notifyBrokerByWhatsApp({
+                lead,
+                broker,
+                reason: isPassBroker ? "pass_broker" : "warm"
+            });
+        }
     }
 }
 
