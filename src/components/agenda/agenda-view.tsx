@@ -1,13 +1,24 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, Trash2, Loader2, ChevronRight as ChevronRightIcon } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, Trash2, Loader2, ChevronRight as ChevronRightIcon, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { deleteAppointment } from "@/lib/actions/appointments";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Appointment {
     id: string;
@@ -28,16 +39,20 @@ interface AgendaViewProps {
 export function AgendaView({ initialAppointments }: AgendaViewProps) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
+    const [appointmentsList, setAppointmentsList] = useState<Appointment[]>(initialAppointments);
     const router = useRouter();
 
-    const appointments = initialAppointments;
+    // Sync state if initialAppointments changes (e.g. from parent fetch)
+    useEffect(() => {
+        setAppointmentsList(initialAppointments);
+    }, [initialAppointments]);
 
     // Calculate stats
     const stats = useMemo(() => {
         const now = new Date();
         const todayStr = now.toLocaleDateString('en-CA'); // YYYY-MM-DD local
 
-        const todayCount = appointments.filter(a => {
+        const todayCount = appointmentsList.filter(a => {
             try {
                 return a.appointmentDate === todayStr;
             } catch (e) {
@@ -51,7 +66,7 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
         nextWeek.setDate(startOfToday.getDate() + 7);
         nextWeek.setHours(23, 59, 59, 999);
 
-        const weekCount = appointments.filter(a => {
+        const weekCount = appointmentsList.filter(a => {
             try {
                 const [y, m, d] = a.appointmentDate.split('-').map(Number);
                 const date = new Date(y, m - 1, d);
@@ -61,14 +76,14 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
             }
         }).length;
 
-        const totalCount = appointments.length;
+        const totalCount = appointmentsList.length;
 
         return [
             { label: "Hoje", value: todayCount.toString() },
             { label: "Esta Semana", value: weekCount.toString() },
             { label: "Total Geral", value: totalCount.toString(), color: "text-primary" },
         ];
-    }, [appointments]);
+    }, [appointmentsList]);
 
     // Calendar logic
     const monthYear = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
@@ -91,7 +106,7 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
 
         for (let i = 1; i <= lastDay; i++) {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-            const hasAppointment = appointments.some(a => a.appointmentDate === dateStr);
+            const hasAppointment = appointmentsList.some(a => a.appointmentDate === dateStr);
             days.push({
                 day: i,
                 dateStr,
@@ -100,13 +115,13 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
             });
         }
         return days;
-    }, [currentDate, appointments]);
+    }, [currentDate, appointmentsList]);
 
     const upcomingAppointments = useMemo(() => {
         const now = new Date();
         const todayStr = now.toLocaleDateString('en-CA');
 
-        return appointments
+        return appointmentsList
             .filter(a => {
                 try {
                     return a.appointmentDate >= todayStr;
@@ -119,8 +134,8 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
                 if (dateCompare !== 0) return dateCompare;
                 return (a.appointmentTime || '').localeCompare(b.appointmentTime || '');
             })
-            .slice(0, 10); // Show more since we have space now
-    }, [appointments]);
+            .slice(0, 10);
+    }, [appointmentsList]);
 
     const changeMonth = (offset: number) => {
         const next = new Date(currentDate);
@@ -129,13 +144,11 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Tem certeza que deseja excluir este agendamento?")) return;
-
         setIsDeleting(id);
         try {
             await deleteAppointment(id);
+            setAppointmentsList(prev => prev.filter(app => app.id !== id));
             toast.success("Agendamento excluído com sucesso.");
-            router.refresh();
         } catch (error) {
             toast.error("Erro ao excluir agendamento.");
         } finally {
@@ -167,7 +180,7 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
                             </h3>
                             <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                                 <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                                {appointments.length} Compromissos detectados
+                                {appointmentsList.length} Compromissos detectados
                             </div>
                         </div>
                         <div className="flex gap-4 w-full sm:w-auto">
@@ -240,19 +253,42 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
                                         <h4 className="text-sm font-black uppercase tracking-tight text-foreground line-clamp-1 group-hover/item:text-primary transition-colors">
                                             {app.title}
                                         </h4>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => handleDelete(app.id)}
-                                            disabled={isDeleting === app.id}
-                                            className="h-8 w-8 rounded-full text-muted-foreground hover:text-hot hover:bg-hot/10 transition-colors"
-                                        >
-                                            {isDeleting === app.id ? (
-                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                            ) : (
-                                                <Trash2 className="h-4 w-4" />
-                                            )}
-                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    disabled={isDeleting === app.id}
+                                                    className="h-8 w-8 rounded-full text-muted-foreground hover:text-hot hover:bg-hot/10 transition-colors"
+                                                >
+                                                    {isDeleting === app.id ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="h-4 w-4" />
+                                                    )}
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent className="rounded-[32px] border-border/50 bg-card p-8">
+                                                <AlertDialogHeader className="space-y-4">
+                                                    <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center text-destructive mb-2 mx-auto sm:mx-0">
+                                                        <AlertTriangle className="h-8 w-8" />
+                                                    </div>
+                                                    <AlertDialogTitle className="text-2xl font-black uppercase tracking-tight text-foreground">Excluir Agendamento?</AlertDialogTitle>
+                                                    <AlertDialogDescription className="text-muted-foreground font-medium">
+                                                        Esta ação não pode ser desfeita. O compromisso <span className="text-foreground font-black">"{app.title}"</span> será removido permanentemente da sua agenda.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter className="mt-8 gap-3">
+                                                    <AlertDialogCancel className="h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] border-border/50 bg-muted/10">Cancelar</AlertDialogCancel>
+                                                    <AlertDialogAction
+                                                        onClick={() => handleDelete(app.id)}
+                                                        className="h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] bg-destructive text-white hover:bg-destructive/90"
+                                                    >
+                                                        Confirmar Exclusão
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </div>
                                     <div className="space-y-2">
                                         <div className="flex items-center gap-2 text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-70">
