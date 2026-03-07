@@ -14,7 +14,6 @@ import {
     Camera,
     Film,
     Play,
-    Share2,
     Trash2,
     Plus,
     Loader2,
@@ -101,9 +100,11 @@ export function CampaignsView() {
         }
     }
 
-    const handleCopy = (link: string, id: string) => {
+    const handleCopy = (slug: string) => {
+        const link = `${window.location.origin}/c/${slug}`;
         navigator.clipboard.writeText(link);
-        setCopiedLink(id);
+        setCopiedLink(slug);
+        toast.success("Link copiado com sucesso! 🚀", { duration: 2000 });
         setTimeout(() => setCopiedLink(null), 2000);
     };
 
@@ -115,7 +116,8 @@ export function CampaignsView() {
                 title: newTitle,
                 contentType: newType,
                 propertyId: linkType === "property" ? linkId : null,
-                launchId: linkType === "launch" ? linkId : null
+                launchId: linkType === "launch" ? linkId : null,
+                baseUrl: window.location.origin
             });
             if (result.error) {
                 toast.error(result.error, { duration: 3000 });
@@ -150,38 +152,11 @@ export function CampaignsView() {
         }
     };
 
-    const handleShare = async (title: string, link: string) => {
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: title,
-                    text: `Confira este anúncio: ${title}`,
-                    url: link,
-                });
-                return;
-            } catch (error) {
-                // If it's an AbortError (user cancelled), we don't need a fallback
-                if ((error as Error).name === 'AbortError') return;
-
-                console.error('Error sharing:', error);
-                // For other errors (like NotAllowedError in some browsers), fall through to clipboard
-            }
-        }
-
-        // Fallback for desktop or when navigator.share fails
-        try {
-            await navigator.clipboard.writeText(link);
-            toast.info("Link copiado para compartilhar!");
-        } catch (err) {
-            toast.error("Não foi possível copiar o link.");
-        }
-    };
-
     const getTypeStyle = (type: string) => {
         switch (type) {
             case 'stories': return { icon: Smartphone, color: 'text-pink-500', bg: 'bg-pink-500/10' };
             case 'instagram_feed': return { icon: Camera, color: 'text-purple-500', bg: 'bg-purple-500/10' };
-            default: return { icon: Share2, color: 'text-primary', bg: 'bg-primary/10' };
+            default: return { icon: Megaphone, color: 'text-primary', bg: 'bg-primary/10' };
         }
     };
 
@@ -380,23 +355,18 @@ export function CampaignsView() {
                                             </div>
 
                                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-muted/20 p-2 rounded-2xl group-hover:bg-muted/40 transition-colors border border-border/50">
-                                                <a
-                                                    href={camp.trackingLink}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-[10px] sm:text-[11px] font-bold text-muted-foreground truncate flex-1 px-4 py-2 sm:py-0 hover:text-primary transition-colors underline underline-offset-4 decoration-primary/20"
-                                                >
-                                                    {camp.trackingLink}
-                                                </a>
+                                                <div className="text-[10px] sm:text-[11px] font-bold text-muted-foreground truncate flex-1 px-4 py-2 sm:py-0">
+                                                    {typeof window !== 'undefined' ? `${window.location.origin}/c/${camp.slug}` : camp.trackingLink}
+                                                </div>
                                                 <Button
                                                     size="sm"
-                                                    onClick={() => handleCopy(camp.trackingLink, camp.id)}
+                                                    onClick={() => handleCopy(camp.slug)}
                                                     className={cn(
                                                         "rounded-xl h-10 sm:h-11 px-6 sm:px-8 font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all shadow-lg",
-                                                        copiedLink === camp.id ? "bg-success hover:bg-success scale-105" : "bg-primary hover:scale-105 active:scale-95"
+                                                        copiedLink === camp.slug ? "bg-success hover:bg-success scale-105" : "bg-primary hover:scale-105 active:scale-95"
                                                     )}
                                                 >
-                                                    {copiedLink === camp.id ? <Check className="w-4 h-4" /> : <><Copy className="w-3.5 h-3.5 mr-2" /> Copiar Link</>}
+                                                    {copiedLink === camp.slug ? <Check className="w-4 h-4" /> : <><Copy className="w-3.5 h-3.5 mr-2" /> Copiar Link</>}
                                                 </Button>
                                             </div>
 
@@ -432,15 +402,6 @@ export function CampaignsView() {
                                         </div>
 
                                         <div className="flex sm:flex-col lg:flex-row gap-2 sm:gap-3 w-full lg:w-auto border-t border-border/10 lg:border-none pt-4 lg:pt-0">
-                                            <Button
-                                                onClick={() => handleShare(camp.title, camp.trackingLink)}
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl hover:bg-muted btn-interactive border border-border/30 lg:border-transparent flex-1 lg:flex-none"
-                                            >
-                                                <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
-                                            </Button>
-
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                     <Button

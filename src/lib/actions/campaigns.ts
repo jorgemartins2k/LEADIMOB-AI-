@@ -31,13 +31,15 @@ export async function createCampaign(data: {
     contentType: string;
     propertyId?: string | null;
     launchId?: string | null;
+    baseUrl?: string;
 }) {
     try {
         const user = await getOrCreateInternalUser();
 
         // Link generation
         const slug = data.title.toLowerCase().replace(/\s+/g, '-').substring(0, 20) + '-' + Math.random().toString(36).substring(2, 6);
-        const trackingLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://leadimob.ai'}/c/${slug}`;
+        const base = data.baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://leadimob.ai';
+        const trackingLink = `${base}/c/${slug}`;
 
         await db.insert(campaigns).values({
             userId: user.id,
