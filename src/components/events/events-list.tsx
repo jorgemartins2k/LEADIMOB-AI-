@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { deleteEvent } from "@/lib/actions/events";
 import { toast } from "sonner";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -159,6 +160,3 @@ export function EventsList({ initialEvents }: EventsListProps) {
     );
 }
 
-function cn(...inputs: any[]) {
-    return inputs.filter(Boolean).join(" ");
-}
