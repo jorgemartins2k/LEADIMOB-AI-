@@ -25,7 +25,7 @@ import {
 import { updateProfile, getProfile, saveAvatarUrl } from "@/lib/actions/profile";
 import { getWorkSchedules, saveWorkSchedules } from "@/lib/actions/schedule";
 import { uploadImage } from "@/lib/supabase/storage";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useClerk } from "@clerk/nextjs";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -51,6 +51,7 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ConfiguraçõesPage() {
+    const { signOut, openUserProfile } = useClerk();
     const [activeTab, setActiveTab] = useState("horarios");
     const [isSaving, setIsSaving] = useState(false);
     const [isSavingSchedule, setIsSavingSchedule] = useState(false);
@@ -207,27 +208,7 @@ export default function ConfiguraçõesPage() {
     };
 
     const handlePasswordReset = async () => {
-        const email = form.getValues("email");
-        if (!email) {
-            toast.warning("Por favor, preencha o campo de e-mail antes de redefinir a senha.", { duration: 3000 });
-            return;
-        }
-
-        try {
-            const response = await fetch("/api/reset-password", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email }),
-            });
-            const data = await response.json();
-            if (data.error) {
-                toast.error("Erro ao enviar e-mail: " + data.error, { duration: 3000 });
-            } else {
-                toast.success("Um link de redefinição de senha foi enviado para o seu e-mail! Verifique sua caixa de entrada.", { duration: 3000 });
-            }
-        } catch (e) {
-            toast.error("Erro ao solicitar redefinição de senha. Tente novamente.", { duration: 3000 });
-        }
+        openUserProfile();
     };
 
     async function onProfileSubmit(values: ProfileFormValues) {
@@ -411,7 +392,12 @@ export default function ConfiguraçõesPage() {
                                         <Badge variant="outline" className="px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border-border text-muted-foreground">ID: #45920-A</Badge>
                                     </div>
                                 </div>
-                                <Button type="button" variant="ghost" className="rounded-2xl text-hot font-black uppercase tracking-widest text-[10px] h-14 px-10 border border-hot/10 hover:bg-hot/5 transition-all hover:scale-105 btn-interactive">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => signOut({ redirectUrl: '/' })}
+                                    className="rounded-2xl text-hot font-black uppercase tracking-widest text-[10px] h-14 px-10 border border-hot/10 hover:bg-hot/5 transition-all hover:scale-105 btn-interactive"
+                                >
                                     Sair da Conta
                                 </Button>
                             </div>
