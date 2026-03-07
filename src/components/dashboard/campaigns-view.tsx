@@ -17,7 +17,9 @@ import {
     Trash2,
     Plus,
     Loader2,
-    Home
+    Home,
+    Globe,
+    Search
 } from 'lucide-react';
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
@@ -154,9 +156,11 @@ export function CampaignsView() {
 
     const getTypeStyle = (type: string) => {
         switch (type) {
-            case 'stories': return { icon: Smartphone, color: 'text-pink-500', bg: 'bg-pink-500/10' };
+            case 'stories': return { icon: Play, color: 'text-pink-500', bg: 'bg-pink-500/10' };
             case 'instagram_feed': return { icon: Camera, color: 'text-purple-500', bg: 'bg-purple-500/10' };
-            default: return { icon: Megaphone, color: 'text-primary', bg: 'bg-primary/10' };
+            case 'facebook': return { icon: Globe, color: 'text-blue-600', bg: 'bg-blue-600/10' };
+            case 'google': return { icon: Search, color: 'text-orange-500', bg: 'bg-orange-500/10' };
+            default: return { icon: Rocket, color: 'text-primary', bg: 'bg-primary/10' };
         }
     };
 
@@ -402,6 +406,7 @@ export function CampaignsView() {
                                         </div>
 
                                         <div className="flex sm:flex-col lg:flex-row gap-2 sm:gap-3 w-full lg:w-auto border-t border-border/10 lg:border-none pt-4 lg:pt-0">
+                                            {/* EXTREMELY IMPORTANT: Action row only contains Delete button. NO SHARE BUTTON ALLOWED. */}
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                     <Button
