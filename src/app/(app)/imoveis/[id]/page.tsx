@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
 import { PropertyMap } from "@/components/properties/property-map";
+import { PropertyGallery } from "@/components/properties/property-gallery";
 
 interface PropertyDetailsPageProps {
     params: Promise<{
@@ -68,34 +69,27 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10 px-1 sm:px-0">
                 {/* Left: Gallery & Description */}
                 <div className="lg:col-span-2 space-y-8 sm:space-y-10">
-                    {/* Gallery Carousel (Simplified for now) */}
-                    <div className="relative aspect-[4/3] sm:aspect-[16/9] w-full rounded-[32px] sm:rounded-[40px] overflow-hidden shadow-2xl group">
-                        <Image
-                            src={photos[0]}
-                            alt={property.title}
-                            fill
-                            className="object-cover transition-transform duration-700 group-hover:scale-105"
-                            priority
-                        />
-                        <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8 bg-gradient-to-t from-black/95 via-black/40 to-transparent">
-                            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                                <div className="space-y-1.5 sm:space-y-2">
-                                    <Badge className="bg-primary hover:bg-primary text-white border-none px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[8px] sm:text-[10px] uppercase font-black tracking-widest shadow-xl">
-                                        {property.standard === 'alto' ? 'Alto Padrão' : property.standard === 'medio' ? 'Padrão Médio' : 'Econômico'}
-                                    </Badge>
-                                    <h1 className="text-xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight drop-shadow-md line-clamp-2">
-                                        {property.title}
-                                    </h1>
-                                    <p className="flex items-center gap-1.5 text-white/90 font-bold text-[10px] sm:text-sm">
-                                        <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" /> {property.neighborhood}, {property.city}
-                                    </p>
-                                </div>
-                                <div className="text-left sm:text-right shrink-0">
-                                    <p className="text-white/60 text-[8px] sm:text-[10px] font-black uppercase tracking-widest mb-0.5 sm:mb-1">Valor Sugerido</p>
-                                    <p className="text-2xl sm:text-4xl font-black text-white tracking-tighter">
-                                        R$ {property.price ? Number(property.price).toLocaleString('pt-BR') : 'Consulte'}
-                                    </p>
-                                </div>
+                    {/* Gallery Carousel */}
+                    <div className="space-y-6">
+                        <PropertyGallery images={photos} title={property.title} />
+
+                        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 px-2 sm:px-4">
+                            <div className="space-y-1.5 sm:space-y-2">
+                                <Badge className="bg-primary hover:bg-primary text-white border-none px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[8px] sm:text-[10px] uppercase font-black tracking-widest shadow-xl">
+                                    {property.standard === 'alto' ? 'Alto Padrão' : property.standard === 'medio' ? 'Padrão Médio' : 'Econômico'}
+                                </Badge>
+                                <h1 className="text-xl sm:text-3xl lg:text-4xl font-black text-foreground tracking-tight line-clamp-2">
+                                    {property.title}
+                                </h1>
+                                <p className="flex items-center gap-1.5 text-muted-foreground font-bold text-[10px] sm:text-sm">
+                                    <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" /> {property.neighborhood}, {property.city}
+                                </p>
+                            </div>
+                            <div className="text-left sm:text-right shrink-0">
+                                <p className="text-muted-foreground text-[8px] sm:text-[10px] font-black uppercase tracking-widest mb-0.5 sm:mb-1">Valor do Imóvel</p>
+                                <p className="text-2xl sm:text-4xl font-black text-primary tracking-tighter">
+                                    R$ {property.price ? Number(property.price).toLocaleString('pt-BR') : 'Consulte'}
+                                </p>
                             </div>
                         </div>
                     </div>
