@@ -60,9 +60,9 @@ export default function NewAppointmentPage() {
             title: "",
             appointmentDate: new Date().toLocaleDateString('en-CA'),
             appointmentTime: "",
-            leadId: "",
-            propertyId: "",
-            launchId: "",
+            leadId: "none",
+            propertyId: "none",
+            launchId: "none",
             notes: "",
             status: "scheduled",
         },
@@ -76,9 +76,9 @@ export default function NewAppointmentPage() {
                     getProperties(),
                     getLaunches()
                 ]);
-                setLeads(l);
-                setProperties(p);
-                setLaunches(ln);
+                setLeads(l || []);
+                setProperties(p || []);
+                setLaunches(ln || []);
             } catch (error) {
                 console.error("Error loading selection data:", error);
                 toast.error("Erro ao carregar dados de seleção.");
@@ -92,17 +92,17 @@ export default function NewAppointmentPage() {
     async function onSubmit(data: AppointmentFormValues) {
         setIsSaving(true);
         try {
-            // Convert empty strings back to undefined for the action
+            // Convert empty strings or "none" values back to undefined for the action
             const submitData = {
                 ...data,
-                leadId: data.leadId || undefined,
-                propertyId: data.propertyId || undefined,
-                launchId: data.launchId || undefined,
+                leadId: (data.leadId === "none" || !data.leadId) ? undefined : data.leadId,
+                propertyId: (data.propertyId === "none" || !data.propertyId) ? undefined : data.propertyId,
+                launchId: (data.launchId === "none" || !data.launchId) ? undefined : data.launchId,
             };
 
             const result = await createAppointment(submitData as any);
             if (result.error) {
-                toast.error(result.error, { duration: 3000 });
+                toast.error(result.error, { duration: 5000 });
                 return;
             }
             toast.success("Compromisso agendado com sucesso! ⏰", { duration: 3000 });
@@ -159,6 +159,7 @@ export default function NewAppointmentPage() {
                                 <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground opacity-70">Vincular a (Opcional)</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <FormField
+                                        control={form.control}
                                         name="leadId"
                                         render={({ field }) => (
                                             <FormItem className="space-y-3">
@@ -182,6 +183,7 @@ export default function NewAppointmentPage() {
                                         )}
                                     />
                                     <FormField
+                                        control={form.control}
                                         name="propertyId"
                                         render={({ field }) => (
                                             <FormItem className="space-y-3">
@@ -205,6 +207,7 @@ export default function NewAppointmentPage() {
                                         )}
                                     />
                                     <FormField
+                                        control={form.control}
                                         name="launchId"
                                         render={({ field }) => (
                                             <FormItem className="space-y-3">

@@ -1,24 +1,22 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { appointments, users } from "@/lib/db/schema";
+import { appointments } from "@/lib/db/schema";
 import { eq, and, asc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getOrCreateInternalUser } from "@/lib/auth-utils";
 
 const appointmentSchema = z.object({
-    leadId: z.string().uuid().optional(),
-    propertyId: z.string().uuid().optional(),
-    launchId: z.string().uuid().optional(),
+    leadId: z.preprocess((val) => (val === "" || val === "none" ? undefined : val), z.string().uuid().optional()),
+    propertyId: z.preprocess((val) => (val === "" || val === "none" ? undefined : val), z.string().uuid().optional()),
+    launchId: z.preprocess((val) => (val === "" || val === "none" ? undefined : val), z.string().uuid().optional()),
     title: z.string().min(3, "O título deve ter pelo menos 3 caracteres"),
     appointmentDate: z.string().min(1, "Informe a data do agendamento"),
     appointmentTime: z.string().optional(),
     notes: z.string().optional(),
     status: z.enum(["scheduled", "completed", "cancelled"]).default("scheduled"),
 });
-
-import { getOrCreateInternalUser } from "@/lib/auth-utils";
 
 export async function getAppointments() {
     try {
@@ -58,6 +56,9 @@ export async function createAppointment(data: z.infer<typeof appointmentSchema>)
         return { success: true };
     } catch (err: any) {
         console.error(err);
+        if (err instanceof z.ZodError) {
+            return { error: "Erro de validação: " + JSON.stringify(err.errors) };
+        }
         return { error: err.message || "Erro ao agendar compromisso." };
     }
 }
