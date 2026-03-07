@@ -33,6 +33,7 @@ export async function updateProfile(data: {
             .where(eq(users.id, user.id));
 
         revalidatePath("/configuracoes");
+        revalidatePath("/", "layout");
         return { success: true };
     } catch (e: any) {
         return { error: e.message || "Erro ao atualizar perfil." };
@@ -53,6 +54,7 @@ export async function saveAvatarUrl(avatarUrl: string) {
             .where(eq(users.id, user.id));
 
         revalidatePath("/configuracoes");
+        revalidatePath("/", "layout");
         return { success: true };
     } catch (e: any) {
         return { error: e.message || "Erro ao salvar foto." };

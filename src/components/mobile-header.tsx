@@ -8,6 +8,7 @@ import { UserButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { LeadImobLogo } from "./LeadImobLogo";
 import { Button } from "./ui/button";
+import { getProfile } from "@/lib/actions/profile";
 
 const navigation = [
     { name: "Visão Geral", href: "/dashboard", icon: LayoutDashboard },
@@ -24,6 +25,20 @@ const navigation = [
 export function MobileHeader() {
     const [isOpen, setIsOpen] = useState(false);
     const pathname = usePathname();
+    const [profile, setProfile] = useState<{ name: string; avatarUrl: string | null } | null>(null);
+
+    useEffect(() => {
+        async function loadProfile() {
+            const data = await getProfile();
+            if (data) {
+                setProfile({
+                    name: data.name,
+                    avatarUrl: data.avatarUrl
+                });
+            }
+        }
+        loadProfile();
+    }, []);
 
     // Close menu when route changes
     useEffect(() => {
@@ -103,18 +118,24 @@ export function MobileHeader() {
                     <div className="mt-8 pt-8 border-t border-white/5 px-2 sm:px-4">
                         <div className="bg-white/5 rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 flex items-center gap-4 border border-white/5 shadow-2xl">
                             <div className="relative">
-                                <UserButton
-                                    afterSignOutUrl="/"
-                                    appearance={{
-                                        elements: {
-                                            userButtonAvatarBox: "h-12 w-12 sm:h-14 sm:w-14 border-2 border-white/10 hover:border-blue-500/50 transition-all duration-300",
-                                        },
-                                    }}
-                                />
+                                {profile?.avatarUrl ? (
+                                    <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full border-2 border-white/10 overflow-hidden">
+                                        <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover" />
+                                    </div>
+                                ) : (
+                                    <UserButton
+                                        afterSignOutUrl="/"
+                                        appearance={{
+                                            elements: {
+                                                userButtonAvatarBox: "h-12 w-12 sm:h-14 sm:w-14 border-2 border-white/10 hover:border-blue-500/50 transition-all duration-300",
+                                            },
+                                        }}
+                                    />
+                                )}
                                 <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-[#020617] pointer-events-none" />
                             </div>
                             <div className="space-y-1">
-                                <p className="text-sm sm:text-base font-black text-white leading-none">Jorge Martins</p>
+                                <p className="text-sm sm:text-base font-black text-white leading-none">{profile?.name || "Carregando..."}</p>
                                 <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/5 border border-white/10">
                                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Plano Pro</span>
                                 </div>

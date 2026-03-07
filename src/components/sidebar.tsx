@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,8 @@ import {
 } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { LeadImobLogo } from "@/components/LeadImobLogo";
+import { getProfile } from "@/lib/actions/profile";
+import { User as UserIcon } from "lucide-react";
 
 const navigation = [
     { name: "Visão Geral", href: "/dashboard", icon: LayoutDashboard },
@@ -35,6 +38,20 @@ const navigation = [
 
 export function Sidebar() {
     const pathname = usePathname();
+    const [profile, setProfile] = useState<{ name: string; avatarUrl: string | null } | null>(null);
+
+    useEffect(() => {
+        async function loadProfile() {
+            const data = await getProfile();
+            if (data) {
+                setProfile({
+                    name: data.name,
+                    avatarUrl: data.avatarUrl
+                });
+            }
+        }
+        loadProfile();
+    }, []);
 
     return (
         <div className="flex h-full w-72 flex-col bg-[#020617] border-r border-white/5 transition-all duration-500 ease-in-out relative overflow-hidden group/sidebar">
@@ -94,19 +111,25 @@ export function Sidebar() {
                 <div className="p-4 rounded-[28px] bg-white/5 border border-white/5 backdrop-blur-lg hover:border-white/10 transition-all duration-500 group/user">
                     <div className="flex items-center gap-4">
                         <div className="relative">
-                            <UserButton
-                                afterSignOutUrl="/"
-                                appearance={{
-                                    elements: {
-                                        userButtonAvatarBox: "h-11 w-11 border-2 border-white/10 hover:border-accent/50 transition-all duration-500",
-                                    },
-                                }}
-                            />
+                            {profile?.avatarUrl ? (
+                                <div className="h-11 w-11 rounded-full border-2 border-white/10 overflow-hidden">
+                                    <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover" />
+                                </div>
+                            ) : (
+                                <UserButton
+                                    afterSignOutUrl="/"
+                                    appearance={{
+                                        elements: {
+                                            userButtonAvatarBox: "h-11 w-11 border-2 border-white/10 hover:border-accent/50 transition-all duration-500",
+                                        },
+                                    }}
+                                />
+                            )}
                             <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-success rounded-full border-2 border-[#020617] shadow-sm" />
                         </div>
                         <div className="flex flex-col min-w-0">
                             <span className="text-sm font-bold text-white truncate group-hover/user:text-accent transition-colors">
-                                Jorge Martins
+                                {profile?.name || "Carregando..."}
                             </span>
                             <div className="flex items-center gap-1.5">
                                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-2 py-0.5 bg-white/5 rounded-md border border-white/5">Plano Pro</span>
