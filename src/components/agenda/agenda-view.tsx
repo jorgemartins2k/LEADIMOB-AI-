@@ -29,16 +29,29 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
 
     // Calculate stats
     const stats = useMemo(() => {
-        const today = new Date().toISOString().split('T')[0];
-        const todayCount = appointments.filter(a => a.appointmentDate === today).length;
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayCount = appointments.filter(a => {
+            try {
+                return new Date(a.appointmentDate).toISOString().split('T')[0] === todayStr;
+            } catch (e) {
+                return false;
+            }
+        }).length;
 
         // This week calculation
         const now = new Date();
+        now.setHours(0, 0, 0, 0);
         const nextWeek = new Date();
         nextWeek.setDate(now.getDate() + 7);
+        nextWeek.setHours(23, 59, 59, 999);
+
         const weekCount = appointments.filter(a => {
-            const date = new Date(a.appointmentDate);
-            return date >= now && date <= nextWeek;
+            try {
+                const date = new Date(a.appointmentDate);
+                return date >= now && date <= nextWeek;
+            } catch (e) {
+                return false;
+            }
         }).length;
 
         const confirmedCount = appointments.filter(a => a.status === 'scheduled' || a.status === 'completed').length;
@@ -73,7 +86,14 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
 
         for (let i = 1; i <= lastDay; i++) {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-            const hasAppointment = appointments.some(a => a.appointmentDate === dateStr);
+            const hasAppointment = appointments.some(a => {
+                try {
+                    const appDate = new Date(a.appointmentDate);
+                    return appDate.toISOString().split('T')[0] === dateStr;
+                } catch (e) {
+                    return false;
+                }
+            });
             days.push({
                 day: i,
                 dateStr,
@@ -85,10 +105,24 @@ export function AgendaView({ initialAppointments }: AgendaViewProps) {
     }, [currentDate, appointments]);
 
     const upcomingAppointments = useMemo(() => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         return appointments
-            .filter(a => a.appointmentDate >= today)
-            .sort((a, b) => a.appointmentDate.localeCompare(b.appointmentDate))
+            .filter(a => {
+                try {
+                    const appDate = new Date(a.appointmentDate);
+                    appDate.setHours(0, 0, 0, 0);
+                    return appDate >= today;
+                } catch (e) {
+                    return false;
+                }
+            })
+            .sort((a, b) => {
+                const dateA = new Date(a.appointmentDate).getTime();
+                const dateB = new Date(b.appointmentDate).getTime();
+                return dateA - dateB;
+            })
             .slice(0, 5);
     }, [appointments]);
 

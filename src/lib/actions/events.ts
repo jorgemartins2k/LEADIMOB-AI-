@@ -20,11 +20,19 @@ const eventSchema = z.object({
 import { getOrCreateInternalUser } from "@/lib/auth-utils";
 
 export async function getEvents() {
-    const user = await getOrCreateInternalUser();
-    return db.query.events.findMany({
-        where: and(eq(events.userId, user.id)),
-        orderBy: [desc(events.eventDate)],
-    });
+    try {
+        const user = await getOrCreateInternalUser();
+        if (!user) return [];
+
+        const results = await db.select().from(events)
+            .where(eq(events.userId, user.id))
+            .orderBy(desc(events.eventDate));
+
+        return results;
+    } catch (error) {
+        console.error("Error in getEvents server action:", error);
+        return [];
+    }
 }
 
 export async function createEvent(data: z.infer<typeof eventSchema>) {

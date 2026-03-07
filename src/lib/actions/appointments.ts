@@ -21,16 +21,19 @@ const appointmentSchema = z.object({
 import { getOrCreateInternalUser } from "@/lib/auth-utils";
 
 export async function getAppointments() {
-    const user = await getOrCreateInternalUser();
-    return db.query.appointments.findMany({
-        where: and(eq(appointments.userId, user.id)),
-        orderBy: [asc(appointments.appointmentDate), asc(appointments.appointmentTime)],
-        with: {
-            // lead: true,
-            // property: true,
-            // launch: true,
-        }
-    });
+    try {
+        const user = await getOrCreateInternalUser();
+        if (!user) return [];
+
+        const results = await db.select().from(appointments)
+            .where(eq(appointments.userId, user.id))
+            .orderBy(asc(appointments.appointmentDate), asc(appointments.appointmentTime));
+
+        return results;
+    } catch (error) {
+        console.error("Error in getAppointments server action:", error);
+        return [];
+    }
 }
 
 export async function createAppointment(data: z.infer<typeof appointmentSchema>) {

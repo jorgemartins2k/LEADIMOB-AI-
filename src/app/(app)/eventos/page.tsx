@@ -1,14 +1,29 @@
-import { Plus, Calendar } from "lucide-react";
+"use client";
+
+import { useState, useEffect } from "react";
+import { Plus, Calendar, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { getEvents } from "@/lib/actions/events";
 import { EventsList } from "@/components/events/events-list";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export default function EventosPage() {
+    const [events, setEvents] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-export default async function EventosPage() {
-    const events = await getEvents();
+    useEffect(() => {
+        const fetchEvents = async () => {
+            try {
+                const data = await getEvents();
+                setEvents(data || []);
+            } catch (error) {
+                console.error("Error fetching events:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchEvents();
+    }, []);
 
     return (
         <div className="space-y-12 animate-in fade-in slide-in-from-top-4 duration-1000 pb-20">
@@ -34,7 +49,13 @@ export default async function EventosPage() {
             </div>
 
             {/* Content Area */}
-            <EventsList initialEvents={events as any} />
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-32">
+                    <Loader2 className="h-12 w-12 text-primary animate-spin opacity-20" />
+                </div>
+            ) : (
+                <EventsList initialEvents={events} />
+            )}
         </div>
     );
 }
