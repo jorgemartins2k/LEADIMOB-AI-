@@ -44,17 +44,17 @@ export function PropertyGallery({ images, title }: PropertyGalleryProps) {
                     <>
                         <button
                             onClick={prevImage}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white flex items-center justify-center hover:bg-white/20 transition-all active:scale-90 z-10"
+                            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/20 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center hover:bg-black/40 transition-all active:scale-90 z-10 shadow-lg"
                             aria-label="Foto anterior"
                         >
-                            <ChevronLeft className="h-6 w-6" />
+                            <ChevronLeft className="h-6 w-6 drop-shadow-md" />
                         </button>
                         <button
                             onClick={nextImage}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white flex items-center justify-center hover:bg-white/20 transition-all active:scale-90 z-10"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/20 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center hover:bg-black/40 transition-all active:scale-90 z-10 shadow-lg"
                             aria-label="Próxima foto"
                         >
-                            <ChevronRight className="h-6 w-6" />
+                            <ChevronRight className="h-6 w-6 drop-shadow-md" />
                         </button>
                     </>
                 )}
