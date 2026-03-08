@@ -1,0 +1,62 @@
+import os
+from supabase import create_client, Client
+from dotenv import load_dotenv
+import requests # Added for Z-API functionality
+
+load_dotenv()
+
+class Database:
+    def __init__(self):
+        url: str = os.getenv("NEXT_PUBLIC_SUPABASE_URL") or ""
+        key: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
+        self.supabase: Client = create_client(url, key)
+
+    def get_broker_by_lead_phone(self, phone: str) -> dict | None: # Added type hints
+        """
+        Busca o corretor associado a um lead via telefone
+        """
+        response = self.supabase.table("leads").select("user_id, name").eq("phone", phone).limit(1).execute()
+        if response.data:
+            lead = response.data[0]
+            user_id = lead['user_id']
+            broker_resp = self.supabase.table("users").select("name, whatsapp").eq("id", user_id).limit(1).execute()
+            if broker_resp.data:
+                broker = broker_resp.data[0]
+                return {
+                    "broker_name": broker['name'],
+                    "broker_whatsapp": broker['whatsapp'],
+                    "user_id": user_id,
+                    "lead_name": lead['name']
+                }
+        return None
+
+    def get_chat_history(self, phone: str, limit: int = 10) -> list[dict]: # Added type hints
+        """
+        Busca o histórico de conversas do lead
+        """
+        response = self.supabase.table("conversations")\
+            .select("role, content")\
+            .eq("phone", phone)\
+            .order("created_at", desc=True)\
+            .limit(limit)\
+            .execute()
+        
+        # Inverte para ordem cronológica
+        return response.data[::-1] if response.data else []
+
+    def save_message(self, phone: str, role: str, content: str): # Added type hints
+        """
+        Salva uma nova mensagem no histórico
+        """
+        self.supabase.table("conversations").insert({
+            "phone": phone,
+            "role": role,
+            "content": content
+        }).execute()
+
+    def get_portfolio(self, user_id):
+        """
+        Busca os imóveis do corretor
+        """
+        response = self.supabase.table("properties").select("*").eq("user_id", user_id).limit(20).execute()
+        return response.data if response.data else []
