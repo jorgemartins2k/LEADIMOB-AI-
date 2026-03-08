@@ -67,7 +67,7 @@ export function Sidebar() {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 space-y-1.5 px-6 py-6 relative z-10">
+            <nav className="flex-1 space-y-1.5 px-6 py-6 relative z-10 overflow-y-auto custom-scrollbar">
                 {navigation.map((item) => {
                     const isActive = pathname.startsWith(item.href);
                     return (

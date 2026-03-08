@@ -1,8 +1,19 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { User, Bell, Clock, Save, Camera, Loader2, Plus } from "lucide-react";
+import { User, Bell, Clock, Save, Camera, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -138,6 +149,11 @@ export default function ConfiguraçõesPage() {
         const newDays = [...workDays];
         newDays[dayIndex].active = !newDays[dayIndex].active;
         setWorkDays(newDays);
+    };
+
+    const onClearSchedule = () => {
+        setWorkDays((prev) => prev.map(day => ({ ...day, active: false })));
+        toast.info("Expediente limpo (não esqueça de salvar para aplicar). ❄️", { duration: 3000 });
     };
 
     const onSaveSchedule = async () => {
@@ -327,14 +343,47 @@ export default function ConfiguraçõesPage() {
                             ))}
                         </div>
 
-                        <div className="flex justify-end pt-8 gap-4">
+                        <div className="flex flex-wrap justify-end pt-8 gap-4">
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        className="h-16 px-10 font-black uppercase text-[10px] tracking-[0.2em] gap-3 border-hot/20 text-hot hover:bg-hot/5 hover:border-hot/40 transition-all rounded-[24px]"
+                                    >
+                                        <Trash2 className="w-5 h-5" />
+                                        Limpar Expediente
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="rounded-[32px] border-border bg-card p-10">
+                                    <AlertDialogHeader className="space-y-4">
+                                        <AlertDialogTitle className="font-display font-black text-3xl text-foreground uppercase tracking-tight">
+                                            Limpar todo o expediente?
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription className="text-body font-medium">
+                                            Esta ação desativará a Raquel em todos os horários. Ela não iniciará novas conversas até que você configure e salve um novo expediente.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter className="pt-8 gap-4">
+                                        <AlertDialogCancel className="h-14 px-8 rounded-2xl font-black uppercase text-[10px] tracking-widest border-border hover:bg-muted btn-interactive">
+                                            Cancelar
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={onClearSchedule}
+                                            className="h-14 px-8 rounded-2xl font-black uppercase text-[10px] tracking-widest bg-hot text-white hover:bg-hot/90 shadow-lg shadow-hot/20 btn-interactive"
+                                        >
+                                            Sim, Limpar Tudo
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+
                             <Button
                                 onClick={onSaveSchedule}
                                 disabled={isSavingSchedule}
-                                className="btn-primary h-16 px-16 font-black uppercase text-[10px] tracking-[0.2em] gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all bg-foreground text-background"
+                                className="btn-primary h-16 px-12 font-black uppercase text-[10px] tracking-[0.2em] gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all bg-foreground text-background"
                             >
                                 {isSavingSchedule ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                                Atualizar Expediente
+                                Salvar Alterações
                             </Button>
                             <Button className="btn-primary h-16 px-10 font-black uppercase text-[10px] tracking-[0.2em] gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all" asChild variant="outline">
                                 <Link href="/agenda/novo">
