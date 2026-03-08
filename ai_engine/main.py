@@ -10,9 +10,14 @@ load_dotenv()
 app = FastAPI(title="Raquel AI Engine - Leadimob-AI")
 raquel = RaquelAgent()
 
+@app.on_event("startup")
+async def startup_event():
+    # Inicia o relógio de follow-ups em segundo plano
+    start_scheduler()
+
 @app.get("/")
 def home():
-    return {"status": "online", "agent": "Raquel"}
+    return {"status": "online", "agent": "Raquel", "scheduler": "active"}
 
 @app.post("/webhook/zapi")
 async def handle_zapi_webhook(request: Request):
@@ -35,6 +40,4 @@ async def handle_zapi_webhook(request: Request):
     return {"status": "ignored"}
 
 if __name__ == "__main__":
-    # Inicia o relógio de follow-ups em segundo plano
-    start_scheduler()
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
