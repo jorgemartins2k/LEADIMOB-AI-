@@ -8,7 +8,14 @@ load_dotenv()
 
 class RaquelAgent:
     def __init__(self):
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        # Validação robusta de chaves
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            print("❌ ERRO CRÍTICO: Variável 'OPENAI_API_KEY' não encontrada no ambiente!")
+            print("Vá no painel do Railway > Seu Serviço > Variables e adicione a chave.")
+            raise RuntimeError("OPENAI_API_KEY ausente.")
+
+        self.client = OpenAI(api_key=api_key)
         self.db = Database()
 
     def get_system_prompt(self, broker_name, lead_name):

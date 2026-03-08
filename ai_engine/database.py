@@ -7,8 +7,13 @@ load_dotenv()
 
 class Database:
     def __init__(self):
-        url: str = os.getenv("NEXT_PUBLIC_SUPABASE_URL") or ""
-        key: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
+        url = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+        key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        
+        if not url or not key:
+            print(f"❌ ERRO CRÍTICO: Variáveis do Supabase ausentes! URL: {'OK' if url else 'FALTANDO'}, KEY: {'OK' if key else 'FALTANDO'}")
+            raise RuntimeError("Variáveis do Supabase ausentes no Railway.")
+
         self.supabase: Client = create_client(url, key)
 
     def get_broker_by_lead_phone(self, phone: str) -> dict | None: # Added type hints
