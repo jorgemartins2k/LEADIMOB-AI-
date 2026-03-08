@@ -42,14 +42,15 @@ class Database:
 
     def get_broker_by_lead_phone(self, phone: str) -> dict | None:
         """
-        Busca o corretor associado a um lead via telefone com perfil completo
+        Busca o corretor associado a um lead via telefone com perfil completo e notas do lead
         """
-        response = self.supabase.table("leads").select("user_id, name").eq("phone", phone).limit(1).execute()
+        response = self.supabase.table("leads").select("user_id, name, notes").eq("phone", phone).limit(1).execute()
         if response.data:
             lead = response.data[0]
             broker_data = self.get_broker_data(lead['user_id'])
             if broker_data:
                 broker_data["lead_name"] = lead['name']
+                broker_data["lead_notes"] = lead.get('notes', '')
                 return broker_data
         return None
 
@@ -180,6 +181,37 @@ class Database:
         if response.data:
             return "\n---\n".join([d['summary'] for d in response.data])
         return "Nenhum exemplo disponível ainda."
+
+    def get_portfolio(self, user_id: str) -> str:
+        """
+        Busca o portfólio completo do corretor (Imóveis e Lançamentos) formatado para o prompt
+        """
+        # 1. Busca Imóveis
+        props_resp = self.supabase.table("properties")\
+            .select("title, description, price, type, city, neighborhood, standard, target_audience")\
+            .eq("user_id", user_id)\
+            .eq("status", "available")\
+            .execute()
+        
+        # 2. Busca Lançamentos
+        launches_resp = self.supabase.table("launches")\
+            .select("name, description, price_from, city, neighborhood, standard, target_audience")\
+            .eq("user_id", user_id)\
+            .execute()
+
+        portfolio_text = ""
+        
+        if props_resp.data:
+            portfolio_text += "--- IMÓVEIS PRONTOS ---\n"
+            for p in props_resp.data:
+                portfolio_text += f"Título: {p['title']}\nTipo: {p['type']}\nPreço: R$ {p['price']}\nLocal: {p['neighborhood']}, {p['city']}\nPadrão: {p['standard']}\nDescrição: {p.get('description', 'Sem descrição')}\nPúblico-alvo: {p.get('target_audience', [])}\n\n"
+
+        if launches_resp.data:
+            portfolio_text += "--- LANÇAMENTOS ---\n"
+            for l in launches_resp.data:
+                portfolio_text += f"Nome: {l['name']}\nPreço a partir: R$ {l['price_from']}\nLocal: {l['neighborhood']}, {l['city']}\nPadrão: {l['standard']}\nDescrição: {l.get('description', 'Sem descrição')}\nPúblico-alvo: {l.get('target_audience', [])}\n\n"
+
+        return portfolio_text if portfolio_text else "Nenhum imóvel ou lançamento cadastrado no portfólio."
 
     def get_broker_schedule(self, user_id: str) -> list[dict]:
         """

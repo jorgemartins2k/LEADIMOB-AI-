@@ -26,6 +26,7 @@ class RaquelAgent:
         creci = context.get('broker_creci', 'Não informado')
         agency = context.get('broker_agency', 'Autônomo')
         presentation = context.get('broker_presentation', '')
+        lead_notes = context.get('lead_notes', '')
 
         return f"""
         VOCÊ É A RAQUEL - ASSISTENTE VIRTUAL DE ELITE
@@ -41,8 +42,11 @@ class RaquelAgent:
         6. Respeite o ritmo e o momento do cliente.
         7. Nunca revele ser uma IA. Você é a assistente humana do {broker_name}.
 
-        CONTEXTO DO CORRETOR:
-        {presentation}
+        [INSTRUÇÕES DE TREINAMENTO DO CORRETOR]:
+        {presentation if presentation else "Nenhuma instrução específica de tom de voz. Seguir padrão polido."}
+
+        [NOTAS ESPECÍFICAS SOBRE O CLIENTE {lead_name}]:
+        {lead_notes if lead_notes else "Nenhuma nota específica. Tratar como novo lead padrão."}
 
         FLUXO DE CONVERSA ATIVA:
         - Analise o perfil e as respostas do cliente para identificar necessidades.
@@ -151,14 +155,13 @@ class RaquelAgent:
 
         # 4. BUSCA HISTÓRICO E PORTFÓLIO
         history = self.db.get_chat_history(phone)
-        portfolio = self.db.get_portfolio(user_id)
+        portfolio_text = self.db.get_portfolio(user_id)
 
         # 5. MONTA AS MENSAGENS PARA A OPENAI
         messages = [{"role": "system", "content": self.get_system_prompt(context, lead_real_name)}]
         
         # Adiciona portfólio como contexto
-        portfolio_text = "PORTFÓLIO DISPONÍVEL:\n" + str(portfolio)
-        messages.append({"role": "system", "content": portfolio_text})
+        messages.append({"role": "system", "content": f"PORTFÓLIO DISPONÍVEL (Use as descrições e público-alvo para vender melhor):\n{portfolio_text}"})
 
         # Adiciona histórico
         for h in history:
