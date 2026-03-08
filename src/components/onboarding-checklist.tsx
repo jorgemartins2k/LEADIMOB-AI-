@@ -42,6 +42,11 @@ export function OnboardingChecklist() {
     const completedCount = steps.filter(s => s.completed).length;
     const progress = (completedCount / steps.length) * 100;
 
+    // Hide the checklist if all steps are completed
+    if (completedCount === steps.length) {
+        return null;
+    }
+
     return (
         <Card className="bg-card border-border overflow-hidden shadow-soft">
             <CardHeader className="pb-4 bg-muted/20 border-b border-border">
