@@ -1,5 +1,6 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 import datetime
+import pytz
 from raquel import RaquelAgent
 from database import Database
 
@@ -11,22 +12,35 @@ def check_leads_and_followups():
     """
     Esta função roda a cada 5 minutos procurando por:
     1. Novos leads cadastrados que precisam de primeiro contato.
-    2. Leads que precisam de follow-up (24h sem resposta).
     """
-    now = datetime.datetime.now()
-    print(f"[{now}] Iniciando verificação de automação...")
+    # Definimos o fuso horário de Brasília/São Paulo
+    tz = pytz.timezone('America/Sao_Paulo')
+    now = datetime.datetime.now(tz)
+    current_hour = now.hour
     
-    # 1. Busca leads que precisam de primeiro contato (exemplo de status 'new')
-    # Nota: No seu banco, você pode usar uma flag 'needs_contact' ou o status do lead
+    # REGRA DE OURO: Só envia mensagens automáticas entre 08:00 e 20:00
+    # Isso evita acordar o cliente de madrugada e garante um tom mais humano.
+    if current_hour < 8 or current_hour >= 20:
+        print(f"[{now}] Fora do horário comercial (08h-20h). Pulando automações...")
+        return
+
+    print(f"[{now}] Dentro do horário comercial. Iniciando verificação de leads...")
+    
     try:
-        # Exemplo: busca leads do dia que ainda não tiveram interação da IA
-        # Esta lógica será refinada conforme os campos específicos do seu banco
+        # Busca leads com status 'pending_contact'
         leads = db.supabase.table("leads").select("*").eq("status", "pending_contact").execute()
         
         for lead in leads.data:
             print(f"Iniciando contato com novo lead: {lead['name']}")
-            raquel.process_message(lead['phone'], "Olá! Vi que você tem interesse em um de nossos imóveis. Como posso te ajudar?", lead['name'])
-            # Atualiza o status para ativo
+            
+            # Raquel processa a primeira mensagem estrategicamente
+            raquel.process_message(
+                lead['phone'], 
+                "Olá! Recebi seu interesse aqui no portal. Sou a Raquel, assistente do seu corretor. Como posso te ajudar hoje?", 
+                lead['name']
+            )
+            
+            # Atualiza o status para 'active' para não repetir o contato
             db.supabase.table("leads").update({"status": "active"}).eq("id", lead['id']).execute()
             
     except Exception as e:
