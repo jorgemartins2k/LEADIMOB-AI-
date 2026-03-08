@@ -1,6 +1,7 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 import datetime
 import pytz
+import time
 from raquel import RaquelAgent
 from database import Database
 
@@ -24,12 +25,17 @@ def is_within_schedule(schedule, now):
     try:
         # Formato esperado "HH:MM:SS" vindo do banco (Postgres time type)
         def parse_time(t_str):
+            # Lida com casos de None ou strings vazias
+            if not t_str: return None
             return datetime.datetime.strptime(t_str[:5], "%H:%M").time()
 
         start_time = parse_time(today_config['start_time'])
         end_time = parse_time(today_config['end_time'])
         current_time = now.time()
         
+        if not start_time or not end_time:
+            return False
+            
         return start_time <= current_time <= end_time
     except Exception as e:
         print(f"Erro ao validar horário: {e}")
@@ -37,43 +43,62 @@ def is_within_schedule(schedule, now):
 
 def check_leads_and_followups():
     """
-    Verifica novos leads respeitando o expediente dinâmico de cada corretor.
+    Lógica Broker-First:
+    1. Percorre todos os corretores.
+    2. Verifica se o fuso de Brasília está no expediente dele.
+    3. Só então busca e processa os leads 'waiting' desse corretor.
     """
     tz = pytz.timezone('America/Sao_Paulo')
     now = datetime.datetime.now(tz)
     
-    print(f"[{now}] Iniciando verificação de automação dinâmica...")
+    print(f"[{now}] 🔍 Iniciando Varredura Multi-Corretor (Broker-First)...")
     
     try:
-        # Busca leads com status 'pending_contact'
-        leads = db.supabase.table("leads").select("*").eq("status", "pending_contact").execute()
+        # 1. Busca todos os corretores
+        brokers = db.get_all_brokers()
         
-        for lead in leads.data:
-            user_id = lead['user_id']
+        for broker in brokers:
+            user_id = broker['id']
+            broker_name = broker['name']
+            
+            # 2. Verifica expediente do corretor
             schedule = db.get_broker_schedule(user_id)
             
-            # Se não tiver agenda configurada, assume horário comercial padrão (8-19h)
+            # Fallback se não tiver agenda (08h-19h)
             if not schedule:
                 if now.hour < 8 or now.hour >= 19:
-                    print(f"Sem agenda para {user_id}. Fora do padrão (8-19h).")
                     continue
             else:
                 if not is_within_schedule(schedule, now):
-                    print(f"Lead {lead['name']} pulado: Corretor {user_id} fora do expediente.")
+                    # print(f"Broker {broker_name} fora do expediente.")
                     continue
 
-            print(f"Iniciando contato com lead {lead['name']} dentro do expediente do corretor.")
+            # 3. Se estiver no expediente, busca leads 'waiting' DESTE corretor
+            leads = db.supabase.table("leads")\
+                .select("*")\
+                .eq("user_id", user_id)\
+                .eq("status", "waiting")\
+                .execute()
             
-            raquel.process_message(
-                lead['phone'], 
-                "Olá! Recebi seu interesse aqui no portal. Sou a Raquel, assistente do seu corretor. Como posso te ajudar hoje?", 
-                lead['name']
-            )
-            
-            db.supabase.table("leads").update({"status": "active"}).eq("id", lead['id']).execute()
-            
+            if leads.data:
+                print(f"[{now}] ⚡ Processando {len(leads.data)} leads para o Corretor: {broker_name}")
+                
+                for lead in leads.data:
+                    # Inicia contato automático
+                    raquel.process_message(
+                        lead['phone'], 
+                        "Olá! Recebi seu interesse no portal. Sou a Raquel, assistente do seu corretor. Como posso te ajudar hoje?", 
+                        lead['name']
+                    )
+                    
+                    # Atualiza o status para 'active'
+                    db.supabase.table("leads").update({"status": "active"}).eq("id", lead['id']).execute()
+                    
+                    # Segurança & Antispam: Delay de 3 segundos entre mensagens do mesmo corretor
+                    time.sleep(3)
+
     except Exception as e:
-        print(f"Erro na automação dinâmica: {e}")
+        print(f"Erro na varredura multi-corretor: {e}")
 
 def start_scheduler():
     scheduler = BackgroundScheduler()

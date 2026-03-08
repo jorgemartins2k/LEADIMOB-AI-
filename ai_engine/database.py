@@ -16,6 +16,30 @@ class Database:
 
         self.supabase: Client = create_client(url, key)
 
+    def get_all_brokers(self) -> list[dict]:
+        """
+        Retorna todos os corretores ativos no sistema
+        """
+        response = self.supabase.table("users").select("id, name").execute()
+        return response.data if response.data else []
+
+    def get_broker_data(self, user_id: str) -> dict | None:
+        """
+        Busca o perfil completo de um corretor específico
+        """
+        response = self.supabase.table("users").select("name, whatsapp, creci, real_estate_agency, presentation").eq("id", user_id).limit(1).execute()
+        if response.data:
+            broker = response.data[0]
+            return {
+                "broker_name": broker['name'],
+                "broker_whatsapp": broker['whatsapp'],
+                "broker_creci": broker.get('creci', 'Não informado'),
+                "broker_agency": broker.get('real_estate_agency', 'Autônomo'),
+                "broker_presentation": broker.get('presentation', ''),
+                "user_id": user_id
+            }
+        return None
+
     def get_broker_by_lead_phone(self, phone: str) -> dict | None:
         """
         Busca o corretor associado a um lead via telefone com perfil completo
@@ -23,19 +47,10 @@ class Database:
         response = self.supabase.table("leads").select("user_id, name").eq("phone", phone).limit(1).execute()
         if response.data:
             lead = response.data[0]
-            user_id = lead['user_id']
-            broker_resp = self.supabase.table("users").select("name, whatsapp, creci, real_estate_agency, presentation").eq("id", user_id).limit(1).execute()
-            if broker_resp.data:
-                broker = broker_resp.data[0]
-                return {
-                    "broker_name": broker['name'],
-                    "broker_whatsapp": broker['whatsapp'],
-                    "broker_creci": broker.get('creci', 'Não informado'),
-                    "broker_agency": broker.get('real_estate_agency', 'Autônomo'),
-                    "broker_presentation": broker.get('presentation', ''),
-                    "user_id": user_id,
-                    "lead_name": lead['name']
-                }
+            broker_data = self.get_broker_data(lead['user_id'])
+            if broker_data:
+                broker_data["lead_name"] = lead['name']
+                return broker_data
         return None
 
     def get_chat_history(self, phone: str, limit: int = 10) -> list[dict]: # Added type hints
