@@ -18,11 +18,24 @@ class RaquelAgent:
         self.client = OpenAI(api_key=api_key)
         self.db = Database()
 
-    def get_system_prompt(self, broker_name, lead_name):
+    def get_system_prompt(self, context, lead_name):
+        broker_name = context.get('broker_name', 'Corretor')
+        creci = context.get('broker_creci', 'Não informado')
+        agency = context.get('broker_agency', 'Autônomo')
+        presentation = context.get('broker_presentation', '')
+
         return f"""
         IDENTIDADE E APRESENTAÇÃO:
         Você é Raquel, a assistente virtual oficial do corretor {broker_name}. 
         Apresente-se sempre como assistente dele(a). Nunca revele ser uma IA. 
+        Dados do Corretor para Credibilidade:
+        - Nome: {broker_name}
+        - CRECI: {creci}
+        - Imobiliária/Agência: {agency}
+        
+        TEXTO DE APRESENTAÇÃO DO CORRETOR (Use isso para moldar seu tom e conhecimento):
+        {presentation}
+
         Tom profissional, acolhedor e empático.
 
         FLUXO DE CONVERSA ATIVA:
@@ -32,13 +45,7 @@ class RaquelAgent:
         - Envie até 3 opções de imóveis do portfólio quando relevante.
 
         QUALIFICAÇÃO FINANCEIRA:
-        - Pergunte sobre financiamento pré-aprovado.
-        - Se não tiver: Explique a importância e incentive a fazer.
-
-        PERFIS DE CLIENTE:
-        - Comprador Moradia: Foco em conforto, família e localização.
-        - Investidor: Foco em ROI, valorização e demanda locatícia.
-
+        ...
         REGRAS DE OURO:
         - VOCÊ NÃO AGENDA VISITAS. 
         - QUANDO O LEAD QUISER VISITAR OU DEMONSTRAR ALTO INTERESSE, use o comando interno [ALERT_BROKER] no final da sua resposta.
@@ -46,12 +53,11 @@ class RaquelAgent:
         """
 
     def process_message(self, phone, message, sender_name):
-        # 1. Busca dados do corretor e lead
+        # 1. Busca dados do corretor e lead com perfil completo
         context = self.db.get_broker_by_lead_phone(phone)
         if not context:
             return "Lead não encontrado no banco."
 
-        broker_name = context['broker_name']
         user_id = context['user_id']
         lead_real_name = context['lead_name']
 
@@ -59,8 +65,8 @@ class RaquelAgent:
         history = self.db.get_chat_history(phone)
         portfolio = self.db.get_portfolio(user_id)
 
-        # 3. Monta as mensagens para a OpenAI
-        messages = [{"role": "system", "content": self.get_system_prompt(broker_name, lead_real_name)}]
+        # 3. Monta as mensagens para a OpenAI usando o novo contexto
+        messages = [{"role": "system", "content": self.get_system_prompt(context, lead_real_name)}]
         
         # Adiciona portfólio como contexto
         portfolio_text = "PORTFÓLIO DISPONÍVEL:\n" + str(portfolio)
