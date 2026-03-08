@@ -73,7 +73,7 @@ export default function NewLeadPage() {
                 return;
             }
             toast.success("Lead cadastrado e Raquel ativada! 🚀", { duration: 3000 });
-            form.reset();
+            router.push('/leads');
         } catch (err) {
             console.error(err);
             toast.error("Erro inesperado ao salvar lead.", { duration: 3000 });
