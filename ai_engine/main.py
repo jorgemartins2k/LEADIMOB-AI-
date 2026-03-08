@@ -2,18 +2,24 @@ from fastapi import FastAPI, Request
 import uvicorn
 import os
 from dotenv import load_dotenv
+from contextlib import asynccontextmanager
 from scheduler import start_scheduler
 from raquel import RaquelAgent
 
 load_dotenv()
 
-app = FastAPI(title="Raquel AI Engine - Leadimob-AI")
-raquel = RaquelAgent()
-
-@app.on_event("startup")
-async def startup_event():
-    # Inicia o relógio de follow-ups em segundo plano
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Inicia o relógio de follow-ups em segundo plano ao ligar o servidor
     start_scheduler()
+    yield
+    # Lógica de encerramento se necessário (opcional)
+
+app = FastAPI(
+    title="Raquel AI Engine - Leadimob-AI",
+    lifespan=lifespan
+)
+raquel = RaquelAgent()
 
 @app.get("/")
 def home():
