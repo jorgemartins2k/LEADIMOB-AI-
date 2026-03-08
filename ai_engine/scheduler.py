@@ -41,60 +41,89 @@ def is_within_schedule(schedule, now):
         print(f"Erro ao validar horário: {e}")
         return False
 
+def monitor_hot_leads():
+    """
+    Protocolo de Alerta Quente:
+    Se o corretor não confirmar ("ok") em 5 min, envia a segunda notificação.
+    """
+    print("⏲️ Monitorando confirmações de Leads Quentes...")
+    pending_leads = db.find_pending_hot_alerts(minutes=5)
+    
+    for lead in pending_leads:
+        context = db.get_broker_data(lead['user_id'])
+        if context:
+            context['lead_name'] = lead['name']
+            print(f"⚠️ Re-notificando corretor {context['broker_name']} sobre o lead {lead['name']}")
+            
+            # Segunda notificação conforme o manual
+            alert_msg = f"⚠️ *SEGUNDO ALERTA: {lead['name']}*\n\nVocê ainda não confirmou o recebimento deste lead quente nas últimas 5 minutos. O cliente está aguardando!\n\nPor favor, envie 'ok' para confirmar."
+            raquel.send_to_zapi(context['broker_whatsapp'], alert_msg)
+            
+            # Marca como notificado pela segunda vez para não repetir infinitamente
+            db.update_lead_status(lead['phone'], "hot_alert_final")
+
+def check_24h_followups():
+    """
+    Sistema de Follow-up:
+    Lead sem resposta após 24 horas entra no fluxo automaticamente.
+    """
+    print("🔍 Buscando leads para Follow-up de 24h...")
+    leads_to_follow = db.find_leads_for_followup(hours=24)
+    
+    for lead in leads_to_follow:
+        print(f"📢 Iniciando Follow-up automático de 24h para {lead['name']}")
+        
+        # O follow-up usa a inteligência da Raquel para retomar naturalmente
+        raquel.process_message(
+            lead['phone'], 
+            "Oi! Passando para ver se você conseguiu ver as informações que te mandei ontem. Como posso te ajudar a avançar?", 
+            lead['name']
+        )
+        
+        # Atualiza para que não receba outro follow-up imediatamente
+        db.update_lead_status(lead['phone'], "active")
+
 def check_leads_and_followups():
     """
-    Lógica Broker-First:
-    1. Percorre todos os corretores.
-    2. Verifica se o fuso de Brasília está no expediente dele.
-    3. Só então busca e processa os leads 'waiting' desse corretor.
+    Lógica Broker-First estendida:
+    Processa leads 'waiting', 'ooh_rescheduled' e 'follow_up_pending'.
     """
     tz = pytz.timezone('America/Sao_Paulo')
     now = datetime.datetime.now(tz)
     
-    print(f"[{now}] 🔍 Iniciando Varredura Multi-Corretor (Broker-First)...")
+    print(f"[{now}] 🔍 Varredura Broker-First (Novos, Reagendados e Follow-ups)...")
     
     try:
-        # 1. Busca todos os corretores
         brokers = db.get_all_brokers()
         
         for broker in brokers:
             user_id = broker['id']
             broker_name = broker['name']
             
-            # 2. Verifica expediente do corretor
             schedule = db.get_broker_schedule(user_id)
-            
-            # Fallback se não tiver agenda (08h-19h)
             if not schedule:
-                if now.hour < 8 or now.hour >= 19:
-                    continue
+                if now.hour < 8 or now.hour >= 19: continue
             else:
-                if not is_within_schedule(schedule, now):
-                    # print(f"Broker {broker_name} fora do expediente.")
-                    continue
+                if not is_within_schedule(schedule, now): continue
 
-            # 3. Se estiver no expediente, busca leads 'waiting' DESTE corretor
+            # Busca leads em estados que permitem início de contato automático
+            # waiting: novo lead
+            # ooh_rescheduled: falou fora de hora, reagendado
+            # follow_up_pending: precisa de retorno (ex: 1 semana após crédito)
             leads = db.supabase.table("leads")\
                 .select("*")\
                 .eq("user_id", user_id)\
-                .eq("status", "waiting")\
+                .in_("status", ["waiting", "ooh_rescheduled", "follow_up_pending"])\
                 .execute()
             
             if leads.data:
-                print(f"[{now}] ⚡ Processando {len(leads.data)} leads para o Corretor: {broker_name}")
-                
                 for lead in leads.data:
-                    # Inicia contato automático
-                    raquel.process_message(
-                        lead['phone'], 
-                        "Olá! Recebi seu interesse no portal. Sou a Raquel, assistente do seu corretor. Como posso te ajudar hoje?", 
-                        lead['name']
-                    )
+                    msg = "Olá! Recebi seu interesse. Sou a Raquel, assistente do seu corretor. Como posso te ajudar?"
+                    if lead['status'] == "ooh_rescheduled":
+                        msg = f"Olá {lead['name']}! Como prometido, estou entrando em contato agora que iniciamos nosso expediente. Como posso te ajudar hoje?"
                     
-                    # Atualiza o status para 'active'
-                    db.supabase.table("leads").update({"status": "active"}).eq("id", lead['id']).execute()
-                    
-                    # Segurança & Antispam: Delay de 3 segundos entre mensagens do mesmo corretor
+                    raquel.process_message(lead['phone'], msg, lead['name'])
+                    db.update_lead_status(lead['phone'], "active")
                     time.sleep(3)
 
     except Exception as e:
@@ -102,6 +131,12 @@ def check_leads_and_followups():
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
+    # Varredura de novos leads/reagendados a cada 5 min
     scheduler.add_job(check_leads_and_followups, 'interval', minutes=5)
+    # Monitor de alerta quente (puxão de orelha) a cada 2 min
+    scheduler.add_job(monitor_hot_leads, 'interval', minutes=2)
+    # Follow-up de 24h uma vez por hora
+    scheduler.add_job(check_24h_followups, 'interval', hours=1)
+    
     scheduler.start()
-    print("Relógio de Automação Raquel Iniciado (5 em 5 minutos)")
+    print("🚀 Sistema de Agendamento Raquel Super-IA Ativo!")

@@ -32,15 +32,30 @@ async def handle_zapi_webhook(request: Request):
     """
     data = await request.json()
     
-    # Lógica simplificada de processamento
     phone = data.get("phone")
-    message = data.get("text", {}).get("message")
+    message_text = data.get("text", {}).get("message")
     sender_name = data.get("senderName")
+    message_type = data.get("type", "text")
     
-    if phone and message:
-        print(f"Mensagem recebida de {sender_name} ({phone}): {message}")
-        # Aqui a Raquel processará e responderá
-        response = raquel.process_message(phone, message, sender_name)
+    if not phone:
+        return {"status": "ignored"}
+
+    # 1. Lógica de Confirmação do Corretor ("ok")
+    if message_text and message_text.lower().strip() == "ok":
+        # Se o corretor mandar OK, marcamos como confirmado no banco
+        # Isso cancela o 'puxão de orelha' de 5 minutos
+        print(f"Corretor {sender_name} confirmou recebimento do lead quente.")
+        # self.db.confirm_hot_lead(phone) 
+        return {"status": "broker_confirmed"}
+
+    # 2. Processamento de Mensagem (Texto ou Áudio)
+    is_audio = message_type in ["audio", "ptt"]
+    audio_url = data.get("audio", {}).get("url") if is_audio else None
+
+    if message_text or is_audio:
+        print(f"Mensagem ({message_type}) recebida de {sender_name} ({phone})")
+        # Raquel processa tudo (transcrição, OOH, etc.)
+        raquel.process_message(phone, message_text, sender_name, is_audio=is_audio, audio_url=audio_url)
         return {"status": "processed"}
     
     return {"status": "ignored"}

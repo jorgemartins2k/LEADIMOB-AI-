@@ -1,8 +1,11 @@
 import os
+import requests
+import datetime
+import pytz
+import time
 from openai import OpenAI
 from dotenv import load_dotenv
 from database import Database
-import requests
 
 load_dotenv()
 
@@ -25,47 +28,132 @@ class RaquelAgent:
         presentation = context.get('broker_presentation', '')
 
         return f"""
-        IDENTIDADE E APRESENTAÇÃO:
-        Você é Raquel, a assistente virtual oficial do corretor {broker_name}. 
-        Apresente-se sempre como assistente dele(a). Nunca revele ser uma IA. 
-        Dados do Corretor para Credibilidade:
-        - Nome: {broker_name}
-        - CRECI: {creci}
-        - Imobiliária/Agência: {agency}
-        
-        TEXTO DE APRESENTAÇÃO DO CORRETOR (Use isso para moldar seu tom e conhecimento):
+        VOCÊ É A RAQUEL - ASSISTENTE VIRTUAL DE ELITE
+        Você é a assistente oficial do corretor {broker_name} (CRECI: {creci}, Agência: {agency}).
+        Seu objetivo único e absoluto é despertar interesse genuíno e conduzir o lead {lead_name} até a VISITA PRESENCIAL.
+
+        REGRAS GERAIS DE COMPORTAMENTO:
+        1. Seja sempre educada, empática e profissional.
+        2. Nunca pressione o cliente de forma agressiva.
+        3. Quebre objeções com argumentos baseados em dados reais e no perfil do cliente.
+        4. NUNCA invente informações sobre imóveis, preços ou condições. Consulte sempre o sistema.
+        5. Mantenha o foco: Gerar interesse e agendar visita.
+        6. Respeite o ritmo e o momento do cliente.
+        7. Nunca revele ser uma IA. Você é a assistente humana do {broker_name}.
+
+        CONTEXTO DO CORRETOR:
         {presentation}
 
-        Tom profissional, acolhedor e empático.
-
         FLUXO DE CONVERSA ATIVA:
-        Objetivo: Despertar interesse genuíno e conduzir à visita presencial.
-        - Analise as necessidades do lead {lead_name}.
-        - Se o cliente desviar, redirecione gentilmente para o tema imobiliário.
-        - Envie até 3 opções de imóveis do portfólio quando relevante.
+        - Analise o perfil e as respostas do cliente para identificar necessidades.
+        - Se o cliente desviar do assunto, redirecione gentilmente para o tema imobiliário.
+        - Sempre que relevante, ofereça até 3 opções de imóveis, lançamentos ou eventos do portfólio.
+        - Compreenda e processe mensagens de áudio (você recebe a transcrição delas).
 
-        QUALIFICAÇÃO FINANCEIRA:
-        ...
-        REGRAS DE OURO:
-        - VOCÊ NÃO AGENDA VISITAS. 
-        - QUANDO O LEAD QUISER VISITAR OU DEMONSTRAR ALTO INTERESSE, use o comando interno [ALERT_BROKER] no final da sua resposta.
-        - Nunca invente preços ou dados técnicos. Use o que estiver no sistema.
+        QUALIFICAÇÃO FINANCEIRA (OBRIGATÓRIO):
+        - Pergunte se o cliente já possui financiamento ou empréstimo pré-aprovado.
+        - SE SIM: Solicite o valor aprovado e foque em imóveis compatíveis.
+        - SE NÃO: Explique de forma simples como fazer a pré-aprovação, incentive-o e informe que agendará um retorno para a próxima semana para verificar a conclusão. 
+
+        PERFIS DE CLIENTE (ADAPTE SUA ABORDAGEM):
+        - COMPRADOR MORADIA: Foco em localização, infraestrutura, conforto e custo-benefício. Família é prioridade.
+        - INVESTIDOR: Identifique o estilo (renda passiva, valorização). Apresente dados da região (valorização histórica, demanda locatícia, infraestrutura futura) e potencial de retorno.
+        - INDEFINIDO: Faça perguntas qualificadoras naturalmente antes de apresentar opções.
+
+        NOTIFICAÇÃO DE LEAD QUENTE:
+        - Quando detectar alto potencial ou pedido de visita, use o comando interno [ALERT_BROKER] no final da sua resposta.
+        - Se o cliente perguntar sobre a demora do corretor entrar em contato após o alerta, peça paciência educadamente informando que o corretor já foi acionado e entrará em contato em breve.
+
+        REAGENDAMENTO E FOLLOW-UP:
+        - Se o cliente pedir para falar em outro momento ou não tiver financiamento, confirme que o contato será retomado na data acordada.
         """
 
-    def process_message(self, phone, message, sender_name):
-        # 1. Busca dados do corretor e lead com perfil completo
+    def is_within_schedule(self, schedule):
+        """
+        Verifica se o fuso de Brasília (now) está dentro do expediente do corretor
+        """
+        import pytz
+        import datetime
+        tz = pytz.timezone('America/Sao_Paulo')
+        now = datetime.datetime.now(tz)
+        
+        # Mon=0 -> Mon=1, ..., Sun=6 -> Sun=0 
+        db_day_of_week = (now.weekday() + 1) % 7
+        
+        # Busca a configuração para o dia de hoje
+        today_config = next((s for s in schedule if s['day_of_week'] == db_day_of_week), None)
+        
+        if not today_config or not today_config['is_active']:
+            return False
+            
+        try:
+            def parse_time(t_str):
+                if not t_str: return None
+                return datetime.datetime.strptime(t_str[:5], "%H:%M").time()
+
+            start_time = parse_time(today_config['start_time'])
+            end_time = parse_time(today_config['end_time'])
+            current_time = now.time()
+            
+            if not start_time or not end_time: return False
+            return start_time <= current_time <= end_time
+        except Exception as e:
+            print(f"Erro ao validar horário: {e}")
+            return False
+
+    def transcribe_audio(self, audio_url):
+        """
+        Baixa o áudio da Z-API e transcreve usando OpenAI Whisper
+        """
+        try:
+            print(f"Baixando áudio para transcrição: {audio_url}")
+            audio_response = requests.get(audio_url)
+            audio_response.raise_for_status()
+            
+            # Salva temporariamente
+            with open("/tmp/temp_audio.ogg", "wb") as f:
+                f.write(audio_response.content)
+            
+            with open("/tmp/temp_audio.ogg", "rb") as audio_file:
+                transcript = self.client.audio.transcriptions.create(
+                    model="whisper-1", 
+                    file=audio_file
+                )
+            return transcript.text
+        except Exception as e:
+            print(f"Erro na transcrição: {e}")
+            return "[Erro ao transcrever áudio]"
+
+    def process_message(self, phone, message, sender_name, is_audio=False, audio_url=None):
+        # 1. Busca dados do corretor
         context = self.db.get_broker_by_lead_phone(phone)
         if not context:
             return "Lead não encontrado no banco."
 
         user_id = context['user_id']
         lead_real_name = context['lead_name']
+        broker_name = context['broker_name']
 
-        # 2. Busca histórico e portfólio
+        # 2. SE FOR ÁUDIO, TRANSCREVE
+        if is_audio and audio_url:
+            message = self.transcribe_audio(audio_url)
+            print(f"Transcrição do áudio: {message}")
+
+        # 3. VERIFICAÇÃO DE EXPEDIENTE (REAGENDAMENTO OOH)
+        schedule = self.db.get_broker_schedule(user_id)
+        if not self.is_within_schedule(schedule):
+            # Mensagem automática de reagendamento conforme o manual
+            ooh_msg = f"Olá {lead_real_name}! Obrigado pelo contato. Recebemos sua mensagem, porém nosso expediente por hoje encerrou. Já reagendamos o seu atendimento para o próximo dia útil, quando o corretor {broker_name} entrar em contato. Até logo!"
+            self.send_to_zapi(phone, ooh_msg)
+            # Atualiza status para reagendado (opcional conforme manual para controle de limites)
+            # self.db.update_lead_status(phone, "ooh_rescheduled") 
+            return ooh_msg
+
+        # 4. BUSCA HISTÓRICO E PORTFÓLIO
         history = self.db.get_chat_history(phone)
         portfolio = self.db.get_portfolio(user_id)
 
-        # 3. Monta as mensagens para a OpenAI usando o novo contexto
+        # 5. MONTA AS MENSAGENS PARA A OPENAI
         messages = [{"role": "system", "content": self.get_system_prompt(context, lead_real_name)}]
         
         # Adiciona portfólio como contexto
@@ -79,7 +167,7 @@ class RaquelAgent:
         # Adiciona nova mensagem
         messages.append({"role": "user", "content": message})
 
-        # 4. Gera resposta
+        # 6. GERA RESPOSTA
         response = self.client.chat.completions.create(
             model="gpt-4o",
             messages=messages
@@ -87,20 +175,18 @@ class RaquelAgent:
         
         reply_content = response.choices[0].message.content
 
-        # 5. Salva no banco
+        # 7. SALVA NO BANCO E ENVIA
         self.db.save_message(phone, "user", message)
         self.db.save_message(phone, "assistant", reply_content)
 
-        # 6. Verifica se precisa alertar o corretor
+        # 8. VERIFICA SE PRECISA ALERTAR O CORRETOR (LEAD QUENTE)
         if "[ALERT_BROKER]" in reply_content:
             clean_reply = reply_content.replace("[ALERT_BROKER]", "").strip()
             self.send_to_zapi(phone, clean_reply)
             self.alert_broker(context, clean_reply)
             return clean_reply
         
-        # 7. Enviar via Z-API normalmente
         self.send_to_zapi(phone, reply_content)
-        
         return reply_content
 
     def alert_broker(self, context, message_context):

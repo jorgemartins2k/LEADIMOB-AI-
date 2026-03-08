@@ -67,22 +67,102 @@ class Database:
         # Inverte para ordem cronológica
         return response.data[::-1] if response.data else []
 
+    def update_lead_status(self, phone: str, status: str):
+        """
+        Atualiza o status de um lead pelo telefone
+        """
+        self.supabase.table("leads").update({
+            "status": status,
+            "updated_at": "now()"
+        }).eq("phone", phone).execute()
+
+    def set_lead_transfer_time(self, phone: str):
+        """
+        Marca o momento em que o lead foi transferido (alerta enviado)
+        """
+        self.supabase.table("leads").update({
+            "transferred_at": "now()"
+        }).eq("phone", phone).execute()
+
+    def find_pending_hot_alerts(self, minutes=5):
+        """
+        Busca leads que receberam alerta há mais de X minutos e não foram confirmados
+        """
+        from datetime import datetime, timedelta, timezone
+        threshold = datetime.now(timezone.utc) - timedelta(minutes=minutes)
+        
+        response = self.supabase.table("leads")\
+            .select("*")\
+            .eq("status", "hot_alert_sent")\
+            .lt("transferred_at", threshold.isoformat())\
+            .execute()
+        return response.data if response.data else []
+
+    def find_leads_for_followup(self, hours=24):
+        """
+        Busca leads ativos sem interação há mais de X horas
+        """
+        from datetime import datetime, timedelta, timezone
+        threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
+        
+        response = self.supabase.table("leads")\
+            .select("*")\
+            .eq("status", "active")\
+            .lt("updated_at", threshold.isoformat())\
+            .execute()
+        return response.data if response.data else []
+
     def save_message(self, phone: str, role: str, content: str): # Added type hints
         """
-        Salva uma nova mensagem no histórico
+        Salva uma nova mensagem e atualiza o timestamp do lead
         """
         self.supabase.table("conversations").insert({
             "phone": phone,
             "role": role,
             "content": content
         }).execute()
+        
+        # Atualiza o lead para que o follow-up saibam que houve interação
+        self.supabase.table("leads").update({"updated_at": "now()"}).eq("phone", phone).execute()
 
-    def get_portfolio(self, user_id):
+    def add_to_best_practices(self, lead_id: str, summary: str, score: int):
         """
-        Busca os imóveis do corretor
+        Adiciona uma conversa ao banco de 200 melhores práticas.
+        Se exceder 200, remove a de menor score.
         """
-        response = self.supabase.table("properties").select("*").eq("user_id", user_id).limit(20).execute()
-        return response.data if response.data else []
+        # 1. Busca total atual
+        count_resp = self.supabase.table("ai_brain_samples").select("id", count="exact").execute()
+        count = count_resp.count if count_resp.count is not None else 0
+        
+        if count >= 200:
+            # Busca a de menor score para substituir
+            weakest = self.supabase.table("ai_brain_samples")\
+                .select("id")\
+                .order("score", desc=False)\
+                .limit(1)\
+                .execute()
+            if weakest.data:
+                self.supabase.table("ai_brain_samples").delete().eq("id", weakest.data[0]['id']).execute()
+        
+        # Insere nova
+        self.supabase.table("ai_brain_samples").insert({
+            "lead_id": lead_id,
+            "summary": summary,
+            "score": score
+        }).execute()
+
+    def get_best_practices(self, limit=10) -> str:
+        """
+        Retorna as melhores práticas para injetar no prompt (RAG simplificado)
+        """
+        response = self.supabase.table("ai_brain_samples")\
+            .select("summary")\
+            .order("score", desc=True)\
+            .limit(limit)\
+            .execute()
+        if response.data:
+            return "\n---\n".join([d['summary'] for d in response.data])
+        return "Nenhum exemplo disponível ainda."
 
     def get_broker_schedule(self, user_id: str) -> list[dict]:
         """
