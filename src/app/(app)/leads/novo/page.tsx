@@ -14,9 +14,6 @@ import {
     User,
     Phone,
     Sparkles,
-    Flame,
-    Wind,
-    Thermometer,
     ArrowRight
 } from "lucide-react";
 import Link from "next/link";
@@ -62,7 +59,7 @@ export default function NewLeadPage() {
             name: "",
             phone: "",
             source: "manual",
-            temperature: "morno",
+            temperature: "frio",
             notes: "",
         },
     });
@@ -85,11 +82,6 @@ export default function NewLeadPage() {
         }
     }
 
-    const temperatures = [
-        { id: "frio", label: "Frio", description: "Primeiro contato", icon: Wind, color: "text-blue-500", bg: "bg-blue-500/10" },
-        { id: "morno", label: "Morno", description: "Interesse inicial", icon: Thermometer, color: "text-orange-500", bg: "bg-orange-500/10" },
-        { id: "quente", label: "Quente", description: "Pronto para fechar", icon: Flame, color: "text-red-500", bg: "bg-red-500/10" },
-    ];
 
     return (
         <div className="min-h-screen bg-muted/30 py-12 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-700">
@@ -168,40 +160,6 @@ export default function NewLeadPage() {
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Temperatura / Prioridade */}
-                            <FormField
-                                name="temperature"
-                                render={({ field }) => (
-                                    <FormItem className="space-y-4">
-                                        <FormLabel className="text-sm font-bold text-foreground">Temperatura do Lead</FormLabel>
-                                        <div className="grid grid-cols-3 gap-4">
-                                            {temperatures.map((temp) => (
-                                                <button
-                                                    key={temp.id}
-                                                    type="button"
-                                                    onClick={() => field.onChange(temp.id)}
-                                                    className={cn(
-                                                        "flex flex-col items-center justify-center p-6 rounded-[24px] border-2 transition-all duration-300 group",
-                                                        field.value === temp.id
-                                                            ? "bg-primary/5 border-primary shadow-lg shadow-primary/5"
-                                                            : "bg-muted/10 border-transparent hover:border-border hover:bg-muted/20"
-                                                    )}
-                                                >
-                                                    <div className={cn(
-                                                        "w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300",
-                                                        field.value === temp.id ? cn(temp.bg, temp.color, "scale-110") : "bg-muted/30 text-muted-foreground group-hover:scale-105"
-                                                    )}>
-                                                        <temp.icon className="w-6 h-6" />
-                                                    </div>
-                                                    <span className={cn("text-sm font-bold", field.value === temp.id ? "text-primary" : "text-foreground")}>{temp.label}</span>
-                                                    <span className="text-[10px] text-muted-foreground mt-1 text-center font-medium opacity-60 leading-tight">{temp.description}</span>
-                                                </button>
-                                            ))}
-                                        </div>
                                     </FormItem>
                                 )}
                             />
