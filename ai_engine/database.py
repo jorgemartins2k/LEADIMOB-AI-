@@ -65,3 +65,13 @@ class Database:
         """
         response = self.supabase.table("properties").select("*").eq("user_id", user_id).limit(20).execute()
         return response.data if response.data else []
+
+    def get_broker_schedule(self, user_id: str) -> list[dict]:
+        """
+        Busca o expediente configurado pelo corretor
+        """
+        response = self.supabase.table("work_schedules")\
+            .select("day_of_week, start_time, end_time, is_active")\
+            .eq("user_id", user_id)\
+            .execute()
+        return response.data if response.data else []
