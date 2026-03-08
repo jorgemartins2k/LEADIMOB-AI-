@@ -6,6 +6,7 @@ import { leads, users } from "@/lib/db/schema";
 import { eq, and, gte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import OpenAI from "openai";
+import { getLeadLimitStatus } from "@/lib/utils/lead-limits";
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -79,19 +80,26 @@ export async function bulkInsertLeads(leadsData: { name: string; phone: string }
 
     if (!user) throw new Error("Usuário não encontrado");
 
+    // 0. Check daily limit status
+    let { remaining, dailyLimit, plan } = await getLeadLimitStatus(user.id);
+
     const results = {
         imported: 0,
-        skipped: 0,
+        skipped: 0, // In quarantine
+        limited: 0, // Hit daily limit
         errors: 0,
     };
 
     const quarantineDays = 15;
-    const quarantineDate = new Date();
-    quarantineDate.setDate(quarantineDate.getDate() - quarantineDays);
-    const quarantineDateStr = quarantineDate.toISOString().split('T')[0];
 
     for (const leadData of leadsData) {
         try {
+            // Check if we still have slots
+            if (remaining <= 0) {
+                results.limited++;
+                continue;
+            }
+
             // Clean phone
             const cleanPhone = leadData.phone.replace(/\D/g, '');
             if (!cleanPhone || cleanPhone.length < 10) {
@@ -99,7 +107,7 @@ export async function bulkInsertLeads(leadsData: { name: string; phone: string }
                 continue;
             }
 
-            // Check quarantine
+            // Check quarantine (15 days)
             const existingLead = await db.query.leads.findFirst({
                 where: and(
                     eq(leads.userId, user.id),
@@ -120,10 +128,12 @@ export async function bulkInsertLeads(leadsData: { name: string; phone: string }
                 phone: cleanPhone,
                 source: "import",
                 status: "waiting",
+                scheduledDate: new Date().toISOString().split('T')[0],
                 quarantineUntil: new Date(Date.now() + quarantineDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             });
 
             results.imported++;
+            remaining--; // Use up a slot
         } catch (error) {
             console.error("Erro ao importar lead individual:", error);
             results.errors++;

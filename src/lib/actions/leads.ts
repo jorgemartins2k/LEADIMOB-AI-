@@ -10,6 +10,7 @@ import { z } from "zod";
 import { getOrCreateInternalUser } from "@/lib/auth-utils";
 import { initiateRaquelContact } from "@/lib/ai/raquel";
 import { isCurrentlyInBusinessHours } from "@/lib/utils/business-hours";
+import { getLeadLimitStatus } from "@/lib/utils/lead-limits";
 
 const leadSchema = z.object({
     name: z.string().min(2, "O nome deve ter pelo menos 2 caracteres"),
@@ -30,13 +31,10 @@ export async function getLeads() {
 export async function checkQuarantine(phone: string) {
     const user = await getOrCreateInternalUser();
 
-    // Clean phone string (remove non-digits if needed, but assuming standard format)
-    // cleanPhone not used yet, but keeping for reference if needed later
-
     const existingLead = await db.query.leads.findFirst({
         where: and(
             eq(leads.userId, user.id),
-            eq(leads.phone, phone), // or cleanPhone depending on storage format
+            eq(leads.phone, phone),
             gte(leads.quarantineUntil, new Date().toISOString().split('T')[0])
         ),
     });
@@ -51,14 +49,20 @@ export async function createLead(data: z.infer<typeof leadSchema>) {
     // 0. Check business hours
     const inBusinessHours = await isCurrentlyInBusinessHours(user.id);
     if (inBusinessHours) {
-        return { error: "Não é permitido lançar leads durante o horário de atendimento. O sistema automatizado está em operação." };
+        return { error: "⚠️ Não é permitido lançar leads durante o expediente da Raquel. O sistema automatizado está em operação." };
+    }
+
+    // 0.1 Check daily limit
+    const limitStatus = await getLeadLimitStatus(user.id);
+    if (limitStatus.remaining <= 0) {
+        return { error: `🚫 Você atingiu o limite de ${limitStatus.dailyLimit} leads para hoje (proporcional ao seu plano ${limitStatus.plan.toUpperCase()}). Novas vagas abrem amanhã! 🕒` };
     }
 
     try {
         // 1. Check quarantine
         const inQuarantine = await checkQuarantine(validated.phone);
         if (inQuarantine) {
-            return { error: `Este lead está em quarentena até ${new Date(inQuarantine.quarantineUntil!).toLocaleDateString()}.` };
+            return { error: `🔒 Este número está em quarentena até ${new Date(inQuarantine.quarantineUntil!).toLocaleDateString()}. Só é possível atender o mesmo lead a cada 15 dias.` };
         }
 
         // 2. Insert
@@ -67,24 +71,12 @@ export async function createLead(data: z.infer<typeof leadSchema>) {
             name: validated.name,
             phone: validated.phone,
             source: validated.source || "manual",
-            temperature: validated.temperature || "morno",
+            temperature: validated.temperature || "frio",
             notes: validated.notes,
             status: "waiting",
-            quarantineUntil: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 15 days
+            scheduledDate: new Date().toISOString().split('T')[0],
+            quarantineUntil: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         }).returning({ insertedId: leads.id });
-
-        const newLeadId = result[0].insertedId;
-
-
-        // 3. Trigger Raquel (AI Contact) 
-        // Logic: Since this is outside business hours (blocked by check above),
-        // we naturally wait for the next automation cycle or next business hours start.
-        // However, if the user wants them contacted in the NEXT session, we don't call it now.
-        // If we call it now, Raquel might message at night.
-        // User says: "são contactados pela AI no proximo expediente".
-
-        // So we just save with "waiting" status and don't call initiateRaquelContact here.
-        // A background worker or the next session start will trigger them.
 
         revalidatePath("/leads");
         revalidatePath("/dashboard");
@@ -97,18 +89,13 @@ export async function createLead(data: z.infer<typeof leadSchema>) {
 
 export async function deleteLead(id: string) {
     const user = await getOrCreateInternalUser();
-
-    await db
-        .delete(leads)
-        .where(and(eq(leads.id, id), eq(leads.userId, user.id)));
-
+    await db.delete(leads).where(and(eq(leads.id, id), eq(leads.userId, user.id)));
     revalidatePath("/leads");
     return { success: true };
 }
 
 export async function cleanupLeads() {
     const user = await getOrCreateInternalUser();
-
     try {
         await db.delete(leads).where(eq(leads.userId, user.id));
         revalidatePath("/leads");
@@ -124,8 +111,29 @@ export async function cleanupLeads() {
  * Checks if current user is in business hours (called from frontend)
  */
 export async function checkBusinessStatus() {
-    const user = await getOrCreateInternalUser();
-    return isCurrentlyInBusinessHours(user.id);
+    const { userId: clerkUserId } = await auth();
+    if (!clerkUserId) return false;
+    const user = await db.query.users.findFirst({
+        where: eq(users.clerkUserId, clerkUserId),
+    });
+    if (!user) return false;
+    return await isCurrentlyInBusinessHours(user.id);
+}
+
+/**
+ * Server action to get lead limit status for the client
+ */
+export async function getLeadLimitServerAction() {
+    const { userId: clerkUserId } = await auth();
+    if (!clerkUserId) throw new Error("Não autorizado");
+
+    const user = await db.query.users.findFirst({
+        where: eq(users.clerkUserId, clerkUserId),
+    });
+
+    if (!user) throw new Error("Usuário não encontrado");
+
+    return await getLeadLimitStatus(user.id);
 }
 
 export async function processAutomation() {
@@ -135,14 +143,11 @@ export async function processAutomation() {
 
 /**
  * Core automation logic for a specific user.
- * Can be called from background jobs or the frontend.
  */
 export async function processUserAutomation(userId: string) {
-    // 1. Check if in business hours
     const inBusinessHours = await isCurrentlyInBusinessHours(userId);
     if (!inBusinessHours) return { success: false, message: "Fora do horário de expediente." };
 
-    // 2. Find all 'waiting' leads for this user
     const pendingLeads = await db.query.leads.findMany({
         where: and(
             eq(leads.userId, userId),
@@ -152,12 +157,10 @@ export async function processUserAutomation(userId: string) {
 
     if (pendingLeads.length === 0) return { success: true, message: "Sem leads pendentes." };
 
-    // 3. Trigger Raquel for each
     let successCount = 0;
     for (const lead of pendingLeads) {
         try {
             await initiateRaquelContact(lead.id);
-            // Update status so we don't contact again
             await db.update(leads)
                 .set({ status: "active", updatedAt: new Date() })
                 .where(eq(leads.id, lead.id));
