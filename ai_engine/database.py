@@ -125,6 +125,23 @@ class Database:
         # Atualiza o lead para que o follow-up saibam que houve interação
         self.supabase.table("leads").update({"updated_at": "now()"}).eq("phone", phone).execute()
 
+    def confirm_hot_lead(self, broker_phone: str):
+        """
+        Busca o corretor pelo telefone de WhatsApp e confirma todos os alertas quentes pendentes dele
+        """
+        # 1. Busca o corretor pelo WhatsApp
+        broker_resp = self.supabase.table("users").select("id").eq("whatsapp", broker_phone).limit(1).execute()
+        if broker_resp.data:
+            user_id = broker_resp.data[0]['id']
+            # 2. Atualiza status de leads pendentes de confirmação desse corretor para 'active'
+            self.supabase.table("leads")\
+                .update({"status": "active", "updated_at": "now()"})\
+                .eq("user_id", user_id)\
+                .in_("status", ["hot_alert_sent", "hot_alert_final"])\
+                .execute()
+            return True
+        return False
+
     def add_to_best_practices(self, lead_id: str, summary: str, score: int):
         """
         Adiciona uma conversa ao banco de 200 melhores práticas.

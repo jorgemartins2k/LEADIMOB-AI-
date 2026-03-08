@@ -44,9 +44,10 @@ async def handle_zapi_webhook(request: Request):
     if message_text and message_text.lower().strip() == "ok":
         # Se o corretor mandar OK, marcamos como confirmado no banco
         # Isso cancela o 'puxão de orelha' de 5 minutos
-        print(f"Corretor {sender_name} confirmou recebimento do lead quente.")
-        # self.db.confirm_hot_lead(phone) 
-        return {"status": "broker_confirmed"}
+        if raquel.db.confirm_hot_lead(phone):
+            print(f"Corretor {sender_name} confirmou recebimento do lead quente.")
+            return {"status": "broker_confirmed"}
+        return {"status": "ok_ignored"}
 
     # 2. Processamento de Mensagem (Texto ou Áudio)
     is_audio = message_type in ["audio", "ptt"]

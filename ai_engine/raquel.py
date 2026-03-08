@@ -183,7 +183,12 @@ class RaquelAgent:
         if "[ALERT_BROKER]" in reply_content:
             clean_reply = reply_content.replace("[ALERT_BROKER]", "").strip()
             self.send_to_zapi(phone, clean_reply)
+            
+            # Alerta o corretor e marca no banco para o monitor (puxão de orelha)
             self.alert_broker(context, clean_reply)
+            self.db.update_lead_status(phone, "hot_alert_sent")
+            self.db.set_lead_transfer_time(phone)
+            
             return clean_reply
         
         self.send_to_zapi(phone, reply_content)
