@@ -7,8 +7,8 @@ from raquel import RaquelAgent
 from database import Database
 
 # Instanciamos o agente e o banco uma única vez
-raquel: RaquelAgent = RaquelAgent()
-db: Database = Database()
+raquel: RaquelAgent = RaquelAgent() # pyre-ignore
+db: Database = Database() # pyre-ignore
 
 def is_within_schedule(schedule: List[Dict[str, Any]], now: datetime.datetime) -> bool:
     """
@@ -20,21 +20,25 @@ def is_within_schedule(schedule: List[Dict[str, Any]], now: datetime.datetime) -
     # Busca a configuração para o dia de hoje
     today_config: Optional[Dict[str, Any]] = next((s for s in schedule if s.get('day_of_week') == db_day_of_week), None)
     
-    if not today_config or not today_config.get('is_active'):
+    if today_config is None or not today_config.get('is_active'):
         return False
+    
+    # Garantimos que config é um dicionário para o linter
+    config: Dict[str, Any] = today_config
         
     try:
         # Formato esperado "HH:MM:SS" vindo do banco (Postgres time type)
         def parse_time(t_str: Optional[str]) -> Optional[datetime.time]:
             # Lida com casos de None ou strings vazias
             if not t_str: return None
-            return datetime.datetime.strptime(str(t_str)[:5], "%H:%M").time()
+            t_val: str = str(t_str)
+            return datetime.datetime.strptime(t_val[:5], "%H:%M").time()
 
-        start_time: Optional[datetime.time] = parse_time(today_config.get('start_time'))
-        end_time: Optional[datetime.time] = parse_time(today_config.get('end_time'))
+        start_time: Optional[datetime.time] = parse_time(config.get('start_time'))
+        end_time: Optional[datetime.time] = parse_time(config.get('end_time'))
         current_time: datetime.time = now.time()
         
-        if not start_time or not end_time:
+        if start_time is None or end_time is None:
             return False
             
         return start_time <= current_time <= end_time
