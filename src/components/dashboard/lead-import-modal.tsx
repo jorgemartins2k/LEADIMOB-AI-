@@ -83,17 +83,19 @@ export function LeadImportModal({ children }: { children: React.ReactNode }) {
                     }
                 });
 
-                const leads = await extractLeadsFromContent(fileContent, fileType);
+                const leads = await extractLeadsFromContent(fileContent, fileType, file.type);
                 if (leads.length === 0) {
-                    toast.warning(`Nenhum lead encontrado no arquivo: ${file.name}`);
+                    toast.warning(`Nenhum lead encontrado no arquivo: ${file.name}`, {
+                        description: "Tente usar uma imagem mais nítida ou um texto mais claro."
+                    });
                 } else {
                     setExtractedLeads(prev => [...prev, ...leads]);
                     toast.success(`${leads.length} leads identificados em ${file.name}`);
                 }
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Erro no processamento:", error);
-            toast.error("Falha ao ler os arquivos. Verifique se são imagens ou PDFs válidos.");
+            toast.error(error.message || "Falha ao ler os arquivos. Verifique se são imagens ou PDFs válidos.");
         } finally {
             setIsProcessing(false);
         }

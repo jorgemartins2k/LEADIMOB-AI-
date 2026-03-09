@@ -12,7 +12,7 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function extractLeadsFromContent(content: string, type: 'image' | 'pdf' | 'text') {
+export async function extractLeadsFromContent(content: string, type: 'image' | 'pdf' | 'text', mimeType?: string) {
     const { userId: clerkUserId } = await auth();
     if (!clerkUserId) throw new Error("Não autorizado");
 
@@ -30,6 +30,7 @@ export async function extractLeadsFromContent(content: string, type: 'image' | '
     try {
         let response;
         if (type === 'image') {
+            const finalMime = mimeType || 'image/jpeg';
             response = await openai.chat.completions.create({
                 model: "gpt-4o",
                 messages: [
@@ -40,7 +41,7 @@ export async function extractLeadsFromContent(content: string, type: 'image' | '
                             {
                                 type: "image_url",
                                 image_url: {
-                                    url: `data:image/jpeg;base64,${content}`,
+                                    url: `data:${finalMime};base64,${content}`,
                                 },
                             },
                         ],
@@ -50,8 +51,12 @@ export async function extractLeadsFromContent(content: string, type: 'image' | '
             });
         } else {
             // Para PDF ou Texto, usamos gpt-4o-mini com o conteúdo bruto/transcrito
-            // Nota: Se for PDF binário aqui estará vindo base64, o que resultará em erro.
-            // O componente UI já deve estar tratando PDF como texto se possível, ou o usuário deve usar imagens.
+            // Se for PDF, o gpt-4o-mini não conseguirá ler o base64 binário. 
+            // Precisamos avisar o usuário ou tentar converter.
+            if (type === 'pdf') {
+                throw new Error("A leitura direta de arquivo PDF ainda não é suportada. Por favor, tire um print (foto/screenshot) da sua lista e envie como imagem para a Raquel ler.");
+            }
+
             response = await openai.chat.completions.create({
                 model: "gpt-4o-mini",
                 messages: [
