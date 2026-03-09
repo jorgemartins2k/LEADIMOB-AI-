@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from typing import Dict, Any, Optional
 import uvicorn
 import os
 from dotenv import load_dotenv
@@ -13,30 +14,29 @@ async def lifespan(app: FastAPI):
     # Inicia o relógio de follow-ups em segundo plano ao ligar o servidor
     start_scheduler()
     yield
-    # Lógica de encerramento se necessário (opcional)
 
-app = FastAPI(
+app: FastAPI = FastAPI(
     title="Raquel AI Engine - Leadimob-AI",
     lifespan=lifespan
 )
-raquel = RaquelAgent()
+raquel: RaquelAgent = RaquelAgent()
 
 @app.get("/")
-def home():
+def home() -> Dict[str, str]:
     return {"status": "online", "agent": "Raquel", "scheduler": "active"}
 
 @app.post("/webhook/zapi")
-async def handle_zapi_webhook(request: Request):
+async def handle_zapi_webhook(request: Request) -> Dict[str, str]:
     """
     Recebe mensagens do WhatsApp via Z-API
     """
     try:
-        data = await request.json()
+        data: Dict[str, Any] = await request.json()
         
-        phone = data.get("phone")
-        message_text = data.get("text", {}).get("message")
-        sender_name = data.get("senderName")
-        message_type = data.get("type", "text")
+        phone: Optional[str] = data.get("phone")
+        message_text: Optional[str] = data.get("text", {}).get("message")
+        sender_name: str = str(data.get("senderName", "Cliente"))
+        message_type: str = str(data.get("type", "text"))
         
         if not phone:
             print("⚠️ Webhook ignorado: campo 'phone' ausente.")
@@ -50,12 +50,12 @@ async def handle_zapi_webhook(request: Request):
             return {"status": "ok_ignored"}
 
         # 2. Processamento de Mensagem (Texto ou Áudio)
-        is_audio = message_type in ["audio", "ptt"]
-        audio_url = data.get("audio", {}).get("url") if is_audio else None
+        is_audio: bool = message_type in ["audio", "ptt"]
+        audio_url: Optional[str] = data.get("audio", {}).get("url") if is_audio else None
 
         if message_text or is_audio:
             print(f"📩 Mensagem ({message_type}) recebida de {sender_name} ({phone})")
-            raquel.process_message(phone, message_text, sender_name, is_audio=is_audio, audio_url=audio_url)
+            raquel.process_message(phone, str(message_text or ""), sender_name, is_audio=is_audio, audio_url=audio_url)
             return {"status": "processed"}
         
         print(f"ℹ️ Webhook recebido mas ignorado (tipo: {message_type}) de {phone}")

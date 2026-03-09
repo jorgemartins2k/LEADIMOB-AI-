@@ -3,6 +3,7 @@ import requests
 import datetime
 import pytz
 import time
+from typing import List, Dict, Any, Optional, Union
 from openai import OpenAI
 from dotenv import load_dotenv
 from database import Database
@@ -10,9 +11,13 @@ from database import Database
 load_dotenv()
 
 class RaquelAgent:
-    def __init__(self):
+    client: OpenAI
+    db: Database
+    tz: datetime.tzinfo
+
+    def __init__(self) -> None:
         # Validação robusta de chaves
-        api_key = os.getenv("OPENAI_API_KEY")
+        api_key: Optional[str] = os.getenv("OPENAI_API_KEY")
         if not api_key:
             print("❌ ERRO CRÍTICO: Variável 'OPENAI_API_KEY' não encontrada no ambiente!")
             print("Vá no painel do Railway > Seu Serviço > Variables e adicione a chave.")
@@ -22,12 +27,12 @@ class RaquelAgent:
         self.db = Database()
         self.tz = pytz.timezone('America/Sao_Paulo')
 
-    def get_system_prompt(self, context, lead_name):
-        broker_name = context.get('broker_name', 'Corretor')
-        creci = context.get('broker_creci', 'Não informado')
-        agency = context.get('broker_agency', 'Autônomo')
-        presentation = context.get('broker_presentation', '')
-        lead_notes = context.get('lead_notes', '')
+    def get_system_prompt(self, context: Dict[str, Any], lead_name: str) -> str:
+        broker_name: str = context.get('broker_name', 'Corretor')
+        creci: str = context.get('broker_creci', 'Não informado')
+        agency: str = context.get('broker_agency', 'Autônomo')
+        presentation: str = context.get('broker_presentation', '')
+        lead_notes: str = context.get('lead_notes', '')
 
         return f"""
         VOCÊ É A RAQUEL - ASSISTENTE VIRTUAL DE ELITE
@@ -73,30 +78,33 @@ class RaquelAgent:
         - Se o cliente pedir para falar em outro momento ou não tiver financiamento, confirme que o contato será retomado na data acordada.
         """
 
-    def is_within_schedule(self, schedule):
+    def is_within_schedule(self, schedule: List[Dict[str, Any]]) -> bool:
         """
         Verifica se o fuso de Brasília (now) está dentro do expediente do corretor
         """
-        now = datetime.datetime.now(self.tz)
+        now: datetime.datetime = datetime.datetime.now(self.tz)
         
         # Mon=0 -> Mon=1, ..., Sun=6 -> Sun=0 
-        db_day_of_week = (now.weekday() + 1) % 7
+        db_day_of_week: int = (now.weekday() + 1) % 7
         
         # Busca a configuração para o dia de hoje
-        today_config = next((s for s in schedule if s['day_of_week'] == db_day_of_week), None)
+        today_config: Optional[Dict[str, Any]] = next((s for s in schedule if s.get('day_of_week') == db_day_of_week), None)
         
-        if not today_config or not today_config['is_active']:
+        if not today_config or not today_config.get('is_active'):
             return False
             
         try:
-            def parse_time(t_str):
+            def parse_time(t_str: Optional[str]) -> Optional[datetime.time]:
                 if not t_str: return None
                 # Aceita HH:MM ou HH:MM:SS
                 return datetime.datetime.strptime(t_str[:5], "%H:%M").time()
 
-            start_time = parse_time(today_config['start_time'])
-            end_time = parse_time(today_config['end_time'])
-            current_time = now.time()
+            start_str: Optional[str] = str(today_config.get('start_time', '')) if today_config.get('start_time') else None
+            end_str: Optional[str] = str(today_config.get('end_time', '')) if today_config.get('end_time') else None
+            
+            start_time: Optional[datetime.time] = parse_time(start_str)
+            end_time: Optional[datetime.time] = parse_time(end_str)
+            current_time: datetime.time = now.time()
             
             if not start_time or not end_time: return False
             return start_time <= current_time <= end_time
@@ -104,14 +112,14 @@ class RaquelAgent:
             print(f"⚠️ Erro ao validar horário: {e}")
             return False
 
-    def transcribe_audio(self, audio_url):
+    def transcribe_audio(self, audio_url: str) -> str:
         """
         Baixa o áudio da Z-API e transcreve usando OpenAI Whisper
         """
-        temp_path = "temp_audio.ogg"
+        temp_path: str = "temp_audio.ogg"
         try:
             print(f"🎙️ Baixando áudio para transcrição: {audio_url}")
-            audio_response = requests.get(audio_url)
+            audio_response: requests.Response = requests.get(audio_url)
             audio_response.raise_for_status()
             
             with open(temp_path, "wb") as f:
@@ -122,7 +130,7 @@ class RaquelAgent:
                     model="whisper-1", 
                     file=audio_file
                 )
-            return transcript.text
+            return str(transcript.text)
         except Exception as e:
             print(f"❌ Erro na transcrição: {e}")
             return "[Erro ao transcrever áudio]"
@@ -131,18 +139,18 @@ class RaquelAgent:
                 try: os.remove(temp_path)
                 except: pass
 
-    def process_message(self, phone, message, sender_name, is_audio=False, audio_url=None):
+    def process_message(self, phone: str, message: str, sender_name: str, is_audio: bool = False, audio_url: Optional[str] = None) -> str:
         print(f"📥 Processando mensagem de {sender_name} ({phone})")
         
         # 1. Busca dados do corretor
-        context = self.db.get_broker_by_lead_phone(phone)
+        context: Optional[Dict[str, Any]] = self.db.get_broker_by_lead_phone(phone)
         if not context:
             print(f"⚠️ Lead {phone} não encontrado no banco.")
             return "Lead não encontrado no banco."
 
-        user_id = context['user_id']
-        lead_real_name = context['lead_name']
-        broker_name = context['broker_name']
+        user_id: str = context.get('user_id', '')
+        lead_real_name: str = context.get('lead_name', 'Cliente')
+        broker_name: str = context.get('broker_name', 'Corretor')
 
         # 2. SE FOR ÁUDIO, TRANSCREVE
         if is_audio and audio_url:
@@ -150,23 +158,23 @@ class RaquelAgent:
             print(f"📝 Transcrição: {message}")
 
         # 3. VERIFICAÇÃO DE EXPEDIENTE (REAGENDAMENTO OOH)
-        schedule = self.db.get_broker_schedule(user_id)
+        schedule: List[Dict[str, Any]] = self.db.get_broker_schedule(user_id)
         if not self.is_within_schedule(schedule):
             print(f"🌙 Fora de horário para {broker_name}. Enviando auto-reagendamento.")
-            ooh_msg = f"Olá {lead_real_name}! Obrigado pelo contato. Recebemos sua mensagem, porém nosso expediente por hoje encerrou. Já reagendamos o seu atendimento para o próximo dia útil, quando o corretor {broker_name} entrar em contato. Até logo!"
+            ooh_msg: str = f"Olá {lead_real_name}! Obrigado pelo contato. Recebemos sua mensagem, porém nosso expediente por hoje encerrou. Já reagendamos o seu atendimento para o próximo dia útil, quando o corretor {broker_name} entrar em contato. Até logo!"
             self.send_to_zapi(phone, ooh_msg)
             return ooh_msg
 
         # 4. BUSCA HISTÓRICO E PORTFÓLIO
-        history = self.db.get_chat_history(phone)
-        portfolio_text = self.db.get_portfolio(user_id)
+        history: List[Dict[str, Any]] = self.db.get_chat_history(phone)
+        portfolio_text: str = self.db.get_portfolio(user_id)
 
         # 5. MONTA AS MENSAGENS PARA A OPENAI
-        messages = [{"role": "system", "content": self.get_system_prompt(context, lead_real_name)}]
+        messages: List[Dict[str, str]] = [{"role": "system", "content": self.get_system_prompt(context, lead_real_name)}]
         messages.append({"role": "system", "content": f"PORTFÓLIO DISPONÍVEL:\n{portfolio_text}"})
 
         for h in history:
-            messages.append({"role": h['role'], "content": h['content']})
+            messages.append({"role": str(h.get('role', 'user')), "content": str(h.get('content', ''))})
 
         messages.append({"role": "user", "content": message})
 
@@ -174,9 +182,9 @@ class RaquelAgent:
         try:
             response = self.client.chat.completions.create(
                 model="gpt-4o",
-                messages=messages
+                messages=messages # pyre-ignore
             )
-            reply_content = response.choices[0].message.content
+            reply_content: str = response.choices[0].message.content or "Desculpe, não consegui formular uma resposta."
         except Exception as e:
             print(f"❌ Erro na OpenAI: {e}")
             return "Desculpe, tive um problema técnico momentâneo."
@@ -188,7 +196,7 @@ class RaquelAgent:
         # 8. VERIFICA SE PRECISA ALERTAR O CORRETOR (LEAD QUENTE)
         if "[ALERT_BROKER]" in reply_content:
             print(f"🔥 LEAD QUENTE DETECTADO: {lead_real_name}")
-            clean_reply = reply_content.replace("[ALERT_BROKER]", "").strip()
+            clean_reply: str = reply_content.replace("[ALERT_BROKER]", "").strip()
             self.send_to_zapi(phone, clean_reply)
             
             self.alert_broker(context, clean_reply)
@@ -200,23 +208,28 @@ class RaquelAgent:
         self.send_to_zapi(phone, reply_content)
         return reply_content
 
-    def alert_broker(self, context, message_context):
-        broker_whatsapp = context['broker_whatsapp']
-        lead_name = context['lead_name']
+    def alert_broker(self, context: Dict[str, Any], message_context: str) -> None:
+        broker_whatsapp: str = context.get('broker_whatsapp', '')
+        lead_name: str = context.get('lead_name', 'Cliente')
         
-        alert_msg = f"🚨 *LEAD QUENTE: {lead_name}*\n\nEste lead demonstrou alto interesse ou pediu visita!\n\n*Resumo da conversa:* {message_context[:100]}...\n\nAssuma o atendimento agora!"
+        alert_msg: str = f"🚨 *LEAD QUENTE: {lead_name}*\n\nEste lead demonstrou alto interesse ou pediu visita!\n\n*Resumo da conversa:* {message_context[:100]}...\n\nAssuma o atendimento agora!"
         self.send_to_zapi(broker_whatsapp, alert_msg)
 
-    def send_to_zapi(self, phone, content):
-        instance_id = os.getenv("ZAPI_INSTANCE_ID")
-        token = os.getenv("ZAPI_TOKEN")
-        url = f"https://api.z-api.io/instances/{instance_id}/token/{token}/send-text"
+    def send_to_zapi(self, phone: str, content: str) -> None:
+        instance_id: Optional[str] = os.getenv("ZAPI_INSTANCE_ID")
+        token: Optional[str] = os.getenv("ZAPI_TOKEN")
         
-        payload = {"phone": phone, "message": content}
-        headers = {"Content-Type": "application/json"}
+        if not instance_id or not token:
+            print("⚠️ ERRO: ZAPI_INSTANCE_ID ou ZAPI_TOKEN ausentes no ambiente.")
+            return
+
+        url: str = f"https://api.z-api.io/instances/{instance_id}/token/{token}/send-text"
+        
+        payload: Dict[str, str] = {"phone": phone, "message": content}
+        headers: Dict[str, str] = {"Content-Type": "application/json"}
         
         try:
-            response = requests.post(url, json=payload, headers=headers)
+            response: requests.Response = requests.post(url, json=payload, headers=headers)
             response.raise_for_status()
             print(f"✅ Enviado para {phone}")
         except Exception as e:
