@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -13,31 +14,60 @@ import {
     ChevronRight,
     LogOut,
     Clock,
+    Rocket,
+    Bell,
 } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
+import { LeadImobLogo } from "@/components/LeadImobLogo";
+import { getProfile } from "@/lib/actions/profile";
+import { User as UserIcon } from "lucide-react";
 
 const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Meus Imóveis", href: "/imoveis", icon: Home },
-    { name: "Lançamentos", href: "/lancamentos", icon: Megaphone },
-    { name: "Agenda", href: "/agenda", icon: Calendar },
-    { name: "Meus Leads", href: "/leads", icon: Users },
-    { name: "Perfil", href: "/configuracoes/perfil", icon: Settings },
-    { name: "Expediente", href: "/configuracoes/expediente", icon: Clock },
+    { name: "Visão Geral", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Leads", href: "/leads", icon: Users },
+    { name: "Imóveis", href: "/imoveis", icon: Home },
+    { name: "Lançamentos", href: "/lancamentos", icon: Rocket },
+    { name: "Eventos", href: "/eventos", icon: Calendar },
+    { name: "Campanhas", href: "/campanhas", icon: Megaphone },
+    { name: "Calendário", href: "/agenda", icon: Clock },
+    { name: "Notificações", href: "/notificacoes", icon: Bell },
+    { name: "Configurações", href: "/configuracoes", icon: Settings },
 ];
+
+
 
 export function Sidebar() {
     const pathname = usePathname();
+    const [profile, setProfile] = useState<{ name: string; avatarUrl: string | null; plan?: string } | null>(null);
+
+    useEffect(() => {
+        async function loadProfile() {
+            const data = await getProfile();
+            if (data) {
+                setProfile({
+                    name: data.name,
+                    avatarUrl: data.avatarUrl
+                });
+            }
+        }
+        loadProfile();
+    }, []);
 
     return (
-        <div className="flex h-full w-64 flex-col bg-surface border-r border-surface-2 transition-all duration-300 ease-in-out">
-            <div className="flex h-20 items-center px-6">
-                <span className="text-2xl font-display font-bold tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                    Leadimob AI
-                </span>
+        <div className="flex h-full w-72 flex-col bg-[#020617] border-r border-white/5 transition-all duration-500 ease-in-out relative overflow-hidden group/sidebar">
+            {/* Background Flair */}
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-accent/10 blur-[100px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-48 -right-24 w-48 h-48 bg-purple/5 blur-[100px] rounded-full pointer-events-none" />
+
+            {/* Brand Logo Section */}
+            <div className="flex h-24 items-center px-8 relative z-10">
+                <Link href="/dashboard" className="flex items-center gap-3 group/logo">
+                    <LeadImobLogo variant="dark" iconSize={36} fontSize="text-xl" />
+                </Link>
             </div>
 
-            <nav className="flex-1 space-y-1 px-4 py-4">
+            {/* Navigation */}
+            <nav className="flex-1 space-y-1.5 px-6 py-6 relative z-10 overflow-y-auto custom-scrollbar">
                 {navigation.map((item) => {
                     const isActive = pathname.startsWith(item.href);
                     return (
@@ -45,42 +75,73 @@ export function Sidebar() {
                             key={item.name}
                             href={item.href}
                             className={cn(
-                                "group flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+                                "group relative flex items-center justify-between rounded-2xl px-6 py-4.5 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 active:scale-95",
                                 isActive
-                                    ? "bg-primary/10 text-primary shadow-sm"
-                                    : "text-text-muted hover:bg-surface-2 hover:text-text"
+                                    ? "bg-white/10 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] backdrop-blur-md"
+                                    : "text-slate-400 hover:bg-white/5 hover:text-white"
                             )}
                         >
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-4">
                                 <item.icon
                                     className={cn(
-                                        "h-5 w-5 shrink-0 transition-colors",
-                                        isActive ? "text-primary" : "text-text-muted group-hover:text-text"
+                                        "h-5 w-5 shrink-0 transition-all duration-500",
+                                        isActive ? "text-accent scale-110" : "text-slate-500 group-hover:text-white group-hover:scale-110"
                                     )}
                                 />
-                                {item.name}
+                                <span className="relative">
+                                    {item.name}
+                                    {isActive && (
+                                        <span className="absolute -bottom-1 left-0 w-4 h-0.5 bg-accent rounded-full animate-in slide-in-from-left-4 duration-500" />
+                                    )}
+                                </span>
                             </div>
-                            {isActive && <ChevronRight className="h-4 w-4 text-primary animate-in fade-in slide-in-from-left-2" />}
+
+                            {isActive ? (
+                                <div className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+                            ) : (
+                                <ChevronRight className="h-4 w-4 text-slate-600 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
+                            )}
                         </Link>
                     );
                 })}
             </nav>
 
-            <div className="p-4 border-t border-surface-2">
-                <div className="flex items-center gap-3 px-3 py-2">
-                    <UserButton
-                        afterSignOutUrl="/"
-                        appearance={{
-                            elements: {
-                                userButtonAvatarBox: "h-9 w-9 border border-primary/20 hover:border-primary/50 transition-colors",
-                            },
-                        }}
-                    />
-                    <div className="flex flex-col">
-                        <span className="text-sm font-medium text-text truncate max-w-[120px]">
-                            Minha Conta
-                        </span>
-                        <span className="text-xs text-text-muted">Plano Start</span>
+            {/* Footer / User Profile */}
+            <div className="p-6 relative z-10">
+                <div className="p-4 rounded-[28px] bg-white/5 border border-white/5 backdrop-blur-lg hover:border-white/10 transition-all duration-500 group/user">
+                    <div className="flex items-center gap-4">
+                        <div className="relative">
+                            {profile?.avatarUrl ? (
+                                <div className="h-11 w-11 rounded-full border-2 border-white/10 overflow-hidden">
+                                    <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover" />
+                                </div>
+                            ) : (
+                                <UserButton
+                                    afterSignOutUrl="/"
+                                    appearance={{
+                                        elements: {
+                                            userButtonAvatarBox: "h-11 w-11 border-2 border-white/10 hover:border-accent/50 transition-all duration-500",
+                                        },
+                                    }}
+                                />
+                            )}
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-success rounded-full border-2 border-[#020617] shadow-sm" />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-bold text-white truncate group-hover/user:text-accent transition-colors">
+                                {profile?.name || "Carregando..."}
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-2 py-0.5 bg-white/5 rounded-md border border-white/5">
+                                    Plano {
+                                        profile?.plan === 'start' ? 'Iniciante' :
+                                            profile?.plan === 'pro' ? 'Pro' :
+                                                profile?.plan === 'premium' ? 'Enterprise' :
+                                                    (profile?.plan?.toUpperCase() || "START")
+                                    }
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

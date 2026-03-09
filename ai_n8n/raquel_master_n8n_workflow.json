@@ -1,0 +1,310 @@
+{
+    "name": "Raquel Master - FINAL FIX",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "raquel-webhook",
+                "options": {}
+            },
+            "id": "webhook-incoming",
+            "name": "Webhook: Mensagem Recebida",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                0,
+                80
+            ]
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "hours",
+                            "hoursInterval": 1
+                        }
+                    ]
+                }
+            },
+            "id": "schedule-followup",
+            "name": "Cronograma: Verificar acompanhamento (1h)",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1,
+            "position": [
+                0,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "SELECT u.whatsapp as broker_whatsapp, u.name as broker_name, u.id as user_id, l.name as lead_name, l.phone as lead_phone, l.status as lead_status \nFROM leads l \nJOIN users u ON l.user_id = u.id \nWHERE l.phone = '{{$node[\"Webhook: Mensagem Recebida\"].json[\"phone\"] || \"NO_PHONE\"}}' \nLIMIT 1;"
+            },
+            "id": "db-lookup-reactive",
+            "name": "DB: Dados do Lead (Reativo)",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                220,
+                80
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "postgres-credential-id",
+                    "name": "Supabase DB"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "SELECT u.whatsapp as broker_whatsapp, u.name as broker_name, u.id as user_id, l.name as lead_name, l.phone as lead_phone, l.status as lead_status \nFROM leads l \nJOIN users u ON l.user_id = u.id \nWHERE l.status = 'awaiting_followup' \nOR (l.last_ai_interaction < NOW() - INTERVAL '24 hours' AND l.status = 'active')\nLIMIT 5;"
+            },
+            "id": "db-lookup-proactive",
+            "name": "DB: Leads para acompanhamento",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                220,
+                300
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "postgres-credential-id",
+                    "name": "Supabase DB"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "=VOCÊ É RAQUEL, ASSISTENTE VIRTUAL DO CORRETOR: {{$node[\"DB: Dados do Lead (Reativo)\"].json[\"broker_name\"] || $node[\"DB: Leads para acompanhamento\"].json[\"broker_name\"]}}\n\nMANUAL ESTRATÉGICO:\n1. IDENTIDADE: Profissional, acolhedora e empática. Nunca revele espontaneamente ser IA.\n2. OBJETIVO: Despertar interesse genuíno e levar à visita. VOCÊ NÃO AGENDA VISITAS. Use 'alertar_corretor_quente' quando o lead quiser visitar.\n3. QUALIFICAÇÃO FINANCEIRA: Pergunte sobre financiamento pré-aprovado. Incentive a fazer se não tiver.\n4. PERFIS: Comprador (conforto/família) vs Investidor (ROI/valorização).\n5. FOLLOW-UP: Retome conversas de forma natural usando o histórico.\n\nREGRAS TÉCNICAS:\n- Use 'buscar_portfolio' para oferecer imóveis.\n- Use 'enviar_mensagem_whatsapp' para responder ao cliente.",
+                "options": {
+                    "systemMessage": "Você é Raquel, a inteligência estratégica do Leadimob-AI."
+                }
+            },
+            "id": "ai-agent-raquel",
+            "name": "Raquel Agente IA",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 1,
+            "position": [
+                600,
+                180
+            ]
+        },
+        {
+            "parameters": {
+                "model": "gpt-4o",
+                "options": {
+                    "temperature": 0.7
+                }
+            },
+            "id": "openai-model",
+            "name": "OpenAI GPT-4o",
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "typeVersion": 1,
+            "position": [
+                500,
+                420
+            ],
+            "credentials": {
+                "openAiApi": {
+                    "id": "openai-credential-id",
+                    "name": "OpenAI Account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "tableName": "conversations",
+                "options": {}
+            },
+            "id": "postgres-memory",
+            "name": "Memória Longo Prazo",
+            "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+            "typeVersion": 1,
+            "position": [
+                650,
+                420
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "postgres-credential-id",
+                    "name": "Supabase DB"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "name": "enviar_mensagem_whatsapp",
+                "description": "Envia a mensagem final para o cliente no WhatsApp.",
+                "url": "https://api.z-api.io/instances/3EF563F4DD4551A0224EDEEAB9125F18/token/6E1D394248DA536C5C45C297/send-text",
+                "method": "POST",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "{\n  \"phone\": \"{{$node[\"DB: Dados do Lead (Reativo)\"].json[\"lead_phone\"] || $node[\"DB: Leads para acompanhamento\"].json[\"lead_phone\"]}}\",\n  \"message\": \"{{$placeholder}}\"\n}",
+                "options": {}
+            },
+            "id": "whatsapp-tool",
+            "name": "Ferramenta Z-API",
+            "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+            "typeVersion": 1,
+            "position": [
+                800,
+                420
+            ]
+        },
+        {
+            "parameters": {
+                "name": "alertar_corretor_quente",
+                "description": "Notifica o corretor dono do lead sobre o interesse em visita.",
+                "url": "https://api.z-api.io/instances/3EF563F4DD4551A0224EDEEAB9125F18/token/6E1D394248DA536C5C45C297/send-text",
+                "method": "POST",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "{\n  \"phone\": \"{{$node[\"DB: Dados do Lead (Reativo)\"].json[\"broker_whatsapp\"] || $node[\"DB: Leads para acompanhamento\"].json[\"broker_whatsapp\"]}}\",\n  \"message\": \"🚨 *LEAD QUENTE IDENTIFICADO*\\n\\nO lead *{{$node[\"DB: Dados do Lead (Reativo)\"].json[\"lead_name\"] || $node[\"DB: Leads para acompanhamento\"].json[\"lead_name\"]}}* quer visitar um imóvel!\\n\\nAssuma o atendimento agora.\"\n}",
+                "options": {}
+            },
+            "id": "alert-tool",
+            "name": "Ferramenta de alerta",
+            "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+            "typeVersion": 1,
+            "position": [
+                950,
+                420
+            ]
+        },
+        {
+            "parameters": {
+                "name": "buscar_portfolio",
+                "description": "Busca imóveis do corretor conforme o interesse do lead.",
+                "url": "https://wwwtuduxxcslpcpgjzya.supabase.co/rest/v1/properties?user_id=eq.{{$node[\"DB: Dados do Lead (Reativo)\"].json[\"user_id\"] || $node[\"DB: Leads para acompanhamento\"].json[\"user_id\"]}}",
+                "method": "GET",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "apikey",
+                            "value": "sb_publishable_lRPKRo4prFynd6c3qpWmng_ntBS9oAW"
+                        },
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer sb_publishable_lRPKRo4prFynd6c3qpWmng_ntBS9oAW"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "portfolio-tool",
+            "name": "Ferramenta Portfólio",
+            "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+            "typeVersion": 1,
+            "position": [
+                1100,
+                420
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook: Mensagem Recebida": {
+            "main": [
+                [
+                    {
+                        "node": "DB: Dados do Lead (Reativo)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Cronograma: Verificar acompanhamento (1h)": {
+            "main": [
+                [
+                    {
+                        "node": "DB: Leads para acompanhamento",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "DB: Dados do Lead (Reativo)": {
+            "main": [
+                [
+                    {
+                        "node": "Raquel Agente IA",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "DB: Leads para acompanhamento": {
+            "main": [
+                [
+                    {
+                        "node": "Raquel Agente IA",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI GPT-4o": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Raquel Agente IA",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Memória Longo Prazo": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "Raquel Agente IA",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Ferramenta Z-API": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "Raquel Agente IA",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Ferramenta de alerta": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "Raquel Agente IA",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Ferramenta Portfólio": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "Raquel Agente IA",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

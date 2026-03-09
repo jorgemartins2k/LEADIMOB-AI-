@@ -1,0 +1,15 @@
+Checking tables directly...
+
+Found 1 users.
+- Jorge Martins (Clerk: user_3APnQg2sUnmGAA7dTgGRqOX7KzG, Internal: b32ac8c7-ace8-4bd6-aaf8-d3b737e82d29)
+
+Found 6 events in total.
+- Jorge Martins De Moura Neto (Date: Sun Mar 15 2026 21:00:00 GMT-0300 (Horário Padrão de Brasília), UserID: b32ac8c7-ace8-4bd6-aaf8-d3b737e82d29)
+- LinkSync (Date: Sat Mar 07 2026 21:00:00 GMT-0300 (Horário Padrão de Brasília), UserID: b32ac8c7-ace8-4bd6-aaf8-d3b737e82d29)
+- workshop (Date: Sat Mar 07 2026 21:00:00 GMT-0300 (Horário Padrão de Brasília), UserID: b32ac8c7-ace8-4bd6-aaf8-d3b737e82d29)
+- LinkSync (Date: Sat Mar 07 2026 21:00:00 GMT-0300 (Horário Padrão de Brasília), UserID: b32ac8c7-ace8-4bd6-aaf8-d3b737e82d29)
+- LinkSync (Date: Tue Jan 19 2027 21:00:00 GMT-0300 (Horário Padrão de Brasília), UserID: b32ac8c7-ace8-4bd6-aaf8-d3b737e82d29)
+- LinkSync (Date: Fri Mar 06 2026 21:00:00 GMT-0300 (Horário Padrão de Brasília), UserID: b32ac8c7-ace8-4bd6-aaf8-d3b737e82d29)
+
+Found 1 appointments in total.
+- visita (Date: Sun Mar 15 2026 21:00:00 GMT-0300 (Horário Padrão de Brasília), UserID: b32ac8c7-ace8-4bd6-aaf8-d3b737e82d29)

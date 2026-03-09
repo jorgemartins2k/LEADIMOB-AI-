@@ -2,7 +2,7 @@ import {
     pgTable, text, timestamp, uuid, numeric, smallint,
     boolean, date, time, uniqueIndex
 } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
+import { sql, relations } from 'drizzle-orm';
 
 export const users = pgTable('users', {
     id: uuid('id').primaryKey().defaultRandom(),
@@ -11,9 +11,15 @@ export const users = pgTable('users', {
     email: text('email').notNull(),
     whatsapp: text('whatsapp'),
     realEstateAgency: text('real_estate_agency'),
+    creci: text('creci'),
+    presentation: text('presentation'),
     avatarUrl: text('avatar_url'),
     plan: text('plan').notNull().default('start'),
     planCycleStart: date('plan_cycle_start').notNull().default(sql`CURRENT_DATE`),
+    dailyReport: boolean('daily_report').default(true),
+    hotLeadAlert: boolean('hot_lead_alert').default(true),
+    browserPush: boolean('browser_push').default(false),
+    weeklyPerformance: boolean('weekly_performance').default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
@@ -42,12 +48,31 @@ export const leads = pgTable('leads', {
     status: text('status').notNull().default('waiting'),
     profile: text('profile'),
     budgetRange: text('budget_range'),
+    temperature: text('temperature').notNull().default('morno'), // 'frio' | 'morno' | 'quente' | 'muito_quente'
     notes: text('notes'),
     scheduledDate: date('scheduled_date').notNull().default(sql`CURRENT_DATE`),
     contactedAt: timestamp('contacted_at', { withTimezone: true }),
     transferredAt: timestamp('transferred_at', { withTimezone: true }),
     quarantineUntil: date('quarantine_until'),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+export const campaigns = pgTable('campaigns', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    slug: text('slug').notNull().unique(),
+    contentType: text('content_type').notNull(),
+    trackingLink: text('tracking_link').notNull(),
+    campaignUrl: text('campaign_url'),
+    status: text('status').notNull().default('active'),
+    totalClicks: smallint('total_clicks').notNull().default(0),
+    totalLeads: smallint('total_leads').notNull().default(0),
+    totalConversions: smallint('total_conversions').notNull().default(0),
+    propertyId: uuid('property_id').references(() => properties.id),
+    launchId: uuid('launch_id').references(() => launches.id),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
@@ -73,11 +98,17 @@ export const properties = pgTable('properties', {
     price: numeric('price', { precision: 12, scale: 2 }).notNull(),
     areaSqm: numeric('area_sqm', { precision: 8, scale: 2 }),
     bedrooms: smallint('bedrooms'),
+    bathrooms: smallint('bathrooms'),
     parkingSpots: smallint('parking_spots'),
     standard: text('standard').notNull(),
     targetAudience: text('target_audience').array().notNull().default(sql`'{}'`),
     status: text('status').notNull().default('available'),
     photos: text('photos').array().default(sql`'{}'`),
+    minhaCasaMinhaVida: boolean('minha_casa_minha_vida').default(false),
+    allowsFinancing: boolean('allows_financing').default(false),
+    downPayment: numeric('down_payment', { precision: 12, scale: 2 }),
+    condoFee: numeric('condo_fee', { precision: 12, scale: 2 }),
+    isCondo: boolean('is_condo').default(false),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
@@ -109,8 +140,16 @@ export const launchUnits = pgTable('launch_units', {
     name: text('name').notNull(),
     areaSqm: numeric('area_sqm', { precision: 8, scale: 2 }),
     bedrooms: smallint('bedrooms'),
+    bathrooms: smallint('bathrooms'),
     parkingSpots: smallint('parking_spots'),
     price: numeric('price', { precision: 12, scale: 2 }),
+    photo: text('photo'),
+    minhaCasaMinhaVida: boolean('minha_casa_minha_vida').default(false),
+    allowsFinancing: boolean('allows_financing').default(false),
+    downPayment: numeric('down_payment', { precision: 12, scale: 2 }),
+    condoFee: numeric('condo_fee', { precision: 12, scale: 2 }),
+    isCondo: boolean('is_condo').default(false),
+    targetAudience: text('target_audience').array().notNull().default(sql`'{}'`),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
@@ -143,3 +182,25 @@ export const appointments = pgTable('appointments', {
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
+
+export const campaignsRelations = relations(campaigns, ({ one }) => ({
+    property: one(properties, {
+        fields: [campaigns.propertyId],
+        references: [properties.id],
+    }),
+    launch: one(launches, {
+        fields: [campaigns.launchId],
+        references: [launches.id],
+    }),
+}));
+
+export const launchesRelations = relations(launches, ({ many }) => ({
+    units: many(launchUnits),
+}));
+
+export const launchUnitsRelations = relations(launchUnits, ({ one }) => ({
+    launch: one(launches, {
+        fields: [launchUnits.launchId],
+        references: [launches.id],
+    }),
+}));

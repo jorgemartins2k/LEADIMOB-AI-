@@ -17,49 +17,51 @@ const eventSchema = z.object({
     standard: z.enum(["economico", "medio", "alto"]).optional(),
 });
 
-async function getInternalUser() {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) throw new Error("Não autorizado");
-
-    const user = await db.query.users.findFirst({
-        where: eq(users.clerkUserId, clerkUserId),
-    });
-
-    if (!user) throw new Error("Usuário não encontrado");
-    return user;
-}
+import { getOrCreateInternalUser } from "@/lib/auth-utils";
 
 export async function getEvents() {
-    const user = await getInternalUser();
-    return db.query.events.findMany({
-        where: and(eq(events.userId, user.id)),
-        orderBy: [desc(events.eventDate)],
-    });
+    try {
+        const user = await getOrCreateInternalUser();
+        if (!user) return [];
+
+        const results = await db.select().from(events)
+            .where(eq(events.userId, user.id))
+            .orderBy(desc(events.eventDate));
+
+        return results;
+    } catch (error) {
+        console.error("Error in getEvents server action:", error);
+        return [];
+    }
 }
 
 export async function createEvent(data: z.infer<typeof eventSchema>) {
-    const user = await getInternalUser();
+    try {
+        const user = await getOrCreateInternalUser();
+        const validated = eventSchema.parse(data);
 
-    const validated = eventSchema.parse(data);
+        await db.insert(events).values({
+            userId: user.id,
+            name: validated.name,
+            eventDate: validated.eventDate, // String YYYY-MM-DD
+            eventTime: validated.eventTime || null,
+            location: validated.location || null,
+            description: validated.description || null,
+            targetAudience: validated.targetAudience,
+            standard: validated.standard || null,
+        });
 
-    await db.insert(events).values({
-        userId: user.id,
-        name: validated.name,
-        eventDate: validated.eventDate, // String YYYY-MM-DD
-        eventTime: validated.eventTime || null,
-        location: validated.location || null,
-        description: validated.description || null,
-        targetAudience: validated.targetAudience,
-        standard: validated.standard || null,
-    });
-
-    revalidatePath("/eventos");
-    revalidatePath("/agenda");
-    return { success: true };
+        revalidatePath("/eventos");
+        revalidatePath("/agenda");
+        return { success: true };
+    } catch (err: any) {
+        console.error(err);
+        return { error: err.message || "Erro ao agendar evento." };
+    }
 }
 
 export async function deleteEvent(id: string) {
-    const user = await getInternalUser();
+    const user = await getOrCreateInternalUser();
 
     await db
         .delete(events)

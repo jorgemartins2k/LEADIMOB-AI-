@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
-import { Syne, DM_Sans } from "next/font/google";
+import { Inter, Geist, Sora } from "next/font/google";
 import "./globals.css";
 
-const syne = Syne({
+const geistSans = Geist({
   variable: "--font-display",
   subsets: ["latin"],
 });
 
-const dmSans = DM_Sans({
+const sora = Sora({
+  variable: "--font-sora",
+  subsets: ["latin"],
+  weight: ["700", "800"],
+});
+
+const inter = Inter({
   variable: "--font-body",
   subsets: ["latin"],
 });
@@ -18,6 +24,7 @@ export const metadata: Metadata = {
 };
 
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function RootLayout({
   children,
@@ -26,9 +33,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${syne.variable} ${dmSans.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${inter.variable} ${sora.variable} antialiased`}>
         <ClerkProvider>
           {children}
+          {/* Build Refresh: Forcing Vercel Webhook - 2026-03-06-05-13 */}
+          <Toaster position="top-center" expand={false} richColors closeButton />
         </ClerkProvider>
       </body>
     </html>

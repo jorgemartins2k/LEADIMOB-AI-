@@ -3,7 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { launches, launchUnits, users } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -23,25 +23,23 @@ const launchSchema = z.object({
         name: z.string().min(1, "Nome da planta"),
         areaSqm: z.string().optional(),
         bedrooms: z.number().optional(),
+        bathrooms: z.number().optional(),
         parkingSpots: z.number().optional(),
         price: z.string().optional(),
+        photo: z.string().optional(),
+        minhaCasaMinhaVida: z.boolean().default(false),
+        allowsFinancing: z.boolean().default(false),
+        downPayment: z.string().optional(),
+        condoFee: z.string().optional(),
+        isCondo: z.boolean().default(false),
+        targetAudience: z.array(z.string()).default([]),
     })).default([]),
 });
 
-async function getInternalUser() {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) throw new Error("Não autorizado");
-
-    const user = await db.query.users.findFirst({
-        where: eq(users.clerkUserId, clerkUserId),
-    });
-
-    if (!user) throw new Error("Usuário não encontrado");
-    return user;
-}
+import { getOrCreateInternalUser } from "@/lib/auth-utils";
 
 export async function getLaunches() {
-    const user = await getInternalUser();
+    const user = await getOrCreateInternalUser();
     return db.query.launches.findMany({
         where: and(eq(launches.userId, user.id)),
         orderBy: [desc(launches.createdAt)],
@@ -52,47 +50,70 @@ export async function getLaunches() {
 }
 
 export async function createLaunch(data: z.infer<typeof launchSchema>) {
-    const user = await getInternalUser();
+    try {
+        const user = await getOrCreateInternalUser();
 
-    const validated = launchSchema.parse(data);
+        // 1. Validar os dados
+        const result = launchSchema.safeParse(data);
+        if (!result.success) {
+            const firstError = result.error.issues[0];
+            return { error: `${firstError.path.join('.')}: ${firstError.message}` };
+        }
+        const validated = result.data;
 
-    // 1. Inserir o lançamento
-    const [newLaunch] = await db.insert(launches).values({
-        userId: user.id,
-        name: validated.name,
-        developer: validated.developer,
-        description: validated.description,
-        city: validated.city,
-        neighborhood: validated.neighborhood,
-        priceFrom: validated.priceFrom,
-        deliveryDate: validated.deliveryDate, // date string is fine forpg date
-        standard: validated.standard,
-        targetAudience: validated.targetAudience,
-        status: validated.status,
-        photos: validated.photos,
-    }).returning();
+        // 2. Inserir o lançamento
+        const [newLaunch] = await db.insert(launches).values({
+            userId: user.id,
+            name: validated.name,
+            developer: validated.developer || null,
+            description: validated.description || null,
+            city: validated.city,
+            neighborhood: validated.neighborhood || null,
+            priceFrom: (validated.priceFrom && String(validated.priceFrom).trim() !== "")
+                ? String(validated.priceFrom).replace(/[^\d.]/g, '')
+                : null,
+            deliveryDate: (validated.deliveryDate && String(validated.deliveryDate).trim() !== "")
+                ? validated.deliveryDate
+                : null,
+            standard: validated.standard,
+            targetAudience: Array.isArray(validated.targetAudience) ? validated.targetAudience : [],
+            status: validated.status,
+            photos: Array.isArray(validated.photos) ? validated.photos : [],
+        }).returning();
 
-    // 2. Inserir as unidades (plantas)
-    if (validated.units.length > 0) {
-        await db.insert(launchUnits).values(
-            validated.units.map((unit) => ({
-                launchId: newLaunch.id,
-                userId: user.id,
-                name: unit.name,
-                areaSqm: unit.areaSqm,
-                bedrooms: unit.bedrooms,
-                parkingSpots: unit.parkingSpots,
-                price: unit.price,
-            }))
-        );
+        // 3. Inserir as unidades (plantas)
+        if (validated.units && validated.units.length > 0) {
+            await db.insert(launchUnits).values(
+                validated.units.map((unit) => ({
+                    launchId: newLaunch.id,
+                    userId: user.id,
+                    name: unit.name,
+                    areaSqm: (unit.areaSqm && String(unit.areaSqm).trim() !== "") ? String(unit.areaSqm).replace(/[^\d.]/g, '') : null,
+                    bedrooms: Math.max(0, unit.bedrooms || 0),
+                    bathrooms: Math.max(0, unit.bathrooms || 0),
+                    parkingSpots: Math.max(0, unit.parkingSpots || 0),
+                    price: (unit.price && String(unit.price).trim() !== "") ? String(unit.price).replace(/[^\d.]/g, '') : null,
+                    photo: unit.photo || null,
+                    minhaCasaMinhaVida: !!unit.minhaCasaMinhaVida,
+                    allowsFinancing: !!unit.allowsFinancing,
+                    downPayment: (unit.downPayment && String(unit.downPayment).trim() !== "") ? String(unit.downPayment).replace(/[^\d.]/g, '') : null,
+                    condoFee: (unit.condoFee && String(unit.condoFee).trim() !== "") ? String(unit.condoFee).replace(/[^\d.]/g, '') : null,
+                    isCondo: !!unit.isCondo,
+                    targetAudience: Array.isArray(unit.targetAudience) ? unit.targetAudience : [],
+                }))
+            );
+        }
+
+        revalidatePath("/lancamentos");
+        return { success: true };
+    } catch (err: any) {
+        console.error("Error creating launch:", err);
+        return { error: err.message || "Erro ao salvar lançamento no banco de dados." };
     }
-
-    revalidatePath("/lancamentos");
-    return { success: true };
 }
 
 export async function deleteLaunch(id: string) {
-    const user = await getInternalUser();
+    const user = await getOrCreateInternalUser();
 
     await db
         .delete(launches)
@@ -100,4 +121,44 @@ export async function deleteLaunch(id: string) {
 
     revalidatePath("/lancamentos");
     return { success: true };
+}
+
+export async function getLaunchById(id: string) {
+    try {
+        const user = await getOrCreateInternalUser();
+
+        const launch = await db.query.launches.findFirst({
+            where: and(eq(launches.id, id), eq(launches.userId, user.id)),
+            with: {
+                units: true
+            }
+        });
+
+        if (!launch) return null;
+
+        // Garantir que os dados sejam serializáveis para Client Components
+        return {
+            ...launch,
+            id: String(launch.id),
+            userId: String(launch.userId),
+            priceFrom: launch.priceFrom ? String(launch.priceFrom) : null,
+            deliveryDate: launch.deliveryDate ? String(launch.deliveryDate) : null,
+            targetAudience: Array.isArray(launch.targetAudience) ? launch.targetAudience : [],
+            photos: Array.isArray(launch.photos) ? launch.photos : [],
+            units: launch.units.map((u) => ({
+                ...u,
+                id: String(u.id),
+                launchId: String(u.launchId),
+                userId: String(u.userId),
+                areaSqm: u.areaSqm ? String(u.areaSqm) : null,
+                price: u.price ? String(u.price) : null,
+                downPayment: u.downPayment ? String(u.downPayment) : null,
+                condoFee: u.condoFee ? String(u.condoFee) : null,
+                targetAudience: Array.isArray(u.targetAudience) ? u.targetAudience : [],
+            }))
+        };
+    } catch (error) {
+        console.error("Critical Error fetching launch by ID:", error);
+        return null;
+    }
 }
