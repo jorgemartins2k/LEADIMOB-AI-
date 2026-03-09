@@ -38,7 +38,7 @@ const navigation = [
 
 export function Sidebar() {
     const pathname = usePathname();
-    const [profile, setProfile] = useState<{ name: string; avatarUrl: string | null } | null>(null);
+    const [profile, setProfile] = useState<{ name: string; avatarUrl: string | null; plan?: string } | null>(null);
 
     useEffect(() => {
         async function loadProfile() {
@@ -132,7 +132,9 @@ export function Sidebar() {
                                 {profile?.name || "Carregando..."}
                             </span>
                             <div className="flex items-center gap-1.5">
-                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-2 py-0.5 bg-white/5 rounded-md border border-white/5">Plano Pro</span>
+                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-2 py-0.5 bg-white/5 rounded-md border border-white/5">
+                                    Plano {profile?.plan?.toUpperCase() || "START"}
+                                </span>
                             </div>
                         </div>
                     </div>
