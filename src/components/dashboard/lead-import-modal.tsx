@@ -83,7 +83,12 @@ export function LeadImportModal({ children }: { children: React.ReactNode }) {
                     }
                 });
 
-                const leads = await extractLeadsFromContent(fileContent, fileType, file.type);
+                const { leads, error } = await extractLeadsFromContent(fileContent, fileType, file.type);
+                if (error) {
+                    toast.error(`Erro em ${file.name}: ${error}`);
+                    continue;
+                }
+
                 if (leads.length === 0) {
                     toast.warning(`Nenhum lead encontrado no arquivo: ${file.name}`, {
                         description: "Tente usar uma imagem mais nítida ou um texto mais claro."
@@ -95,7 +100,7 @@ export function LeadImportModal({ children }: { children: React.ReactNode }) {
             }
         } catch (error: any) {
             console.error("Erro no processamento:", error);
-            toast.error(error.message || "Falha ao ler os arquivos. Verifique se são imagens ou PDFs válidos.");
+            toast.error("Falha ao ler os arquivos. Verifique se são imagens ou PDFs válidos.");
         } finally {
             setIsProcessing(false);
         }
@@ -116,20 +121,28 @@ export function LeadImportModal({ children }: { children: React.ReactNode }) {
 
         setIsImporting(true);
         try {
-            const res = await bulkInsertLeads(extractedLeads);
-            setResult(res);
-            setExtractedLeads([]);
-            loadStatus(); // Refresh slots
+            const { results, error } = await bulkInsertLeads(extractedLeads);
 
-            if (res.imported > 0) {
-                toast.success(`${res.imported} leads importados com sucesso!`);
+            if (error) {
+                toast.error(error);
+                return;
             }
-            if (res.errors > 0 || res.skipped > 0 || res.limited > 0) {
-                toast.info("Importação concluída com algumas observações.");
+
+            if (results) {
+                setResult(results);
+                setExtractedLeads([]);
+                loadStatus(); // Refresh slots
+
+                if (results.imported > 0) {
+                    toast.success(`${results.imported} leads importados com sucesso!`);
+                }
+                if (results.errors > 0 || results.skipped > 0 || results.limited > 0) {
+                    toast.info("Importação concluída com algumas observações.");
+                }
             }
         } catch (error: any) {
             console.error("Erro na importação:", error);
-            toast.error(error.message || "Erro ao salvar leads no banco de dados.");
+            toast.error("Erro inesperado ao salvar leads.");
         } finally {
             setIsImporting(false);
         }

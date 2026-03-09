@@ -13,21 +13,21 @@ const openai = new OpenAI({
 });
 
 export async function extractLeadsFromContent(content: string, type: 'image' | 'pdf' | 'text', mimeType?: string) {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) throw new Error("Não autorizado");
-
-    const prompt = `
-        VOCÊ É A RAQUEL - ESPECIALISTA EM EXTRAÇÃO DE DADOS.
-        Extraia Nome e Telefone dos leads deste conteúdo.
-        
-        REGRAS:
-        1. Telefone: Apenas números com DDD (ex: 11999998888).
-        2. Se não houver leads claros, retorne {"leads": []}.
-        3. Não invente dados.
-        4. O JSON deve ser estritamente: {"leads": [{"name": "...","phone": "..."}]}
-    `;
-
     try {
+        const { userId: clerkUserId } = await auth();
+        if (!clerkUserId) return { leads: [], error: "Sessão expirada. Por favor, faça login novamente." };
+
+        const prompt = `
+            VOCÊ É A RAQUEL - ESPECIALISTA EM EXTRAÇÃO DE DADOS.
+            Extraia Nome e Telefone dos leads deste conteúdo.
+            
+            REGRAS:
+            1. Telefone: Apenas números com DDD (ex: 11999998888).
+            2. Se não houver leads claros, retorne {"leads": []}.
+            3. Não invente dados.
+            4. O JSON deve ser estritamente: {"leads": [{"name": "...","phone": "..."}]}
+        `;
+
         let response;
         if (type === 'image') {
             const finalMime = mimeType || 'image/jpeg';
@@ -50,11 +50,8 @@ export async function extractLeadsFromContent(content: string, type: 'image' | '
                 response_format: { type: "json_object" },
             });
         } else {
-            // Para PDF ou Texto, usamos gpt-4o-mini com o conteúdo bruto/transcrito
-            // Se for PDF, o gpt-4o-mini não conseguirá ler o base64 binário. 
-            // Precisamos avisar o usuário ou tentar converter.
             if (type === 'pdf') {
-                throw new Error("A leitura direta de arquivo PDF ainda não é suportada. Por favor, tire um print (foto/screenshot) da sua lista e envie como imagem para a Raquel ler.");
+                return { leads: [], error: "A leitura direta de arquivo PDF ainda não é suportada. Por favor, tire um print (foto/screenshot) da sua lista e envie como imagem para a Raquel ler." };
             }
 
             response = await openai.chat.completions.create({
@@ -69,12 +66,6 @@ export async function extractLeadsFromContent(content: string, type: 'image' | '
 
         const rawContent = response.choices[0].message.content || '{"leads": []}';
         const result = JSON.parse(rawContent);
-
-        // Handle both possible structures
-        if (Array.isArray(result)) return result;
-        if (result.leads && Array.isArray(result.leads)) return result.leads;
-
-        return [];
     } catch (error) {
         console.error("Erro na extração de leads:", error);
         throw new Error("Falha ao extrair leads do arquivo.");
@@ -82,76 +73,81 @@ export async function extractLeadsFromContent(content: string, type: 'image' | '
 }
 
 export async function bulkInsertLeads(leadsData: { name: string; phone: string }[]) {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) throw new Error("Não autorizado");
+    try {
+        const { userId: clerkUserId } = await auth();
+        if (!clerkUserId) return { error: "Não autorizado" };
 
-    const user = await db.query.users.findFirst({
-        where: eq(users.clerkUserId, clerkUserId),
-    });
+        const user = await db.query.users.findFirst({
+            where: eq(users.clerkUserId, clerkUserId),
+        });
 
-    if (!user) throw new Error("Usuário não encontrado");
+        if (!user) return { error: "Usuário não encontrado" };
 
-    // 0. Check daily limit status
-    let { remaining, dailyLimit, plan } = await getLeadLimitStatus(user.id);
+        // 0. Check daily limit status
+        let { remaining, dailyLimit, plan } = await getLeadLimitStatus(user.id);
 
-    const results = {
-        imported: 0,
-        skipped: 0, // In quarantine
-        limited: 0, // Hit daily limit
-        errors: 0,
-    };
+        const results = {
+            imported: 0,
+            skipped: 0, // In quarantine
+            limited: 0, // Hit daily limit
+            errors: 0,
+        };
 
-    const quarantineDays = 15;
+        const quarantineDays = 15;
 
-    for (const leadData of leadsData) {
-        try {
-            // Check if we still have slots
-            if (remaining <= 0) {
-                results.limited++;
-                continue;
-            }
+        for (const leadData of leadsData) {
+            try {
+                // Check if we still have slots
+                if (remaining <= 0) {
+                    results.limited++;
+                    continue;
+                }
 
-            // Clean phone
-            const cleanPhone = leadData.phone.replace(/\D/g, '');
-            if (!cleanPhone || cleanPhone.length < 10) {
+                // Clean phone
+                const cleanPhone = leadData.phone.replace(/\D/g, '');
+                if (!cleanPhone || cleanPhone.length < 10) {
+                    results.errors++;
+                    continue;
+                }
+
+                // Check quarantine (15 days)
+                const existingLead = await db.query.leads.findFirst({
+                    where: and(
+                        eq(leads.userId, user.id),
+                        eq(leads.phone, cleanPhone),
+                        gte(leads.quarantineUntil, new Date().toISOString().split('T')[0])
+                    ),
+                });
+
+                if (existingLead) {
+                    results.skipped++;
+                    continue;
+                }
+
+                // Insert
+                await db.insert(leads).values({
+                    userId: user.id,
+                    name: leadData.name || "Lead Importado",
+                    phone: cleanPhone,
+                    source: "import",
+                    status: "waiting",
+                    scheduledDate: new Date().toISOString().split('T')[0],
+                    quarantineUntil: new Date(Date.now() + quarantineDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                });
+
+                results.imported++;
+                remaining--; // Use up a slot
+            } catch (error) {
+                console.error("Erro ao importar lead individual:", error);
                 results.errors++;
-                continue;
             }
-
-            // Check quarantine (15 days)
-            const existingLead = await db.query.leads.findFirst({
-                where: and(
-                    eq(leads.userId, user.id),
-                    eq(leads.phone, cleanPhone),
-                    gte(leads.quarantineUntil, new Date().toISOString().split('T')[0])
-                ),
-            });
-
-            if (existingLead) {
-                results.skipped++;
-                continue;
-            }
-
-            // Insert
-            await db.insert(leads).values({
-                userId: user.id,
-                name: leadData.name || "Lead Importado",
-                phone: cleanPhone,
-                source: "import",
-                status: "waiting",
-                scheduledDate: new Date().toISOString().split('T')[0],
-                quarantineUntil: new Date(Date.now() + quarantineDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            });
-
-            results.imported++;
-            remaining--; // Use up a slot
-        } catch (error) {
-            console.error("Erro ao importar lead individual:", error);
-            results.errors++;
         }
-    }
 
-    revalidatePath("/leads");
-    revalidatePath("/dashboard");
-    return results;
+        revalidatePath("/leads");
+        revalidatePath("/dashboard");
+        return { results };
+    } catch (error: any) {
+        console.error("Erro na importação:", error);
+        return { error: "Erro ao salvar os leads. Tente novamente." };
+    }
 }
