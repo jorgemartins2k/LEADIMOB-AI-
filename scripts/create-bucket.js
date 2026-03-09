@@ -24,26 +24,28 @@ if (!supabaseUrl || !supabaseServiceRoleKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-async function createBucket() {
-    const bucketName = "property-photos";
+async function createBuckets() {
+    const buckets = ["property-photos", "profile-photos"];
 
-    console.log(`Checking/Creating bucket: ${bucketName}...`);
+    for (const bucketName of buckets) {
+        console.log(`Checking/Creating bucket: ${bucketName}...`);
 
-    const { data, error } = await supabase.storage.createBucket(bucketName, {
-        public: true,
-        fileSizeLimit: 5242880, // 5MB
-        allowedMimeTypes: ['image/*']
-    });
+        const { data, error } = await supabase.storage.createBucket(bucketName, {
+            public: true,
+            fileSizeLimit: 5242880, // 5MB
+            allowedMimeTypes: ['image/*']
+        });
 
-    if (error) {
-        if (error.message.includes("already exists")) {
-            console.log(`Bucket "${bucketName}" already exists.`);
+        if (error) {
+            if (error.message.includes("already exists")) {
+                console.log(`Bucket "${bucketName}" already exists.`);
+            } else {
+                console.error(`Error creating bucket "${bucketName}":`, error.message);
+            }
         } else {
-            console.error("Error creating bucket:", error.message);
+            console.log(`Bucket "${bucketName}" created successfully!`);
         }
-    } else {
-        console.log(`Bucket "${bucketName}" created successfully!`);
     }
 }
 
-createBucket();
+createBuckets();
