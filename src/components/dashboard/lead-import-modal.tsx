@@ -57,6 +57,7 @@ export function LeadImportModal({ children }: { children: React.ReactNode }) {
 
         try {
             for (const file of acceptedFiles) {
+                console.log(`[Import] Processando arquivo: ${file.name} (${file.type}, ${file.size} bytes)`);
                 const isImage = file.type.startsWith('image/');
                 const isPdf = file.type === 'application/pdf';
                 const fileType: 'image' | 'pdf' | 'text' = isImage ? 'image' : isPdf ? 'pdf' : 'text';
@@ -66,15 +67,25 @@ export function LeadImportModal({ children }: { children: React.ReactNode }) {
                     reader.onload = () => {
                         const result = reader.result as string;
                         if (fileType === 'text') {
+                            console.log(`[Import] Arquivo lido como texto (${result.length} chars)`);
                             resolve(result); // Texto puro
                         } else {
                             // Para PDF ou Imagem, pegamos o base64
-                            const base64 = result.split(',')[1];
-                            if (!base64) reject("Falha ao ler o conteúdo do arquivo.");
+                            const parts = result.split(',');
+                            const base64 = parts[1];
+                            if (!base64) {
+                                console.error("[Import] Falha ao extrair base64", result.substring(0, 100));
+                                reject("Falha ao ler o conteúdo do arquivo.");
+                                return;
+                            }
+                            console.log(`[Import] Arquivo lido como base64 (${base64.length} chars)`);
                             resolve(base64);
                         }
                     };
-                    reader.onerror = () => reject("Erro ao ler o arquivo.");
+                    reader.onerror = (e) => {
+                        console.error("[Import] FileReader error:", e);
+                        reject("Erro ao ler o arquivo.");
+                    };
 
                     if (fileType === 'text') {
                         reader.readAsText(file);
@@ -83,23 +94,28 @@ export function LeadImportModal({ children }: { children: React.ReactNode }) {
                     }
                 });
 
+                console.log(`[Import] Chamando extractLeadsFromContent para ${file.name}`);
                 const { leads, error } = await extractLeadsFromContent(fileContent, fileType, file.type);
+
                 if (error) {
+                    console.error(`[Import] Erro retornado pela Raquel: ${error}`);
                     toast.error(`Erro em ${file.name}: ${error}`);
                     continue;
                 }
 
-                if (leads.length === 0) {
+                if (!leads || leads.length === 0) {
+                    console.warn(`[Import] Nenhum lead extraído de ${file.name}`);
                     toast.warning(`Nenhum lead encontrado no arquivo: ${file.name}`, {
                         description: "Tente usar uma imagem mais nítida ou um texto mais claro."
                     });
                 } else {
+                    console.log(`[Import] ${leads.length} leads extraídos com sucesso de ${file.name}`);
                     setExtractedLeads(prev => [...prev, ...leads]);
                     toast.success(`${leads.length} leads identificados em ${file.name}`);
                 }
             }
         } catch (error: any) {
-            console.error("Erro no processamento:", error);
+            console.error("[Import] Erro fatal no processamento:", error);
             toast.error("Falha ao ler os arquivos. Verifique se são imagens ou PDFs válidos.");
         } finally {
             setIsProcessing(false);
