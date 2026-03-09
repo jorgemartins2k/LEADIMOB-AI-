@@ -45,7 +45,7 @@ export function Pricing() {
             description: 'Para grandes imobiliárias',
             icon: Building2,
             features: [
-                'Leads Ilimitados*',
+                'Até 5.000 leads/mês',
                 'Múltiplos Atendentes IA',
                 'Integração com CRM Próprio',
                 'Gerente de Conta Dedicado',

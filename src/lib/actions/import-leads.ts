@@ -12,27 +12,26 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function extractLeadsFromContent(content: string, isImageValue: boolean = false) {
+export async function extractLeadsFromContent(content: string, type: 'image' | 'pdf' | 'text') {
     const { userId: clerkUserId } = await auth();
     if (!clerkUserId) throw new Error("Não autorizado");
 
     const prompt = `
-        Você é um assistente especializado em extração de dados imobiliários.
-        Analise o conteúdo fornecido (pode ser texto ou uma descrição de imagem) e extraia uma lista de leads.
-        Para cada lead, identifique o NOME e o WHATSAPP (Telefone com DDD).
-        
-        Regras:
-        1. Se o número não tiver DDD, tente inferir pelo contexto ou deixe apenas o número.
-        2. Formate o WHATSAPP apenas com dígitos (ex: 11999998888).
-        3. Se houver nomes incompletos ou óbvios "apelidos", extraia como estão.
-        4. Retorne APENAS um JSON no formato: [{"name": "...", "phone": "..."}, ...]
-        5. Se não encontrar nenhum lead, retorne um array vazio [].
+        Você é a Raquel, uma assistente especializada em extração de dados de leads imobiliários.
+        Sua tarefa é ler o conteúdo fornecido (que pode ser uma imagem, um PDF ou um texto bruto) e extrair os nomes e telefones de todos os potenciais clientes (leads) encontrados.
+
+        REGRAS:
+        1. Extraia apenas Nome e Telefone.
+        2. O telefone deve conter o DDD (apenas números, ex: 11999998888).
+        3. Se encontrar múltiplos leads, extraia todos.
+        4. Se não encontrar nada, retorne um array vazio [].
+        5. Retorne APENAS um JSON válido no formato: {"leads": [{"name": "Nome", "phone": "11999999999"}]}
     `;
 
     try {
         let response;
-        if (isImageValue) {
-            // content is base64
+        if (type === 'image' || type === 'pdf') {
+            const mimeType = type === 'image' ? 'image/jpeg' : 'application/pdf';
             response = await openai.chat.completions.create({
                 model: "gpt-4o",
                 messages: [
@@ -43,7 +42,7 @@ export async function extractLeadsFromContent(content: string, isImageValue: boo
                             {
                                 type: "image_url",
                                 image_url: {
-                                    url: `data:image/jpeg;base64,${content}`,
+                                    url: `data:${mimeType};base64,${content}`,
                                 },
                             },
                         ],
@@ -62,8 +61,14 @@ export async function extractLeadsFromContent(content: string, isImageValue: boo
             });
         }
 
-        const result = JSON.parse(response.choices[0].message.content || '{"leads": []}');
-        return result.leads || result; // Handle both {"leads": [...]} and [...]
+        const rawContent = response.choices[0].message.content || '{"leads": []}';
+        const result = JSON.parse(rawContent);
+
+        // Handle both possible structures
+        if (Array.isArray(result)) return result;
+        if (result.leads && Array.isArray(result.leads)) return result.leads;
+
+        return [];
     } catch (error) {
         console.error("Erro na extração de leads:", error);
         throw new Error("Falha ao extrair leads do arquivo.");

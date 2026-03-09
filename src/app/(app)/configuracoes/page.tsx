@@ -68,6 +68,7 @@ export default function ConfiguraçõesPage() {
     const [isSavingSchedule, setIsSavingSchedule] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [profile, setProfile] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [workDays, setWorkDays] = useState<DaySchedule[]>([
@@ -114,6 +115,7 @@ export default function ConfiguraçõesPage() {
                     realEstateAgency: profile.realEstateAgency || "",
                 });
                 if (profile.avatarUrl) setAvatarUrl(profile.avatarUrl);
+                setProfile(profile);
             }
 
             if (schedules && schedules.length > 0) {
@@ -437,7 +439,16 @@ export default function ConfiguraçõesPage() {
                                         <p className="text-body font-medium opacity-60">Consultor Imobiliário</p>
                                     </div>
                                     <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
-                                        <Badge variant="secondary" className="bg-primary/10 text-primary px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/20">Membro PRO</Badge>
+                                        <Badge variant="secondary" className="bg-primary/10 text-primary px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/20">
+                                            Membro {
+                                                form.getValues("name") ? (
+                                                    profile?.plan === 'start' ? 'Iniciante' :
+                                                        profile?.plan === 'pro' ? 'Pro' :
+                                                            profile?.plan === 'premium' ? 'Enterprise' :
+                                                                (profile?.plan?.toUpperCase() || "START")
+                                                ) : "..."
+                                            }
+                                        </Badge>
                                         <Badge variant="outline" className="px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border-border text-muted-foreground">ID: #45920-A</Badge>
                                     </div>
                                 </div>

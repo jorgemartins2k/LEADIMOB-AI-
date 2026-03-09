@@ -21,7 +21,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { LeadImportModal } from './lead-import-modal';
-import { getLeads, deleteLead, checkBusinessStatus, cleanupLeads, processAutomation } from '@/lib/actions/leads';
+import { getLeads, deleteLead, checkBusinessStatus, cleanupLeads, processAutomation, getLeadLimitServerAction } from '@/lib/actions/leads';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
@@ -46,16 +46,19 @@ export function LeadsView() {
     const [isDeleting, setIsDeleting] = useState(false);
     const [inBusinessHours, setInBusinessHours] = useState(false);
     const [isCleaning, setIsCleaning] = useState(false);
+    const [limitData, setLimitData] = useState<{ dailyLimit: number; addedToday: number; remaining: number; plan: string } | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [leadsData, businessStatus] = await Promise.all([
+                const [leadsData, businessStatus, limits] = await Promise.all([
                     getLeads(),
-                    checkBusinessStatus()
+                    checkBusinessStatus(),
+                    getLeadLimitServerAction()
                 ]);
                 setLeadsList(leadsData);
                 setInBusinessHours(businessStatus);
+                setLimitData(limits);
 
                 // Se estiver no expediente, processa automação para leads que ficaram aguardando
                 if (businessStatus) {
@@ -130,7 +133,9 @@ export function LeadsView() {
 
     const stats = {
         total: leadsList.length,
-        dailyLimit: 100,
+        processedToday: limitData?.addedToday || 0,
+        dailyLimit: limitData?.dailyLimit || 100,
+        plan: limitData?.plan || 'pro',
         hot: leadsList.filter(l => l.temperature === 'very_hot' || l.temperature === 'quente').length,
     };
 
@@ -189,11 +194,14 @@ export function LeadsView() {
                 <div className="flex flex-col lg:flex-row items-center justify-between mb-8 sm:mb-10 gap-6 sm:gap-8">
                     <div className="space-y-2 sm:space-y-3 flex-1 text-center lg:text-left">
                         <h3 className="heading-lg text-foreground uppercase tracking-tight">Capacidade da IA</h3>
-                        <p className="text-body font-medium">Plano PRO: <span className="text-foreground font-black">3.000 leads/mês</span> ativos.</p>
+                        <p className="text-body font-medium">
+                            Plano {stats.plan === 'start' ? 'INICIANTE' : stats.plan === 'premium' ? 'ENTERPRISE' : 'PRO'}:
+                            <span className="text-foreground font-black"> {stats.plan === 'start' ? '1.500' : stats.plan === 'premium' ? '5.000' : '3.000'} leads/mês</span> ativos.
+                        </p>
                     </div>
                     <div className="text-center lg:text-right">
                         <div className="text-5xl sm:text-6xl font-black text-foreground tracking-tighter">
-                            {stats.total}
+                            {stats.processedToday}
                             <span className="text-muted-foreground/20 text-2xl sm:text-3xl ml-2 font-black">/ {stats.dailyLimit}</span>
                         </div>
                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-2">processados hoje</p>
@@ -202,13 +210,13 @@ export function LeadsView() {
                 <div className="relative h-4 w-full bg-muted/30 rounded-full overflow-hidden p-1 border border-border/50 shadow-inner">
                     <div
                         className="h-full bg-primary rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(15,23,42,0.3)]"
-                        style={{ width: `${Math.min((stats.total / stats.dailyLimit) * 100, 100)}%` }}
+                        style={{ width: `${Math.min((stats.processedToday / stats.dailyLimit) * 100, 100)}%` }}
                     />
                 </div>
                 <div className="flex justify-between mt-6 text-[9px] sm:text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-50">
                     <span>Performance Atual</span>
                     <span className="text-primary opacity-100">
-                        {stats.total >= stats.dailyLimit ? "Limite diário atingido" : `Faltam ${stats.dailyLimit - stats.total} hoje`}
+                        {stats.processedToday >= stats.dailyLimit ? "Limite diário atingido" : `Faltam ${stats.dailyLimit - stats.processedToday} hoje`}
                     </span>
                 </div>
             </div>

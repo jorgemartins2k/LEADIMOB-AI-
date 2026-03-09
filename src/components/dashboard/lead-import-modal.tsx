@@ -56,25 +56,30 @@ export function LeadImportModal({ children }: { children: React.ReactNode }) {
 
         try {
             for (const file of acceptedFiles) {
-                const reader = new FileReader();
+                const isImage = file.type.startsWith('image/');
+                const isPdf = file.type === 'application/pdf';
+                const fileType: 'image' | 'pdf' | 'text' = isImage ? 'image' : isPdf ? 'pdf' : 'text';
 
                 const fileContent = await new Promise<string>((resolve) => {
+                    const reader = new FileReader();
                     reader.onload = () => {
-                        const base64 = (reader.result as string).split(',')[1];
-                        resolve(base64);
+                        const result = reader.result as string;
+                        if (fileType === 'text') {
+                            resolve(result); // Texto puro
+                        } else {
+                            const base64 = result.split(',')[1];
+                            resolve(base64);
+                        }
                     };
 
-                    if (file.type.startsWith('image/')) {
-                        reader.readAsDataURL(file);
-                    } else if (file.type === 'application/pdf') {
-                        reader.readAsDataURL(file);
-                    } else {
+                    if (fileType === 'text') {
                         reader.readAsText(file);
+                    } else {
+                        reader.readAsDataURL(file);
                     }
                 });
 
-                const isImage = file.type.startsWith('image/');
-                const leads = await extractLeadsFromContent(fileContent, isImage);
+                const leads = await extractLeadsFromContent(fileContent, fileType);
                 setExtractedLeads(prev => [...prev, ...leads]);
             }
         } catch (error) {
@@ -266,7 +271,7 @@ export function LeadImportModal({ children }: { children: React.ReactNode }) {
                                 </div>
                                 <div className="p-6 rounded-[32px] bg-muted/10 border border-border text-center">
                                     <p className="text-3xl font-black text-muted-foreground">{result.errors}</p>
-                                    <p className="text-[10px) font-black text-muted-foreground/60 uppercase tracking-widest mt-1">Erros</p>
+                                    <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest mt-1">Erros</p>
                                 </div>
                             </div>
 
