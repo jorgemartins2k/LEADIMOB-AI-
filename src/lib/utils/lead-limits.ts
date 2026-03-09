@@ -3,9 +3,9 @@ import { leads, users } from "@/lib/db/schema";
 import { eq, and, gte, count, sql } from "drizzle-orm";
 
 export const PLAN_LIMITS = {
-    start: 310,   // ~10 per day
-    pro: 1000,    // ~33 per day
-    premium: 3100, // ~100 per day
+    start: 1500,   // Iniciante
+    pro: 3000,     // Pro
+    premium: 5000, // Enterprise
 } as const;
 
 export type PlanType = keyof typeof PLAN_LIMITS;

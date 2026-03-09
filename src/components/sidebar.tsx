@@ -133,7 +133,12 @@ export function Sidebar() {
                             </span>
                             <div className="flex items-center gap-1.5">
                                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-2 py-0.5 bg-white/5 rounded-md border border-white/5">
-                                    Plano {profile?.plan?.toUpperCase() || "START"}
+                                    Plano {
+                                        profile?.plan === 'start' ? 'Iniciante' :
+                                            profile?.plan === 'pro' ? 'Pro' :
+                                                profile?.plan === 'premium' ? 'Enterprise' :
+                                                    (profile?.plan?.toUpperCase() || "START")
+                                    }
                                 </span>
                             </div>
                         </div>

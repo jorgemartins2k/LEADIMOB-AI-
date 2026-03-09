@@ -169,7 +169,12 @@ export default function NewLeadPage() {
                                 {status.remainingLeads} / {status.dailyLimit}
                             </p>
                             <p className="text-[10px] font-bold opacity-70 italic">
-                                Plano {status.plan.toUpperCase()}
+                                Plano {
+                                    status.plan === 'start' ? 'Iniciante' :
+                                        status.plan === 'pro' ? 'Pro' :
+                                            status.plan === 'premium' ? 'Enterprise' :
+                                                status.plan.toUpperCase()
+                                }
                             </p>
                         </div>
                     </div>

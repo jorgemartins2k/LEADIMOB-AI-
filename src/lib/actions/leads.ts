@@ -55,7 +55,11 @@ export async function createLead(data: z.infer<typeof leadSchema>) {
     // 0.1 Check daily limit
     const limitStatus = await getLeadLimitStatus(user.id);
     if (limitStatus.remaining <= 0) {
-        return { error: `🚫 Você atingiu o limite de ${limitStatus.dailyLimit} leads para hoje (proporcional ao seu plano ${limitStatus.plan.toUpperCase()}). Novas vagas abrem amanhã! 🕒` };
+        const planName = limitStatus.plan === 'start' ? 'Iniciante' :
+            limitStatus.plan === 'pro' ? 'Pro' :
+                limitStatus.plan === 'premium' ? 'Enterprise' :
+                    limitStatus.plan.toUpperCase();
+        return { error: `🚫 Você atingiu o limite de ${limitStatus.dailyLimit} leads para hoje (proporcional ao seu plano ${planName}). Novas vagas abrem amanhã! 🕒` };
     }
 
     try {
