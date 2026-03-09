@@ -1,8 +1,8 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request # pyre-ignore
 from typing import Dict, Any, Optional
-import uvicorn
+import uvicorn # pyre-ignore
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv # pyre-ignore
 from contextlib import asynccontextmanager
 from scheduler import start_scheduler
 from raquel import RaquelAgent

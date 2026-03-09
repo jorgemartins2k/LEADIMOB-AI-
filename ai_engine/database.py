@@ -1,8 +1,8 @@
 import os
 from typing import List, Dict, Any, Optional
-from supabase import create_client, Client
-from dotenv import load_dotenv
-import requests
+from supabase import create_client, Client # pyre-ignore
+from dotenv import load_dotenv # pyre-ignore
+import requests # pyre-ignore
 
 load_dotenv()
 

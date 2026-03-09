@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Optional
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.background import BackgroundScheduler # pyre-ignore
 import datetime
-import pytz
+import pytz # pyre-ignore
 import time
 from raquel import RaquelAgent
 from database import Database

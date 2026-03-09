@@ -1,11 +1,11 @@
 import os
-import requests
+import requests # pyre-ignore
 import datetime
-import pytz
+import pytz # pyre-ignore
 import time
 from typing import List, Dict, Any, Optional, Union
-from openai import OpenAI
-from dotenv import load_dotenv
+from openai import OpenAI # pyre-ignore
+from dotenv import load_dotenv # pyre-ignore
 from database import Database
 
 load_dotenv()
