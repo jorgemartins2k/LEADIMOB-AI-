@@ -12,7 +12,7 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function extractLeadsFromContent(content: string, type: 'image' | 'pdf' | 'text', mimeType?: string) {
+export async function extractLeadsFromContent(content: string, type: 'image' | 'pdf' | 'text', mimeType?: string): Promise<{ leads: any[]; error?: string }> {
     try {
         const { userId: clerkUserId } = await auth();
         if (!clerkUserId) return { leads: [], error: "Sessão expirada. Por favor, faça login novamente." };
@@ -65,10 +65,13 @@ export async function extractLeadsFromContent(content: string, type: 'image' | '
         }
 
         const rawContent = response.choices[0].message.content || '{"leads": []}';
+        console.log("[Raquel] Resposta bruta da OpenAI:", rawContent);
         const result = JSON.parse(rawContent);
-    } catch (error) {
+        const extractedLeads = result.leads || [];
+        return { leads: extractedLeads, error: undefined };
+    } catch (error: any) {
         console.error("Erro na extração de leads:", error);
-        throw new Error("Falha ao extrair leads do arquivo.");
+        return { leads: [], error: error.message || "Erro na leitura inteligente. Tente usar uma imagem mais nítida." };
     }
 }
 
