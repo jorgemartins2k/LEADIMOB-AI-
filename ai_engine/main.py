@@ -39,12 +39,13 @@ async def handle_zapi_webhook(request: Request):
         message_type = data.get("type", "text")
         
         if not phone:
+            print("⚠️ Webhook ignorado: campo 'phone' ausente.")
             return {"status": "ignored"}
 
         # 1. Lógica de Confirmação do Corretor ("ok")
         if message_text and message_text.lower().strip() == "ok":
             if raquel.db.confirm_hot_lead(phone):
-                print(f"Corretor {sender_name} confirmou recebimento do lead quente.")
+                print(f"✅ Corretor {sender_name} ({phone}) confirmou recebimento do lead quente.")
                 return {"status": "broker_confirmed"}
             return {"status": "ok_ignored"}
 
@@ -53,13 +54,14 @@ async def handle_zapi_webhook(request: Request):
         audio_url = data.get("audio", {}).get("url") if is_audio else None
 
         if message_text or is_audio:
-            print(f"Mensagem ({message_type}) recebida de {sender_name} ({phone})")
+            print(f"📩 Mensagem ({message_type}) recebida de {sender_name} ({phone})")
             raquel.process_message(phone, message_text, sender_name, is_audio=is_audio, audio_url=audio_url)
             return {"status": "processed"}
         
+        print(f"ℹ️ Webhook recebido mas ignorado (tipo: {message_type}) de {phone}")
         return {"status": "ignored"}
     except Exception as e:
-        print(f"Erro ao processar webhook da Z-API: {e}")
+        print(f"❌ Erro crítico no webhook Z-API: {e}")
         return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@ class RaquelAgent:
 
         self.client = OpenAI(api_key=api_key)
         self.db = Database()
+        self.tz = pytz.timezone('America/Sao_Paulo')
 
     def get_system_prompt(self, context, lead_name):
         broker_name = context.get('broker_name', 'Corretor')
@@ -76,10 +77,7 @@ class RaquelAgent:
         """
         Verifica se o fuso de Brasília (now) está dentro do expediente do corretor
         """
-        import pytz
-        import datetime
-        tz = pytz.timezone('America/Sao_Paulo')
-        now = datetime.datetime.now(tz)
+        now = datetime.datetime.now(self.tz)
         
         # Mon=0 -> Mon=1, ..., Sun=6 -> Sun=0 
         db_day_of_week = (now.weekday() + 1) % 7
@@ -93,6 +91,7 @@ class RaquelAgent:
         try:
             def parse_time(t_str):
                 if not t_str: return None
+                # Aceita HH:MM ou HH:MM:SS
                 return datetime.datetime.strptime(t_str[:5], "%H:%M").time()
 
             start_time = parse_time(today_config['start_time'])
@@ -102,36 +101,43 @@ class RaquelAgent:
             if not start_time or not end_time: return False
             return start_time <= current_time <= end_time
         except Exception as e:
-            print(f"Erro ao validar horário: {e}")
+            print(f"⚠️ Erro ao validar horário: {e}")
             return False
 
     def transcribe_audio(self, audio_url):
         """
         Baixa o áudio da Z-API e transcreve usando OpenAI Whisper
         """
+        temp_path = "temp_audio.ogg"
         try:
-            print(f"Baixando áudio para transcrição: {audio_url}")
+            print(f"🎙️ Baixando áudio para transcrição: {audio_url}")
             audio_response = requests.get(audio_url)
             audio_response.raise_for_status()
             
-            # Salva temporariamente
-            with open("/tmp/temp_audio.ogg", "wb") as f:
+            with open(temp_path, "wb") as f:
                 f.write(audio_response.content)
             
-            with open("/tmp/temp_audio.ogg", "rb") as audio_file:
+            with open(temp_path, "rb") as audio_file:
                 transcript = self.client.audio.transcriptions.create(
                     model="whisper-1", 
                     file=audio_file
                 )
             return transcript.text
         except Exception as e:
-            print(f"Erro na transcrição: {e}")
+            print(f"❌ Erro na transcrição: {e}")
             return "[Erro ao transcrever áudio]"
+        finally:
+            if os.path.exists(temp_path):
+                try: os.remove(temp_path)
+                except: pass
 
     def process_message(self, phone, message, sender_name, is_audio=False, audio_url=None):
+        print(f"📥 Processando mensagem de {sender_name} ({phone})")
+        
         # 1. Busca dados do corretor
         context = self.db.get_broker_by_lead_phone(phone)
         if not context:
+            print(f"⚠️ Lead {phone} não encontrado no banco.")
             return "Lead não encontrado no banco."
 
         user_id = context['user_id']
@@ -141,16 +147,14 @@ class RaquelAgent:
         # 2. SE FOR ÁUDIO, TRANSCREVE
         if is_audio and audio_url:
             message = self.transcribe_audio(audio_url)
-            print(f"Transcrição do áudio: {message}")
+            print(f"📝 Transcrição: {message}")
 
         # 3. VERIFICAÇÃO DE EXPEDIENTE (REAGENDAMENTO OOH)
         schedule = self.db.get_broker_schedule(user_id)
         if not self.is_within_schedule(schedule):
-            # Mensagem automática de reagendamento conforme o manual
+            print(f"🌙 Fora de horário para {broker_name}. Enviando auto-reagendamento.")
             ooh_msg = f"Olá {lead_real_name}! Obrigado pelo contato. Recebemos sua mensagem, porém nosso expediente por hoje encerrou. Já reagendamos o seu atendimento para o próximo dia útil, quando o corretor {broker_name} entrar em contato. Até logo!"
             self.send_to_zapi(phone, ooh_msg)
-            # Atualiza status para reagendado (opcional conforme manual para controle de limites)
-            # self.db.update_lead_status(phone, "ooh_rescheduled") 
             return ooh_msg
 
         # 4. BUSCA HISTÓRICO E PORTFÓLIO
@@ -159,24 +163,23 @@ class RaquelAgent:
 
         # 5. MONTA AS MENSAGENS PARA A OPENAI
         messages = [{"role": "system", "content": self.get_system_prompt(context, lead_real_name)}]
-        
-        # Adiciona portfólio como contexto
-        messages.append({"role": "system", "content": f"PORTFÓLIO DISPONÍVEL (Use as descrições e público-alvo para vender melhor):\n{portfolio_text}"})
+        messages.append({"role": "system", "content": f"PORTFÓLIO DISPONÍVEL:\n{portfolio_text}"})
 
-        # Adiciona histórico
         for h in history:
             messages.append({"role": h['role'], "content": h['content']})
 
-        # Adiciona nova mensagem
         messages.append({"role": "user", "content": message})
 
         # 6. GERA RESPOSTA
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages
-        )
-        
-        reply_content = response.choices[0].message.content
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages
+            )
+            reply_content = response.choices[0].message.content
+        except Exception as e:
+            print(f"❌ Erro na OpenAI: {e}")
+            return "Desculpe, tive um problema técnico momentâneo."
 
         # 7. SALVA NO BANCO E ENVIA
         self.db.save_message(phone, "user", message)
@@ -184,10 +187,10 @@ class RaquelAgent:
 
         # 8. VERIFICA SE PRECISA ALERTAR O CORRETOR (LEAD QUENTE)
         if "[ALERT_BROKER]" in reply_content:
+            print(f"🔥 LEAD QUENTE DETECTADO: {lead_real_name}")
             clean_reply = reply_content.replace("[ALERT_BROKER]", "").strip()
             self.send_to_zapi(phone, clean_reply)
             
-            # Alerta o corretor e marca no banco para o monitor (puxão de orelha)
             self.alert_broker(context, clean_reply)
             self.db.update_lead_status(phone, "hot_alert_sent")
             self.db.set_lead_transfer_time(phone)
@@ -198,9 +201,6 @@ class RaquelAgent:
         return reply_content
 
     def alert_broker(self, context, message_context):
-        """
-        Envia um alerta para o WhatsApp do Corretor
-        """
         broker_whatsapp = context['broker_whatsapp']
         lead_name = context['lead_name']
         
@@ -208,25 +208,16 @@ class RaquelAgent:
         self.send_to_zapi(broker_whatsapp, alert_msg)
 
     def send_to_zapi(self, phone, content):
-        """
-        Envia a mensagem via Z-API usando as chaves do .env.local
-        """
         instance_id = os.getenv("ZAPI_INSTANCE_ID")
         token = os.getenv("ZAPI_TOKEN")
         url = f"https://api.z-api.io/instances/{instance_id}/token/{token}/send-text"
         
-        payload = {
-            "phone": phone,
-            "message": content
-        }
-        
-        headers = {
-            "Content-Type": "application/json"
-        }
+        payload = {"phone": phone, "message": content}
+        headers = {"Content-Type": "application/json"}
         
         try:
             response = requests.post(url, json=payload, headers=headers)
             response.raise_for_status()
-            print(f"Mensagem enviada para {phone} via Z-API.")
+            print(f"✅ Enviado para {phone}")
         except Exception as e:
-            print(f"Erro ao enviar para Z-API de {phone}: {e}")
+            print(f"❌ Erro Z-API ({phone}): {e}")

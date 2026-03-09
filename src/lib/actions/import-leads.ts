@@ -8,9 +8,18 @@ import { revalidatePath } from "next/cache";
 import OpenAI from "openai";
 import { getLeadLimitStatus } from "@/lib/utils/lead-limits";
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient() {
+    if (!openaiClient) {
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) {
+            throw new Error("Sua chave de API da OpenAI (OPENAI_API_KEY) não foi encontrada ou está inválida no servidor.");
+        }
+        openaiClient = new OpenAI({ apiKey });
+    }
+    return openaiClient;
+}
 
 export async function extractLeadsFromContent(content: string, type: 'image' | 'pdf' | 'text', mimeType?: string): Promise<{ leads: any[]; error?: string }> {
     try {
@@ -31,7 +40,7 @@ export async function extractLeadsFromContent(content: string, type: 'image' | '
         let response;
         if (type === 'image') {
             const finalMime = mimeType || 'image/jpeg';
-            response = await openai.chat.completions.create({
+            response = await getOpenAIClient().chat.completions.create({
                 model: "gpt-4o",
                 messages: [
                     {
@@ -54,7 +63,7 @@ export async function extractLeadsFromContent(content: string, type: 'image' | '
                 return { leads: [], error: "A leitura direta de arquivo PDF ainda não é suportada. Por favor, tire um print (foto/screenshot) da sua lista e envie como imagem para a Raquel ler." };
             }
 
-            response = await openai.chat.completions.create({
+            response = await getOpenAIClient().chat.completions.create({
                 model: "gpt-4o-mini",
                 messages: [
                     { role: "system", content: prompt },
