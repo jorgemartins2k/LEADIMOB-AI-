@@ -116,7 +116,8 @@ export function LeadImportModal({ children }: { children: React.ReactNode }) {
             }
         } catch (error: any) {
             console.error("[Import] Erro fatal no processamento:", error);
-            toast.error("Falha ao ler os arquivos. Verifique se são imagens ou PDFs válidos.");
+            const msg = error?.message || "Erro desconhecido ao processar arquivo.";
+            toast.error(msg);
         } finally {
             setIsProcessing(false);
         }
