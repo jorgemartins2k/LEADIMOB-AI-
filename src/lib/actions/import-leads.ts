@@ -17,21 +17,19 @@ export async function extractLeadsFromContent(content: string, type: 'image' | '
     if (!clerkUserId) throw new Error("Não autorizado");
 
     const prompt = `
-        Você é a Raquel, uma assistente especializada em extração de dados de leads imobiliários.
-        Sua tarefa é ler o conteúdo fornecido (que pode ser uma imagem, um PDF ou um texto bruto) e extrair os nomes e telefones de todos os potenciais clientes (leads) encontrados.
-
+        VOCÊ É A RAQUEL - ESPECIALISTA EM EXTRAÇÃO DE DADOS.
+        Extraia Nome e Telefone dos leads deste conteúdo.
+        
         REGRAS:
-        1. Extraia apenas Nome e Telefone.
-        2. O telefone deve conter o DDD (apenas números, ex: 11999998888).
-        3. Se encontrar múltiplos leads, extraia todos.
-        4. Se não encontrar nada, retorne um array vazio [].
-        5. Retorne APENAS um JSON válido no formato: {"leads": [{"name": "Nome", "phone": "11999999999"}]}
+        1. Telefone: Apenas números com DDD (ex: 11999998888).
+        2. Se não houver leads claros, retorne {"leads": []}.
+        3. Não invente dados.
+        4. O JSON deve ser estritamente: {"leads": [{"name": "...","phone": "..."}]}
     `;
 
     try {
         let response;
-        if (type === 'image' || type === 'pdf') {
-            const mimeType = type === 'image' ? 'image/jpeg' : 'application/pdf';
+        if (type === 'image') {
             response = await openai.chat.completions.create({
                 model: "gpt-4o",
                 messages: [
@@ -42,7 +40,7 @@ export async function extractLeadsFromContent(content: string, type: 'image' | '
                             {
                                 type: "image_url",
                                 image_url: {
-                                    url: `data:${mimeType};base64,${content}`,
+                                    url: `data:image/jpeg;base64,${content}`,
                                 },
                             },
                         ],
@@ -51,6 +49,9 @@ export async function extractLeadsFromContent(content: string, type: 'image' | '
                 response_format: { type: "json_object" },
             });
         } else {
+            // Para PDF ou Texto, usamos gpt-4o-mini com o conteúdo bruto/transcrito
+            // Nota: Se for PDF binário aqui estará vindo base64, o que resultará em erro.
+            // O componente UI já deve estar tratando PDF como texto se possível, ou o usuário deve usar imagens.
             response = await openai.chat.completions.create({
                 model: "gpt-4o-mini",
                 messages: [
@@ -129,7 +130,7 @@ export async function bulkInsertLeads(leadsData: { name: string; phone: string }
             // Insert
             await db.insert(leads).values({
                 userId: user.id,
-                name: leadData.name,
+                name: leadData.name || "Lead Importado",
                 phone: cleanPhone,
                 source: "import",
                 status: "waiting",

@@ -13,6 +13,7 @@ import {
     Info,
     ArrowRight
 } from "lucide-react";
+import { toast } from "sonner";
 import {
     Dialog,
     DialogContent,
@@ -60,17 +61,20 @@ export function LeadImportModal({ children }: { children: React.ReactNode }) {
                 const isPdf = file.type === 'application/pdf';
                 const fileType: 'image' | 'pdf' | 'text' = isImage ? 'image' : isPdf ? 'pdf' : 'text';
 
-                const fileContent = await new Promise<string>((resolve) => {
+                const fileContent = await new Promise<string>((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = () => {
                         const result = reader.result as string;
                         if (fileType === 'text') {
                             resolve(result); // Texto puro
                         } else {
+                            // Para PDF ou Imagem, pegamos o base64
                             const base64 = result.split(',')[1];
+                            if (!base64) reject("Falha ao ler o conteúdo do arquivo.");
                             resolve(base64);
                         }
                     };
+                    reader.onerror = () => reject("Erro ao ler o arquivo.");
 
                     if (fileType === 'text') {
                         reader.readAsText(file);
@@ -80,10 +84,16 @@ export function LeadImportModal({ children }: { children: React.ReactNode }) {
                 });
 
                 const leads = await extractLeadsFromContent(fileContent, fileType);
-                setExtractedLeads(prev => [...prev, ...leads]);
+                if (leads.length === 0) {
+                    toast.warning(`Nenhum lead encontrado no arquivo: ${file.name}`);
+                } else {
+                    setExtractedLeads(prev => [...prev, ...leads]);
+                    toast.success(`${leads.length} leads identificados em ${file.name}`);
+                }
             }
         } catch (error) {
             console.error("Erro no processamento:", error);
+            toast.error("Falha ao ler os arquivos. Verifique se são imagens ou PDFs válidos.");
         } finally {
             setIsProcessing(false);
         }
@@ -108,8 +118,16 @@ export function LeadImportModal({ children }: { children: React.ReactNode }) {
             setResult(res);
             setExtractedLeads([]);
             loadStatus(); // Refresh slots
-        } catch (error) {
+
+            if (res.imported > 0) {
+                toast.success(`${res.imported} leads importados com sucesso!`);
+            }
+            if (res.errors > 0 || res.skipped > 0 || res.limited > 0) {
+                toast.info("Importação concluída com algumas observações.");
+            }
+        } catch (error: any) {
             console.error("Erro na importação:", error);
+            toast.error(error.message || "Erro ao salvar leads no banco de dados.");
         } finally {
             setIsImporting(false);
         }
@@ -136,7 +154,9 @@ export function LeadImportModal({ children }: { children: React.ReactNode }) {
                                 <Upload className="w-6 h-6 text-primary" /> Importar Leads Inteligente
                             </DialogTitle>
                             <DialogDescription className="text-muted-foreground font-medium mt-1">
-                                Suba PDFs ou Imagens e a Raquel extrairá os contatos para você.
+                                Para PDFs e Imagens, a Raquel extrairá os contatos automaticamente.
+                                <br />
+                                <span className="text-[10px] text-hot font-bold uppercase mt-1 block">* Use prints ou fotos nítidas para listas complexas.</span>
                             </DialogDescription>
                         </div>
                         {status && (
