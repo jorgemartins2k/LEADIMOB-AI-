@@ -62,6 +62,11 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
                     </Button>
                 </Link>
                 <div className="flex gap-3">
+                    <Link href={`/imoveis/${property.id}/editar`}>
+                        <Button variant="outline" className="gap-2 rounded-2xl border-accent/20 text-accent hover:bg-accent/5 font-bold uppercase tracking-widest text-[10px] btn-interactive">
+                            Editar Imóvel
+                        </Button>
+                    </Link>
                 </div>
             </div>
 

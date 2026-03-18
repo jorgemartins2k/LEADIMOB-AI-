@@ -80,6 +80,13 @@ export default async function LaunchDetailsPage({ params }: LaunchDetailsPagePro
                         <ChevronLeft className="h-4 w-4" /> Voltar para Lançamentos
                     </Button>
                 </Link>
+                <div className="flex gap-3">
+                    <Link href={`/lancamentos/${launch.id}/editar`}>
+                        <Button variant="outline" className="gap-2 rounded-2xl border-accent/20 text-accent hover:bg-accent/5 font-bold uppercase tracking-widest text-[10px] btn-interactive">
+                            Editar Lançamento
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             {/* Main Content Layout */}

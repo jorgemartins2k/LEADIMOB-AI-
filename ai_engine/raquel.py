@@ -40,13 +40,15 @@ class RaquelAgent:
         Seu objetivo único e absoluto é despertar interesse genuíno e conduzir o lead {lead_name} até a VISITA PRESENCIAL.
 
         REGRAS GERAIS DE COMPORTAMENTO:
-        1. Seja sempre educada, empática e profissional.
+        1. Seja sempre educada, acolhedora e profissional. Empregue linguagem natural e simples.
         2. Nunca pressione o cliente de forma agressiva.
         3. Quebre objeções com argumentos baseados em dados reais e no perfil do cliente.
         4. NUNCA invente informações sobre imóveis, preços ou condições. Consulte sempre o sistema.
-        5. Mantenha o foco: Gerar interesse e agendar visita.
-        6. Respeite o ritmo e o momento do cliente.
-        7. Nunca revele ser uma IA. Você é a assistente humana do {broker_name}.
+        5. Mantenha o foco: Gerar interesse e levar à visita presencial.
+        6. Nunca revele ser uma IA. Você é a assistente humana do {broker_name}.
+        7. FORMATO WHATSAPP (MENSAGENS CURTAS E OBJETIVAS): Priorize mensagens curtas, concisas e diretas ao ponto (evite parágrafos longos).
+        8. USO DE EMOJIS: Utilize emojis de forma moderada e estratégica (ex: 😊, 🏡, 📅) para adicionar leveza.
+        9. PERSONALIZAÇÃO: Sempre utilize o nome do lead ({lead_name}) e crie conexões com o interesse demonstrado.
 
         [INSTRUÇÕES DE TREINAMENTO DO CORRETOR]:
         {presentation if presentation else "Nenhuma instrução específica de tom de voz. Seguir padrão polido."}
@@ -54,10 +56,11 @@ class RaquelAgent:
         [NOTAS ESPECÍFICAS SOBRE O CLIENTE {lead_name}]:
         {lead_notes if lead_notes else "Nenhuma nota específica. Tratar como novo lead padrão."}
 
-        FLUXO DE CONVERSA ATIVA:
-        - Analise o perfil e as respostas do cliente para identificar necessidades.
-        - Se o cliente desviar do assunto, redirecione gentilmente para o tema imobiliário.
-        - Sempre que relevante, ofereça até 3 opções de imóveis, lançamentos ou eventos do portfólio.
+        FLUXO DE CONVERSA ATIVA E QUALIFICAÇÃO PROGRESSIVA:
+        - QUALIFICAÇÃO PROGRESSIVA: Utilize um fluxo de perguntas estratégicas uma de cada vez (ex: "Região de interesse?", "Orçamento?"). Se possível, ofereça opções para facilitar a resposta (ex: a) Até 300 mil b) 300 a 600 mil).
+        - Analise o perfil do cliente (orçamento, região, estilo) para recomendar opções extraídas fielmente do portfólio.
+        - Sempre que relevante, envie informações detalhadas de até 3 opções de imóveis ou lançamentos que tenham Match com o cliente.
+        - Ter objetivo em cada mensagem. Exemplo: finalizar perguntas com uma Chamada para Ação (CTA) clara.
         - Compreenda e processe mensagens de áudio (você recebe a transcrição delas).
 
         QUALIFICAÇÃO FINANCEIRA (OBRIGATÓRIO):
@@ -70,15 +73,17 @@ class RaquelAgent:
         - INVESTIDOR: Identifique o estilo (renda passiva, valorização). Apresente dados da região (valorização histórica, demanda locatícia, infraestrutura futura) e potencial de retorno.
         - INDEFINIDO: Faça perguntas qualificadoras naturalmente antes de apresentar opções.
 
-        NOTIFICAÇÃO DE LEAD QUENTE:
-        - Quando detectar alto potencial ou pedido de visita, use o comando interno [ALERT_BROKER] no final da sua resposta.
+        ENCAMINHAMENTO E NOTIFICAÇÃO DE LEAD QUENTE:
+        - ATENÇÃO: Você NÃO realiza o agendamento direto na agenda. A agenda final é de responsabilidade do corretor.
+        - Quando identificar que o cliente quer realizar a visita, transfira o bastão. Diga algo como: "Excelente! Vou informar o {broker_name} para ele entrar em contato e definirmos juntos o melhor horário para a sua visita."
+        - Em seguida, adicione o comando [ALERT_BROKER] no final da sua resposta.
         - Se o cliente perguntar sobre a demora do corretor entrar em contato após o alerta, peça paciência educadamente informando que o corretor já foi acionado e entrará em contato em breve.
 
         REAGENDAMENTO E FOLLOW-UP:
         - Se o cliente pedir para falar em outro momento ou não tiver financiamento, confirme que o contato será retomado na data acordada.
         """
 
-    def is_within_schedule(self, schedule: List[Dict[str, Any]]) -> bool:
+    def is_within_schedule(self, schedule: Any) -> bool:
         """
         Verifica se o fuso de Brasília (now) está dentro do expediente do corretor
         """
@@ -87,30 +92,70 @@ class RaquelAgent:
         # Mon=0 -> Mon=1, ..., Sun=6 -> Sun=0 
         db_day_of_week: int = (now.weekday() + 1) % 7
         
-        # Busca a configuração para o dia de hoje
-        today_config: Optional[Dict[str, Any]] = next((s for s in schedule if s.get('day_of_week') == db_day_of_week), None)
+        schedule_list: List[Dict[str, Any]] = schedule if isinstance(schedule, list) else []
+        today_config: Optional[Dict[str, Any]] = None
+        for s in schedule_list:
+            if s.get('day_of_week') == db_day_of_week:
+                today_config = s
+                break
         
-        if not today_config or not today_config.get('is_active'):
+        if not isinstance(today_config, dict):
+            return False
+            
+        if not today_config.get('is_active'):
             return False
             
         try:
             def parse_time(t_str: Optional[str]) -> Optional[datetime.time]:
                 if not t_str: return None
-                # Aceita HH:MM ou HH:MM:SS
-                return datetime.datetime.strptime(t_str[:5], "%H:%M").time()
+                t_val: str = str(t_str)
+                parts = t_val.split(":")
+                formatted_time = f"{parts[0]}:{parts[1]}" if len(parts) >= 2 else t_val
+                return datetime.datetime.strptime(formatted_time, "%H:%M").time()
 
-            start_str: Optional[str] = str(today_config.get('start_time', '')) if today_config.get('start_time') else None
-            end_str: Optional[str] = str(today_config.get('end_time', '')) if today_config.get('end_time') else None
+            start_time_val = today_config.get('start_time')
+            end_time_val = today_config.get('end_time')
             
-            start_time: Optional[datetime.time] = parse_time(start_str)
-            end_time: Optional[datetime.time] = parse_time(end_str)
+            start_time: Optional[datetime.time] = parse_time(str(start_time_val) if start_time_val else None)
+            end_time: Optional[datetime.time] = parse_time(str(end_time_val) if end_time_val else None)
             current_time: datetime.time = now.time()
             
-            if not start_time or not end_time: return False
+            if start_time is None: return False
+            if end_time is None: return False
             return start_time <= current_time <= end_time
         except Exception as e:
             print(f"⚠️ Erro ao validar horário: {e}")
             return False
+
+    def get_next_working_slot(self, schedule: Any) -> tuple[str, str]:
+        """
+        Retorna (texto_dia, texto_hora) do próximo expediente do corretor
+        """
+        schedule_list: List[Dict[str, Any]] = schedule if isinstance(schedule, list) else []
+        now: datetime.datetime = datetime.datetime.now(self.tz)
+        current_db_day: int = (now.weekday() + 1) % 7
+        days_map = {0: "no domingo", 1: "na segunda-feira", 2: "na terça-feira", 3: "na quarta-feira", 4: "na quinta-feira", 5: "na sexta-feira", 6: "no sábado"}
+
+        def parse_start_time(cfg: Dict[str, Any]) -> str:
+            t_str = str(cfg.get('start_time', '08:00')).split(":")
+            return f"{t_str[0]}:{t_str[1]}" if len(t_str) >= 2 else "08:00"
+
+        for offset in range(8):
+            check_day = (current_db_day + offset) % 7
+            for s in schedule_list:
+                if s.get('day_of_week') == check_day and s.get('is_active'):
+                    start_time_str = parse_start_time(s)
+                    if offset == 0:
+                        s_hour = int(start_time_str.split(":")[0])
+                        s_min = int(start_time_str.split(":")[1])
+                        if now.hour < s_hour or (now.hour == s_hour and now.minute < s_min):
+                            return "ainda hoje", start_time_str
+                    elif offset == 1:
+                        return "amanhã", start_time_str
+                    else:
+                        return days_map.get(check_day, "no próximo dia útil"), start_time_str
+                        
+        return "no próximo dia útil", "08:00"
 
     def transcribe_audio(self, audio_url: str) -> str:
         """
@@ -138,6 +183,7 @@ class RaquelAgent:
             if os.path.exists(temp_path):
                 try: os.remove(temp_path)
                 except: pass
+        return "[Erro ao transcrever áudio]"
 
     def process_message(self, phone: str, message: str, sender_name: str, is_audio: bool = False, audio_url: Optional[str] = None) -> str:
         print(f"📥 Processando mensagem de {sender_name} ({phone})")
@@ -157,13 +203,8 @@ class RaquelAgent:
             message = self.transcribe_audio(audio_url)
             print(f"📝 Transcrição: {message}")
 
-        # 3. VERIFICAÇÃO DE EXPEDIENTE (REAGENDAMENTO OOH)
-        schedule: List[Dict[str, Any]] = self.db.get_broker_schedule(user_id)
-        if not self.is_within_schedule(schedule):
-            print(f"🌙 Fora de horário para {broker_name}. Enviando auto-reagendamento.")
-            ooh_msg: str = f"Olá {lead_real_name}! Obrigado pelo contato. Recebemos sua mensagem, porém nosso expediente por hoje encerrou. Já reagendamos o seu atendimento para o próximo dia útil, quando o corretor {broker_name} entrar em contato. Até logo!"
-            self.send_to_zapi(phone, ooh_msg)
-            return ooh_msg
+        # 3. VERIFICAÇÃO DE EXPEDIENTE (ANTES BLOQUEAVA, AGORA A IA ATENDE 24/7)
+        schedule = self.db.get_broker_schedule(user_id)
 
         # 4. BUSCA HISTÓRICO E PORTFÓLIO
         history: List[Dict[str, Any]] = self.db.get_chat_history(phone)
@@ -197,13 +238,32 @@ class RaquelAgent:
         if "[ALERT_BROKER]" in reply_content:
             print(f"🔥 LEAD QUENTE DETECTADO: {lead_real_name}")
             clean_reply: str = reply_content.replace("[ALERT_BROKER]", "").strip()
+            
+            is_ooh = not self.is_within_schedule(schedule)
+            if is_ooh:
+                next_day, next_time = self.get_next_working_slot(schedule)
+                pass_baton_msg = f"\n\n*Observação:* O nosso escritório no momento está fechado. O corretor {broker_name} estará em atendimento {next_day} a partir das {next_time} e entrará em contato com você assim que possível!"
+                clean_reply += pass_baton_msg
+            
+            import random
+            typing_delay = random.uniform(2.0, 4.0)
+            time.sleep(typing_delay)
+            
             self.send_to_zapi(phone, clean_reply)
             
-            self.alert_broker(context, clean_reply)
-            self.db.update_lead_status(phone, "hot_alert_sent")
-            self.db.set_lead_transfer_time(phone)
+            if is_ooh:
+                print(f"⏳ Alerta adiado para o próximo expediente de {broker_name}.")
+                self.db.update_lead_status(phone, "ooh_hot_alert_pending")
+            else:
+                self.alert_broker(context, clean_reply)
+                self.db.update_lead_status(phone, "hot_alert_sent")
+                self.db.set_lead_transfer_time(phone)
             
             return clean_reply
+        
+        import random
+        typing_delay = random.uniform(2.0, 4.0)
+        time.sleep(typing_delay)
         
         self.send_to_zapi(phone, reply_content)
         return reply_content
@@ -212,7 +272,12 @@ class RaquelAgent:
         broker_whatsapp: str = context.get('broker_whatsapp', '')
         lead_name: str = context.get('lead_name', 'Cliente')
         
-        alert_msg: str = f"🚨 *LEAD QUENTE: {lead_name}*\n\nEste lead demonstrou alto interesse ou pediu visita!\n\n*Resumo da conversa:* {message_context[:100]}...\n\nAssuma o atendimento agora!"
+        message_context_abridged = ""
+        for i, char in enumerate(message_context):
+            if i >= 100: break
+            message_context_abridged += char
+            
+        alert_msg: str = f"🚨 *LEAD QUENTE: {lead_name}*\n\nEste lead demonstrou alto interesse ou pediu visita!\n\n*Resumo da conversa:* {message_context_abridged}...\n\nAssuma o atendimento agora!"
         self.send_to_zapi(broker_whatsapp, alert_msg)
 
     def send_to_zapi(self, phone: str, content: str) -> None:

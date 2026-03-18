@@ -101,7 +101,12 @@ export async function deleteLead(id: string) {
 export async function cleanupLeads() {
     const user = await getOrCreateInternalUser();
     try {
-        await db.delete(leads).where(eq(leads.userId, user.id));
+        await db.delete(leads).where(
+            and(
+                eq(leads.userId, user.id),
+                eq(leads.status, "waiting")
+            )
+        );
         revalidatePath("/leads");
         revalidatePath("/dashboard");
         return { success: true };

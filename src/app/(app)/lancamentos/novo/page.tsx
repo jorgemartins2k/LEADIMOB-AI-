@@ -548,7 +548,7 @@ export default function NewLaunchPage() {
                                                                 <div className="flex flex-col gap-3">
                                                                     <ImageUpload
                                                                         value={field.value ? [field.value] : []}
-                                                                        onChange={(urls) => field.onChange(urls[0] || "")}
+                                                                        onChange={(urls) => field.onChange(urls[urls.length - 1] || "")}
                                                                         disabled={isSaving}
                                                                     />
                                                                     <p className="text-[10px] text-muted-foreground font-medium italic opacity-60">

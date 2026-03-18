@@ -4,8 +4,8 @@ import uvicorn # pyre-ignore
 import os
 from dotenv import load_dotenv # pyre-ignore
 from contextlib import asynccontextmanager
-from scheduler import start_scheduler
-from raquel import RaquelAgent
+from scheduler import start_scheduler # pyre-ignore
+from raquel import RaquelAgent # pyre-ignore
 
 load_dotenv()
 
@@ -19,7 +19,7 @@ app: FastAPI = FastAPI(
     title="Raquel AI Engine - Leadimob-AI",
     lifespan=lifespan
 )
-raquel: RaquelAgent = RaquelAgent()
+raquel = RaquelAgent() # pyre-ignore
 
 @app.get("/")
 def home() -> Dict[str, str]:
@@ -31,10 +31,14 @@ async def handle_zapi_webhook(request: Request) -> Dict[str, str]:
     Recebe mensagens do WhatsApp via Z-API
     """
     try:
-        data: Dict[str, Any] = await request.json()
+        data_raw: Any = await request.json()
+        data: Dict[str, Any] = data_raw if isinstance(data_raw, dict) else {}
         
         phone: Optional[str] = data.get("phone")
-        message_text: Optional[str] = data.get("text", {}).get("message")
+        
+        text_data = data.get("text", {})
+        message_text: Optional[str] = text_data.get("message") if isinstance(text_data, dict) else None
+        
         sender_name: str = str(data.get("senderName", "Cliente"))
         message_type: str = str(data.get("type", "text"))
         
@@ -42,10 +46,12 @@ async def handle_zapi_webhook(request: Request) -> Dict[str, str]:
             print("⚠️ Webhook ignorado: campo 'phone' ausente.")
             return {"status": "ignored"}
 
+        phone_str: str = str(phone)
+
         # 1. Lógica de Confirmação do Corretor ("ok")
         if message_text and message_text.lower().strip() == "ok":
-            if raquel.db.confirm_hot_lead(phone):
-                print(f"✅ Corretor {sender_name} ({phone}) confirmou recebimento do lead quente.")
+            if raquel.db.confirm_hot_lead(phone_str):
+                print(f"✅ Corretor {sender_name} ({phone_str}) confirmou recebimento do lead quente.")
                 return {"status": "broker_confirmed"}
             return {"status": "ok_ignored"}
 
@@ -54,8 +60,8 @@ async def handle_zapi_webhook(request: Request) -> Dict[str, str]:
         audio_url: Optional[str] = data.get("audio", {}).get("url") if is_audio else None
 
         if message_text or is_audio:
-            print(f"📩 Mensagem ({message_type}) recebida de {sender_name} ({phone})")
-            raquel.process_message(phone, str(message_text or ""), sender_name, is_audio=is_audio, audio_url=audio_url)
+            print(f"📩 Mensagem ({message_type}) recebida de {sender_name} ({phone_str})")
+            raquel.process_message(phone_str, str(message_text or ""), sender_name, is_audio=is_audio, audio_url=audio_url)
             return {"status": "processed"}
         
         print(f"ℹ️ Webhook recebido mas ignorado (tipo: {message_type}) de {phone}")

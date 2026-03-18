@@ -75,6 +75,45 @@ export async function createProperty(data: z.infer<typeof propertySchema>) {
     }
 }
 
+export async function updateProperty(id: string, data: z.infer<typeof propertySchema>) {
+    try {
+        const user = await getOrCreateInternalUser();
+        const validated = propertySchema.parse(data);
+
+        await db.update(properties)
+            .set({
+                title: validated.title,
+                description: validated.description,
+                type: validated.type,
+                city: validated.city,
+                neighborhood: validated.neighborhood,
+                address: validated.address,
+                price: validated.price.replace(/[^\d.]/g, ''),
+                areaSqm: validated.areaSqm,
+                bedrooms: validated.bedrooms,
+                bathrooms: validated.bathrooms,
+                parkingSpots: validated.parkingSpots,
+                standard: validated.standard,
+                targetAudience: validated.targetAudience,
+                photos: validated.photos,
+                minhaCasaMinhaVida: validated.minhaCasaMinhaVida,
+                allowsFinancing: validated.allowsFinancing,
+                downPayment: validated.downPayment,
+                condoFee: validated.condoFee,
+                isCondo: validated.isCondo,
+                updatedAt: new Date(),
+            })
+            .where(and(eq(properties.id, id), eq(properties.userId, user.id)));
+
+        revalidatePath("/imoveis");
+        revalidatePath(`/imoveis/${id}`);
+        return { success: true };
+    } catch (err: any) {
+        console.error(err);
+        return { error: err.message || "Erro ao atualizar imóvel." };
+    }
+}
+
 
 export async function deleteProperty(id: string) {
     const user = await getOrCreateInternalUser();

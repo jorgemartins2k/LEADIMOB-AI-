@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { leads, users } from "@/lib/db/schema";
-import { eq, and, gte, count, sql } from "drizzle-orm";
+import { eq, and, gte, count, sql, notInArray } from "drizzle-orm";
 
 export const PLAN_LIMITS = {
     start: 1500,   // Iniciante
@@ -39,7 +39,8 @@ export async function getLeadsAddedToday(userId: string) {
         .where(
             and(
                 eq(leads.userId, userId),
-                eq(leads.scheduledDate, today) // leads use scheduledDate for the day they were added
+                eq(leads.scheduledDate, today), // leads use scheduledDate for the day they were added
+                notInArray(leads.status, ['active', 'hot_alert_sent', 'ooh_hot_alert_pending', 'follow_up_pending', 'awaiting_followup', 'ooh_rescheduled'])
             )
         );
 

@@ -60,6 +60,50 @@ export async function createEvent(data: z.infer<typeof eventSchema>) {
     }
 }
 
+export async function getEventById(id: string) {
+    try {
+        const user = await getOrCreateInternalUser();
+        const event = await db.query.events.findFirst({
+            where: and(eq(events.id, id), eq(events.userId, user.id))
+        });
+        if (!event) return null;
+        return {
+            ...event,
+            id: String(event.id),
+            userId: String(event.userId),
+            targetAudience: Array.isArray(event.targetAudience) ? event.targetAudience : []
+        };
+    } catch (error) {
+        console.error("Critical Error fetching event by ID:", error);
+        return null;
+    }
+}
+
+export async function updateEvent(id: string, data: z.infer<typeof eventSchema>) {
+    try {
+        const user = await getOrCreateInternalUser();
+        const validated = eventSchema.parse(data);
+
+        await db.update(events).set({
+            name: validated.name,
+            eventDate: validated.eventDate,
+            eventTime: validated.eventTime || null,
+            location: validated.location || null,
+            description: validated.description || null,
+            targetAudience: validated.targetAudience,
+            standard: validated.standard || null,
+        }).where(and(eq(events.id, id), eq(events.userId, user.id)));
+
+        revalidatePath("/eventos");
+        revalidatePath("/agenda");
+        revalidatePath(`/eventos/${id}`);
+        return { success: true };
+    } catch (err: any) {
+        console.error(err);
+        return { error: err.message || "Erro ao atualizar evento." };
+    }
+}
+
 export async function deleteEvent(id: string) {
     const user = await getOrCreateInternalUser();
 

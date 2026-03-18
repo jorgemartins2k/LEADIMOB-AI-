@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, MapPin, Trash2, Loader2, AlertTriangle, Building2, Home, Sparkles } from "lucide-react";
+import { Calendar, MapPin, Trash2, Edit2, Loader2, AlertTriangle, Building2, Home, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { deleteEvent } from "@/lib/actions/events";
@@ -97,34 +97,41 @@ export function EventsList({ initialEvents }: EventsListProps) {
                                 {std.label}
                             </Badge>
 
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all">
-                                        <Trash2 className="h-5 w-5" />
+                            <div className="flex gap-1">
+                                <Link href={`/eventos/${event.id}/editar`}>
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-muted-foreground hover:bg-accent/10 hover:text-accent transition-all">
+                                        <Edit2 className="h-5 w-5" />
                                     </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent className="rounded-[32px] border-border/50 bg-card p-8">
-                                    <AlertDialogHeader className="space-y-4">
-                                        <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center text-destructive mb-2 mx-auto sm:mx-0">
-                                            <AlertTriangle className="h-8 w-8" />
-                                        </div>
-                                        <AlertDialogTitle className="text-2xl font-black uppercase tracking-tight">Excluir Evento?</AlertDialogTitle>
-                                        <AlertDialogDescription className="text-muted-foreground font-medium">
-                                            Esta ação não pode ser desfeita. O evento <span className="text-foreground font-black">"{event.name}"</span> será removido permanentemente.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter className="mt-8 gap-3">
-                                        <AlertDialogCancel className="h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] border-border/50 bg-muted/10">Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction
-                                            onClick={() => handleDelete(event.id)}
-                                            className="h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] bg-destructive text-white hover:bg-destructive/90"
-                                            disabled={isDeleting === event.id}
-                                        >
-                                            {isDeleting === event.id ? <Loader2 className="animate-spin h-5 w-5" /> : "Confirmar Exclusão"}
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                                </Link>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all">
+                                            <Trash2 className="h-5 w-5" />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent className="rounded-[32px] border-border/50 bg-card p-8">
+                                        <AlertDialogHeader className="space-y-4">
+                                            <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center text-destructive mb-2 mx-auto sm:mx-0">
+                                                <AlertTriangle className="h-8 w-8" />
+                                            </div>
+                                            <AlertDialogTitle className="text-2xl font-black uppercase tracking-tight">Excluir Evento?</AlertDialogTitle>
+                                            <AlertDialogDescription className="text-muted-foreground font-medium">
+                                                Esta ação não pode ser desfeita. O evento <span className="text-foreground font-black">"{event.name}"</span> será removido permanentemente.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter className="mt-8 gap-3">
+                                            <AlertDialogCancel className="h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] border-border/50 bg-muted/10">Cancelar</AlertDialogCancel>
+                                            <AlertDialogAction
+                                                onClick={() => handleDelete(event.id)}
+                                                className="h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] bg-destructive text-white hover:bg-destructive/90"
+                                                disabled={isDeleting === event.id}
+                                            >
+                                                {isDeleting === event.id ? <Loader2 className="animate-spin h-5 w-5" /> : "Confirmar Exclusão"}
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
                         </div>
 
                         {/* Event Content */}

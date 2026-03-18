@@ -112,6 +112,64 @@ export async function createLaunch(data: z.infer<typeof launchSchema>) {
     }
 }
 
+export async function updateLaunch(id: string, data: z.infer<typeof launchSchema>) {
+    try {
+        const user = await getOrCreateInternalUser();
+        const validated = launchSchema.parse(data);
+
+        await db.update(launches).set({
+            name: validated.name,
+            developer: validated.developer || null,
+            description: validated.description || null,
+            city: validated.city,
+            neighborhood: validated.neighborhood || null,
+            priceFrom: (validated.priceFrom && String(validated.priceFrom).trim() !== "")
+                ? String(validated.priceFrom).replace(/[^\d.]/g, '')
+                : null,
+            deliveryDate: (validated.deliveryDate && String(validated.deliveryDate).trim() !== "")
+                ? validated.deliveryDate
+                : null,
+            standard: validated.standard,
+            targetAudience: Array.isArray(validated.targetAudience) ? validated.targetAudience : [],
+            status: validated.status,
+            photos: Array.isArray(validated.photos) ? validated.photos : [],
+            updatedAt: new Date(),
+        }).where(and(eq(launches.id, id), eq(launches.userId, user.id)));
+
+        await db.delete(launchUnits)
+            .where(and(eq(launchUnits.launchId, id), eq(launchUnits.userId, user.id)));
+
+        if (validated.units && validated.units.length > 0) {
+            await db.insert(launchUnits).values(
+                validated.units.map((unit) => ({
+                    launchId: id,
+                    userId: user.id,
+                    name: unit.name,
+                    areaSqm: (unit.areaSqm && String(unit.areaSqm).trim() !== "") ? String(unit.areaSqm).replace(/[^\d.]/g, '') : null,
+                    bedrooms: Math.max(0, unit.bedrooms || 0),
+                    bathrooms: Math.max(0, unit.bathrooms || 0),
+                    parkingSpots: Math.max(0, unit.parkingSpots || 0),
+                    price: (unit.price && String(unit.price).trim() !== "") ? String(unit.price).replace(/[^\d.]/g, '') : null,
+                    photo: unit.photo || null,
+                    minhaCasaMinhaVida: !!unit.minhaCasaMinhaVida,
+                    allowsFinancing: !!unit.allowsFinancing,
+                    downPayment: (unit.downPayment && String(unit.downPayment).trim() !== "") ? String(unit.downPayment).replace(/[^\d.]/g, '') : null,
+                    condoFee: (unit.condoFee && String(unit.condoFee).trim() !== "") ? String(unit.condoFee).replace(/[^\d.]/g, '') : null,
+                    isCondo: !!unit.isCondo,
+                    targetAudience: Array.isArray(unit.targetAudience) ? unit.targetAudience : [],
+                }))
+            );
+        }
+
+        revalidatePath("/lancamentos");
+        revalidatePath(`/lancamentos/${id}`);
+        return { success: true };
+    } catch (err: any) {
+        console.error("Error updating launch:", err);
+        return { error: err.message || "Erro ao atualizar lançamento." };
+    }
+}
+
 export async function deleteLaunch(id: string) {
     const user = await getOrCreateInternalUser();
 

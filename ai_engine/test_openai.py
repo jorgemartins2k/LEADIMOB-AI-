@@ -1,37 +1,31 @@
 import os
-from openai import OpenAI
-from dotenv import load_dotenv
+from openai import OpenAI # pyre-ignore
+from dotenv import load_dotenv # pyre-ignore
+
+load_dotenv()
 
 def test_key():
-    load_dotenv()
     api_key = os.getenv("OPENAI_API_KEY")
-    
     if not api_key:
-        print("❌ ERRO: OPENAI_API_KEY não encontrada no arquivo .env")
+        print("ERROR: OPENAI_API_KEY not found in .env file")
         return
 
-    print(f"🔍 Testando chave: {api_key[:10]}...{api_key[-5:]}")
-    
-    client = OpenAI(api_key=api_key)
+    print(f"Testing key starting with: {api_key[:12]}...") # pyre-ignore
     
     try:
-        # Teste simples: listar modelos ou fazer uma completion pequena
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": "Olá, você está funcionando?"}],
-            max_tokens=10
-        )
-        print("✅ SUCESSO! A Raquel conseguiu se conectar com a OpenAI.")
-        print(f"Resposta: {response.choices[0].message.content}")
-        
+        client = OpenAI(api_key=api_key)
+        # Test with a lightweight call
+        response = client.models.list()
+        print("SUCCESS: API Key is valid and working!")
+        print("Available models check: OK")
     except Exception as e:
-        print("❌ FALHA: A OpenAI retornou um erro.")
-        print(f"Detalhes: {e}")
+        print(f"FAILED: Connection to OpenAI failed.")
+        print(f"Error detail: {e}")
         
         if "401" in str(e):
-            print("\n💡 DICA: O erro 401 significa que a chave está incorreta ou foi revogada.")
+            print("\nTIP: Error 401 means the key is incorrect. Check if you copied any extra spaces or if the key was revoked.")
         elif "429" in str(e):
-            print("\n💡 DICA: O erro 429 significa que você acabou seus créditos ou está sem saldo na OpenAI.")
+            print("\nTIP: Error 429 means you hit a rate limit or ran out of credits. Check your balance at https://platform.openai.com/usage")
 
 if __name__ == "__main__":
     test_key()
