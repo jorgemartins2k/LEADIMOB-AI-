@@ -45,6 +45,7 @@ export function LeadsView() {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [leadToDelete, setLeadToDelete] = useState<{ id: string, name: string } | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isCleanupDialogOpen, setIsCleanupDialogOpen] = useState(false);
     const [inBusinessHours, setInBusinessHours] = useState(false);
     const [isCleaning, setIsCleaning] = useState(false);
     const [limitData, setLimitData] = useState<{ dailyLimit: number; addedToday: number; remaining: number; plan: string } | null>(null);
@@ -79,13 +80,13 @@ export function LeadsView() {
     }, []);
 
     const handleCleanup = async () => {
-        if (!confirm("Isso excluirá todos os leads atuais ao final do expediente. Prosseguir?")) return;
         setIsCleaning(true);
         try {
             const result = await cleanupLeads();
             if (result.success) {
                 toast.success("Lista limpa com sucesso.");
                 setLeadsList([]);
+                setIsCleanupDialogOpen(false);
             } else {
                 toast.error(result.error || "Erro ao limpar lista.");
             }
@@ -294,7 +295,7 @@ export function LeadsView() {
                     <div className="flex justify-start sm:justify-end pb-2">
                         <Button
                             variant="ghost"
-                            onClick={handleCleanup}
+                            onClick={() => setIsCleanupDialogOpen(true)}
                             disabled={isCleaning}
                             className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 rounded-2xl border border-destructive/20 text-destructive font-black uppercase text-[9px] sm:text-[10px] tracking-[0.2em] hover:bg-destructive/10 gap-3 btn-interactive"
                         >
@@ -426,6 +427,53 @@ export function LeadsView() {
                                         <Trash2 className="w-4 h-4" />
                                     )}
                                     Excluir Agora
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal de Limpeza de Expediente */}
+            <Dialog open={isCleanupDialogOpen} onOpenChange={setIsCleanupDialogOpen}>
+                <DialogContent className="max-w-md p-0 overflow-hidden border-none bg-transparent shadow-2xl">
+                    <div className="relative bg-card/90 backdrop-blur-2xl border border-white/10 rounded-[40px] overflow-hidden p-10 animate-in zoom-in duration-300">
+                        {/* Background Decoration */}
+                        <div className="absolute -top-24 -right-24 w-48 h-48 bg-destructive/10 blur-[80px] rounded-full" />
+
+                        <div className="relative z-10 space-y-8">
+                            <div className="w-20 h-20 rounded-3xl bg-destructive/10 flex items-center justify-center mx-auto shadow-inner border border-destructive/20 rotate-3 group-hover:rotate-0 transition-transform">
+                                <AlertTriangle className="w-10 h-10 text-destructive animate-pulse" />
+                            </div>
+
+                            <div className="space-y-3 text-center">
+                                <DialogTitle className="text-2xl font-black text-foreground uppercase tracking-tighter leading-none">
+                                    Limpar Lista do Dia
+                                </DialogTitle>
+                                <DialogDescription className="text-muted-foreground font-medium leading-relaxed">
+                                    Isso excluirá <span className="text-foreground font-bold">todos os leads atuais</span> da sua lista de atendimento de hoje. Tem certeza que deseja prosseguir?
+                                </DialogDescription>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => setIsCleanupDialogOpen(false)}
+                                    className="h-16 rounded-2xl font-black uppercase tracking-widest text-[10px] text-muted-foreground hover:bg-muted/50"
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    onClick={handleCleanup}
+                                    disabled={isCleaning}
+                                    className="h-16 rounded-2xl bg-destructive text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-destructive/20 hover:scale-105 active:scale-95 transition-all gap-2"
+                                >
+                                    {isCleaning ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Trash2 className="w-4 h-4" />
+                                    )}
+                                    Limpar Agenda
                                 </Button>
                             </div>
                         </div>
