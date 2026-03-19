@@ -130,10 +130,18 @@ export default function EditLaunchPage() {
                     status: (data.status as any) || "pre_launch",
                     photos: data.photos || [],
                     units: (data.units && data.units.length > 0) ? data.units.map((u: any) => ({
-                        ...u,
+                        name: u.name || "",
+                        areaSqm: u.areaSqm || "",
                         bedrooms: u.bedrooms ? String(u.bedrooms) : "",
                         bathrooms: u.bathrooms ? String(u.bathrooms) : "",
                         parkingSpots: u.parkingSpots ? String(u.parkingSpots) : "",
+                        price: u.price || "",
+                        photo: u.photo || "",
+                        minhaCasaMinhaVida: !!u.minhaCasaMinhaVida,
+                        allowsFinancing: !!u.allowsFinancing,
+                        downPayment: u.downPayment || "",
+                        condoFee: u.condoFee || "",
+                        isCondo: !!u.isCondo,
                         targetAudience: u.targetAudience || []
                     })) : [],
                 });
