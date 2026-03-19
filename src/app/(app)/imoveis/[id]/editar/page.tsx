@@ -202,7 +202,11 @@ export default function EditPropertyPage() {
                                 <Loader2 className="h-8 w-8 animate-spin text-accent" />
                             </div>
                         ) : (
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="p-5 sm:p-8 md:p-10 space-y-6 sm:space-y-10">
+                            <form onSubmit={form.handleSubmit(onSubmit, (errs) => {
+                                const msg = Object.keys(errs).join(', ');
+                                toast.error(`Preenchimento incorreto nos campos: ${msg}`, { duration: 5000 });
+                                console.error("Validation errors:", errs);
+                            })} className="p-5 sm:p-8 md:p-10 space-y-6 sm:space-y-10">
                                 {/* Título */}
                                 <FormField
                                     name="title"
