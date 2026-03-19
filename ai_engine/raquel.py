@@ -49,6 +49,8 @@ class RaquelAgent:
         7. FORMATO WHATSAPP (MENSAGENS CURTAS E OBJETIVAS): Priorize mensagens curtas, concisas e diretas ao ponto (evite parágrafos longos).
         8. USO DE EMOJIS: Utilize emojis de forma moderada e estratégica (ex: 😊, 🏡, 📅) para adicionar leveza.
         9. PERSONALIZAÇÃO: Sempre utilize o nome do lead ({lead_name}) e crie conexões com o interesse demonstrado.
+        10. LINKS DE IMÓVEIS: Se o imóvel/lançamento possuir um "Link do Imóvel" ou "Link do Empreendimento" no portfólio, NÃO DESCREVA O IMÓVEL DE FORMA EXTENSA. Envie apenas uma brevíssima introdução (1 a 2 linhas) e o link imediatamente! Deixe o link fazer o trabalho de venda.
+        11. ENVIO DE FOTOS: Se o imóvel NÃO tiver link, o portfólio mostrará uma lista "Fotos: [...]". Quando o cliente pedir fotos (ex: "tem foto da sala?", "quero ver"), você deve escolher as URLs mais relevantes daquela lista e usar EXATAMENTE O COMANDO: [SEND_IMAGE: url_da_foto] na sua resposta. O sistema trocará esse comando pela imagem real. Você pode usar múltiplos comandos se quiser enviar várias fotos.
 
         [INSTRUÇÕES DE TREINAMENTO DO CORRETOR]:
         {presentation if presentation else "Nenhuma instrução específica de tom de voz. Seguir padrão polido."}
@@ -230,14 +232,18 @@ class RaquelAgent:
             print(f"❌ Erro na OpenAI: {e}")
             return "Desculpe, tive um problema técnico momentâneo."
 
-        # 7. SALVA NO BANCO E ENVIA
+        # 7. SALVA NO BANCO 
         self.db.save_message(phone, "user", message)
         self.db.save_message(phone, "assistant", reply_content)
 
+        import re
+        images_to_send = re.findall(r'\[SEND_IMAGE:\s*(.*?)\]', reply_content)
+        clean_reply = re.sub(r'\[SEND_IMAGE:\s*.*?\]', '', reply_content).strip()
+
         # 8. VERIFICA SE PRECISA ALERTAR O CORRETOR (LEAD QUENTE)
-        if "[ALERT_BROKER]" in reply_content:
+        if "[ALERT_BROKER]" in clean_reply:
             print(f"🔥 LEAD QUENTE DETECTADO: {lead_real_name}")
-            clean_reply: str = reply_content.replace("[ALERT_BROKER]", "").strip()
+            clean_reply = clean_reply.replace("[ALERT_BROKER]", "").strip()
             
             is_ooh = not self.is_within_schedule(schedule)
             if is_ooh:
@@ -249,7 +255,11 @@ class RaquelAgent:
             typing_delay = random.uniform(2.0, 4.0)
             time.sleep(typing_delay)
             
-            self.send_to_zapi(phone, clean_reply)
+            if clean_reply:
+                self.send_to_zapi(phone, clean_reply)
+            for img_url in images_to_send:
+                time.sleep(1)
+                self.send_image_to_zapi(phone, img_url)
             
             if is_ooh:
                 print(f"⏳ Alerta adiado para o próximo expediente de {broker_name}.")
@@ -265,8 +275,13 @@ class RaquelAgent:
         typing_delay = random.uniform(2.0, 4.0)
         time.sleep(typing_delay)
         
-        self.send_to_zapi(phone, reply_content)
-        return reply_content
+        if clean_reply:
+            self.send_to_zapi(phone, clean_reply)
+        for img_url in images_to_send:
+            time.sleep(1)
+            self.send_image_to_zapi(phone, img_url)
+            
+        return clean_reply
 
     def alert_broker(self, context: Dict[str, Any], message_context: str) -> None:
         broker_whatsapp: str = context.get('broker_whatsapp', '')
@@ -299,3 +314,23 @@ class RaquelAgent:
             print(f"✅ Enviado para {phone}")
         except Exception as e:
             print(f"❌ Erro Z-API ({phone}): {e}")
+
+    def send_image_to_zapi(self, phone: str, image_url: str) -> None:
+        instance_id: Optional[str] = os.getenv("ZAPI_INSTANCE_ID")
+        token: Optional[str] = os.getenv("ZAPI_TOKEN")
+        
+        if not instance_id or not token:
+            print("⚠️ ERRO: ZAPI_INSTANCE_ID ou ZAPI_TOKEN ausentes no ambiente.")
+            return
+
+        url: str = f"https://api.z-api.io/instances/{instance_id}/token/{token}/send-image"
+        
+        payload: Dict[str, str] = {"phone": phone, "image": image_url}
+        headers: Dict[str, str] = {"Content-Type": "application/json"}
+        
+        try:
+            response: requests.Response = requests.post(url, json=payload, headers=headers)
+            response.raise_for_status()
+            print(f"✅ Imagem enviada para {phone}")
+        except Exception as e:
+            print(f"❌ Erro Z-API ao enviar imagem ({phone}): {e}")

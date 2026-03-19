@@ -42,7 +42,8 @@ import { cn } from "@/lib/utils";
 import { getPropertyById, updateProperty } from "@/lib/actions/properties";
 
 const propertySchema = z.object({
-    title: z.string().min(3, "O título deve ter pelo menos 3 caracteres"),
+    title: z.string().min(5, "O título deve ter pelo menos 5 caracteres"),
+    websiteUrl: z.string().optional(),
     type: z.enum(["apartamento", "casa", "terreno", "comercial"]),
     city: z.string().min(2, "Informe a cidade"),
     neighborhood: z.string().optional(),
@@ -76,6 +77,7 @@ export default function EditPropertyPage() {
         resolver: zodResolver(propertySchema),
         defaultValues: {
             title: "",
+            websiteUrl: "",
             type: "casa",
             city: "",
             neighborhood: "",
@@ -104,6 +106,7 @@ export default function EditPropertyPage() {
             if (data) {
                 form.reset({
                     title: data.title || "",
+                    websiteUrl: data.websiteUrl || "",
                     type: (data.type as any) || "casa",
                     city: data.city || "",
                     neighborhood: data.neighborhood || "",
@@ -137,6 +140,7 @@ export default function EditPropertyPage() {
         try {
             const result = await updateProperty(id as string, {
                 ...values,
+                websiteUrl: values.websiteUrl || undefined,
                 bedrooms: values.bedrooms ? parseInt(values.bedrooms) : undefined,
                 bathrooms: values.bathrooms ? parseInt(values.bathrooms) : undefined,
                 parkingSpots: values.parkingSpots ? parseInt(values.parkingSpots) : undefined,
@@ -211,6 +215,27 @@ export default function EditPropertyPage() {
                                             <FormControl>
                                                 <Input
                                                     placeholder="Ex: Apartamento 3 quartos - Centro"
+                                                    {...field}
+                                                    className="bg-muted/10 border-border/40 h-12 sm:h-14 rounded-xl sm:rounded-2xl px-4 sm:px-6 font-bold text-sm sm:text-base focus-visible:ring-accent/20 transition-all placeholder:opacity-30"
+                                                />
+                                            </FormControl>
+                                            <FormMessage className="text-[10px] font-bold uppercase" />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* Website URL */}
+                                <FormField
+                                    name="websiteUrl"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-3">
+                                            <div className="flex items-center gap-2 ml-1">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                                                <FormLabel className="text-[10px] sm:text-sm font-black uppercase tracking-widest text-foreground opacity-70">Link no Site do Corretor (Opcional)</FormLabel>
+                                            </div>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Ex: https://meusite.com.br/imovel"
                                                     {...field}
                                                     className="bg-muted/10 border-border/40 h-12 sm:h-14 rounded-xl sm:rounded-2xl px-4 sm:px-6 font-bold text-sm sm:text-base focus-visible:ring-accent/20 transition-all placeholder:opacity-30"
                                                 />

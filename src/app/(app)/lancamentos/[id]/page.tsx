@@ -285,6 +285,21 @@ export default async function LaunchDetailsPage({ params }: LaunchDetailsPagePro
                         </div>
                     </div>
 
+                    {/* Website Link Card */}
+                    {launch.websiteUrl && (
+                        <div className="card-premium p-6 sm:p-8 space-y-4 sm:space-y-6">
+                            <h4 className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">Link do Corretor</h4>
+                            <p className="text-xs sm:text-sm font-bold text-foreground leading-relaxed">
+                                Acesse a página original deste lançamento no site ou marketplace.
+                            </p>
+                            <a href={launch.websiteUrl} target="_blank" rel="noopener noreferrer" className="block w-full">
+                                <Button className="w-full h-12 sm:h-14 rounded-xl bg-accent text-white font-black uppercase text-[10px] tracking-widest hover:scale-[1.02] transition-all shadow-xl shadow-accent/20">
+                                    Acessar Página Original
+                                </Button>
+                            </a>
+                        </div>
+                    )}
+
                     {/* Location Card with Map */}
                     <div className="card-premium p-6 sm:p-8 space-y-4 sm:space-y-6">
                         <div className="border-l-4 border-accent pl-4">

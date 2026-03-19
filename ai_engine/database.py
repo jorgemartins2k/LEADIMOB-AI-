@@ -183,29 +183,37 @@ class Database:
         Busca o portfólio completo do corretor (Imóveis e Lançamentos) formatado para o prompt
         """
         props_resp = self.supabase.table("properties")\
-            .select("title, description, price, type, city, neighborhood, standard, target_audience")\
+            .select("title, description, price, type, city, neighborhood, standard, target_audience, website_url, photos")\
             .eq("user_id", user_id)\
             .eq("status", "available")\
             .execute()
         
         launches_resp = self.supabase.table("launches")\
-            .select("name, description, price_from, city, neighborhood, standard, target_audience")\
+            .select("name, description, price_from, city, neighborhood, standard, target_audience, website_url, photos")\
             .eq("user_id", user_id)\
             .execute()
 
-        portfolio_text = ""
+        portfolio_parts: List[str] = []
         
         if props_resp.data:
-            portfolio_text += "--- IMÓVEIS PRONTOS ---\n"
+            portfolio_parts.append("--- IMÓVEIS PRONTOS ---\n")
             for p in props_resp.data:
-                portfolio_text += f"Título: {p.get('title', 'Sem título')}\nTipo: {p.get('type', 'Indefinido')}\nPreço: R$ {p.get('price', 'Sob consulta')}\nLocal: {p.get('neighborhood', '')}, {p.get('city', '')}\nPadrão: {p.get('standard', '')}\nDescrição: {p.get('description', 'Sem descrição')}\nPúblico-alvo: {p.get('target_audience', [])}\n\n"
+                url = p.get('website_url')
+                if url:
+                    portfolio_parts.append(f"Título: {p.get('title', 'Sem título')}\nLink do Imóvel: {url}\nTipo: {p.get('type', 'Indefinido')}\nPreço: R$ {p.get('price', 'Sob consulta')}\nLocal: {p.get('neighborhood', '')}, {p.get('city', '')}\nPúblico-alvo: {p.get('target_audience', [])}\n\n")
+                else:
+                    portfolio_parts.append(f"Título: {p.get('title', 'Sem título')}\nTipo: {p.get('type', 'Indefinido')}\nPreço: R$ {p.get('price', 'Sob consulta')}\nLocal: {p.get('neighborhood', '')}, {p.get('city', '')}\nPadrão: {p.get('standard', '')}\nDescrição: {p.get('description', 'Sem descrição')}\nPúblico-alvo: {p.get('target_audience', [])}\nFotos: {p.get('photos', [])}\n\n")
 
         if launches_resp.data:
-            portfolio_text += "--- LANÇAMENTOS ---\n"
+            portfolio_parts.append("--- LANÇAMENTOS ---\n")
             for l in launches_resp.data:
-                portfolio_text += f"Nome: {l.get('name', 'Sem nome')}\nPreço a partir: R$ {l.get('price_from', 'Sob consulta')}\nLocal: {l.get('neighborhood', '')}, {l.get('city', '')}\nPadrão: {l.get('standard', '')}\nDescrição: {l.get('description', 'Sem descrição')}\nPúblico-alvo: {l.get('target_audience', [])}\n\n"
+                url = l.get('website_url')
+                if url:
+                    portfolio_parts.append(f"Nome: {l.get('name', 'Sem nome')}\nLink do Empreendimento: {url}\nPreço a partir: R$ {l.get('price_from', 'Sob consulta')}\nLocal: {l.get('neighborhood', '')}, {l.get('city', '')}\nPúblico-alvo: {l.get('target_audience', [])}\n\n")
+                else:
+                    portfolio_parts.append(f"Nome: {l.get('name', 'Sem nome')}\nPreço a partir: R$ {l.get('price_from', 'Sob consulta')}\nLocal: {l.get('neighborhood', '')}, {l.get('city', '')}\nPadrão: {l.get('standard', '')}\nDescrição: {l.get('description', 'Sem descrição')}\nPúblico-alvo: {l.get('target_audience', [])}\nFotos: {l.get('photos', [])}\n\n")
 
-        return portfolio_text if portfolio_text else "Nenhum imóvel ou lançamento cadastrado no portfólio."
+        return "".join(portfolio_parts) if portfolio_parts else "Nenhum imóvel ou lançamento cadastrado no portfólio."
 
     def get_broker_schedule(self, user_id: str) -> List[Dict[str, Any]]:
         """

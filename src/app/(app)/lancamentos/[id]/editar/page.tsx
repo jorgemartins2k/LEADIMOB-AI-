@@ -50,6 +50,7 @@ import { getLaunchById, updateLaunch } from "@/lib/actions/launches";
 
 const launchSchema = z.object({
     name: z.string().min(3, "O nome do lançamento deve ter pelo menos 3 caracteres"),
+    websiteUrl: z.string().optional(),
     developer: z.string().optional(),
     description: z.string().optional(),
     city: z.string().min(2, "Informe a cidade"),
@@ -90,6 +91,7 @@ export default function EditLaunchPage() {
         resolver: zodResolver(launchSchema),
         defaultValues: {
             name: "",
+            websiteUrl: "",
             developer: "",
             description: "",
             city: "",
@@ -116,6 +118,7 @@ export default function EditLaunchPage() {
             if (data) {
                 form.reset({
                     name: data.name || "",
+                    websiteUrl: data.websiteUrl || "",
                     developer: data.developer || "",
                     description: data.description || "",
                     city: data.city || "",
@@ -148,6 +151,7 @@ export default function EditLaunchPage() {
         try {
             const result = await updateLaunch(id as string, {
                 ...data,
+                websiteUrl: data.websiteUrl || undefined,
                 priceFrom: data.priceFrom || undefined,
                 photos: data.photos || [],
                 units: data.units.map((u) => ({
@@ -235,6 +239,27 @@ export default function EditLaunchPage() {
                                                 <FormControl>
                                                     <Input
                                                         placeholder="Ex: Reserva Imperial"
+                                                        {...field}
+                                                        className="bg-muted/10 border-border/40 h-12 sm:h-16 rounded-xl sm:rounded-[24px] px-5 sm:px-8 font-black text-base sm:text-xl focus-visible:ring-accent/20 transition-all placeholder:opacity-30"
+                                                    />
+                                                </FormControl>
+                                                <FormMessage className="text-[10px] font-bold uppercase" />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {/* Website URL */}
+                                    <FormField
+                                        name="websiteUrl"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-3">
+                                                <div className="flex items-center gap-2 ml-1">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                                                    <FormLabel className="text-[10px] sm:text-sm font-black uppercase tracking-widest text-foreground opacity-70">Link no Site do Corretor (Opcional)</FormLabel>
+                                                </div>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="Ex: https://meusite.com.br/lancamento"
                                                         {...field}
                                                         className="bg-muted/10 border-border/40 h-12 sm:h-16 rounded-xl sm:rounded-[24px] px-5 sm:px-8 font-black text-base sm:text-xl focus-visible:ring-accent/20 transition-all placeholder:opacity-30"
                                                     />

@@ -11,6 +11,7 @@ const launchSchema = z.object({
     name: z.string().min(3, "O nome do lançamento deve ter pelo menos 3 caracteres"),
     developer: z.string().optional(),
     description: z.string().optional(),
+    websiteUrl: z.string().url("URL inválida").optional().or(z.literal("")),
     city: z.string().min(2, "Informe a cidade"),
     neighborhood: z.string().optional(),
     priceFrom: z.string().optional(),
@@ -67,6 +68,7 @@ export async function createLaunch(data: z.infer<typeof launchSchema>) {
             name: validated.name,
             developer: validated.developer || null,
             description: validated.description || null,
+            websiteUrl: validated.websiteUrl || null,
             city: validated.city,
             neighborhood: validated.neighborhood || null,
             priceFrom: (validated.priceFrom && String(validated.priceFrom).trim() !== "")
@@ -121,6 +123,7 @@ export async function updateLaunch(id: string, data: z.infer<typeof launchSchema
             name: validated.name,
             developer: validated.developer || null,
             description: validated.description || null,
+            websiteUrl: validated.websiteUrl || null,
             city: validated.city,
             neighborhood: validated.neighborhood || null,
             priceFrom: (validated.priceFrom && String(validated.priceFrom).trim() !== "")
@@ -199,6 +202,7 @@ export async function getLaunchById(id: string) {
             ...launch,
             id: String(launch.id),
             userId: String(launch.userId),
+            websiteUrl: launch.websiteUrl ? String(launch.websiteUrl) : null,
             priceFrom: launch.priceFrom ? String(launch.priceFrom) : null,
             deliveryDate: launch.deliveryDate ? String(launch.deliveryDate) : null,
             targetAudience: Array.isArray(launch.targetAudience) ? launch.targetAudience : [],
