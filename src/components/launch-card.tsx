@@ -7,6 +7,7 @@ import { Megaphone, MapPin, Calendar, Trash2, Edit, UserPlus, Building2 } from "
 import { cn } from "@/lib/utils";
 import { deleteLaunch } from "@/lib/actions/launches";
 import { toast } from "sonner";
+import Link from "next/link";
 
 interface LaunchCardProps {
     launch: {
@@ -99,9 +100,11 @@ export function LaunchCard({ launch }: LaunchCardProps) {
             </CardContent>
 
             <CardFooter className="p-5 pt-0 flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1 bg-card border-border hover:bg-muted text-xs font-bold uppercase tracking-tight rounded-xl">
-                    <Edit className="h-3.5 w-3.5 mr-2 opacity-60" /> Detalhes
-                </Button>
+                <Link href={`/lancamentos/${launch.id}`} className="flex-1">
+                    <Button variant="outline" size="sm" className="w-full bg-card border-border hover:bg-muted text-xs font-bold uppercase tracking-tight rounded-xl">
+                        <Edit className="h-3.5 w-3.5 mr-2 opacity-60" /> Detalhes
+                    </Button>
+                </Link>
                 <Button
                     variant="ghost"
                     size="icon"

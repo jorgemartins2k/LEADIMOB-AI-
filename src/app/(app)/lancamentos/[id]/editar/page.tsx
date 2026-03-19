@@ -579,141 +579,137 @@ export default function EditLaunchPage() {
                                                     )}
                                                 />
 
-                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 py-4 sm:py-6 border-y border-border/40">
-
-                                                    <FormField
-                                                        name={`units.${index}.photo`}
-                                                        render={({ field }) => (
-                                                            <FormItem className="space-y-3">
-                                                                <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Planta da Unidade</FormLabel>
-                                                                <FormControl>
-                                                                    <div className="flex flex-col gap-3">
-                                                                        <ImageUpload
-                                                                            value={field.value ? [field.value] : []}
-                                                                            onChange={(urls) => field.onChange(urls[urls.length - 1] || "")}
-                                                                            disabled={isSaving}
-                                                                        />
-                                                                        <p className="text-[10px] text-muted-foreground font-medium italic opacity-60">
-                                                                            Adicione a imagem referente a planta (preferência planta baixa da unidade).
-                                                                        </p>
-                                                                    </div>
-                                                                </FormControl>
-                                                            </FormItem>
-                                                        )}
-                                                    />
-
-                                                    {/* Salvar Empreendimento e MCMV Unidades */}
-                                                    <div className="grid grid-cols-2 gap-4 pb-2">
+                                                <div className="flex flex-col lg:flex-row gap-6 py-6 border-y border-border/40">
+                                                    <div className="w-full lg:w-[35%]">
                                                         <FormField
-                                                            name={`units.${index}.minhaCasaMinhaVida`}
+                                                            name={`units.${index}.photo`}
                                                             render={({ field }) => (
-                                                                <FormItem className="flex items-center justify-between rounded-xl border border-border/30 p-4 bg-white/5">
-                                                                    <div className="space-y-0.5">
-                                                                        <FormLabel className="text-[10px] font-bold uppercase tracking-wider">MCMV</FormLabel>
-                                                                    </div>
+                                                                <FormItem className="space-y-3">
+                                                                    <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Planta da Unidade</FormLabel>
                                                                     <FormControl>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => field.onChange(!field.value)}
-                                                                            className={cn(
-                                                                                "w-10 h-5 rounded-full transition-all duration-300 relative border border-transparent",
-                                                                                field.value
-                                                                                    ? "bg-primary shadow-[0_0_10px_-2px_rgba(59,130,246,0.5)]"
-                                                                                    : "bg-zinc-300 dark:bg-zinc-700 border-zinc-400/50 shadow-inner"
-                                                                            )}
-                                                                        >
-                                                                            <div className={cn(
-                                                                                "absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-[0_1px_5px_rgba(0,0,0,0.3)]",
-                                                                                field.value ? "right-0.5" : "left-0.5"
-                                                                            )} />
-                                                                        </button>
-                                                                    </FormControl>
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                        <FormField
-                                                            name={`units.${index}.allowsFinancing`}
-                                                            render={({ field }) => (
-                                                                <FormItem className="flex items-center justify-between rounded-xl border border-border/30 p-4 bg-white/5">
-                                                                    <div className="space-y-0.5">
-                                                                        <FormLabel className="text-[10px] font-bold uppercase tracking-wider">Financ.</FormLabel>
-                                                                    </div>
-                                                                    <FormControl>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => field.onChange(!field.value)}
-                                                                            className={cn(
-                                                                                "w-10 h-5 rounded-full transition-all duration-300 relative border border-transparent",
-                                                                                field.value
-                                                                                    ? "bg-primary shadow-[0_0_10px_-2px_rgba(59,130,246,0.5)]"
-                                                                                    : "bg-zinc-300 dark:bg-zinc-700 border-zinc-400/50 shadow-inner"
-                                                                            )}
-                                                                        >
-                                                                            <div className={cn(
-                                                                                "absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-[0_1px_5px_rgba(0,0,0,0.3)]",
-                                                                                field.value ? "right-0.5" : "left-0.5"
-                                                                            )} />
-                                                                        </button>
+                                                                        <div className="flex flex-col gap-3">
+                                                                            <ImageUpload
+                                                                                value={field.value ? [field.value] : []}
+                                                                                onChange={(urls) => field.onChange(urls[urls.length - 1] || "")}
+                                                                                disabled={isSaving}
+                                                                            />
+                                                                            <p className="text-[10px] text-muted-foreground font-medium italic opacity-60">
+                                                                                Adicione a imagem referente a planta (preferência planta baixa da unidade).
+                                                                            </p>
+                                                                        </div>
                                                                     </FormControl>
                                                                 </FormItem>
                                                             )}
                                                         />
                                                     </div>
 
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <FormField
-                                                            name={`units.${index}.downPayment`}
-                                                            render={({ field }) => (
-                                                                <FormItem className="space-y-2">
-                                                                    <FormLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Entrada (R$)</FormLabel>
-                                                                    <FormControl>
-                                                                        <Input placeholder="Opcional" {...field} className="bg-white/5 border-border h-10 rounded-lg text-sm" />
-                                                                    </FormControl>
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                        <FormField
-                                                            name={`units.${index}.isCondo`}
-                                                            render={({ field }) => (
-                                                                <FormItem className="flex items-center justify-between rounded-xl border border-border/30 p-4 bg-white/5">
-                                                                    <div className="space-y-0.5">
-                                                                        <FormLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Condom.</FormLabel>
-                                                                    </div>
-                                                                    <FormControl>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => field.onChange(!field.value)}
-                                                                            className={cn(
-                                                                                "w-10 h-5 rounded-full transition-all duration-300 relative border border-transparent",
-                                                                                field.value
-                                                                                    ? "bg-primary shadow-[0_0_10px_-2px_rgba(59,130,246,0.5)]"
-                                                                                    : "bg-zinc-300 dark:bg-zinc-700 border-zinc-400/50 shadow-inner"
-                                                                            )}
-                                                                        >
-                                                                            <div className={cn(
-                                                                                "absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all duration-300",
-                                                                                field.value ? "right-0.5" : "left-0.5"
-                                                                            )} />
-                                                                        </button>
-                                                                    </FormControl>
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                    </div>
+                                                    <div className="w-full lg:w-[65%] space-y-4 pt-1">
+                                                        {/* Switches line */}
+                                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                                            <FormField
+                                                                name={`units.${index}.minhaCasaMinhaVida`}
+                                                                render={({ field }) => (
+                                                                    <FormItem className="flex items-center justify-between rounded-xl border border-border/30 px-3 py-3.5 bg-white/5 h-[60px]">
+                                                                        <FormLabel className="text-[10px] font-bold uppercase tracking-wider mb-0 cursor-pointer">MCMV</FormLabel>
+                                                                        <FormControl>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => field.onChange(!field.value)}
+                                                                                className={cn(
+                                                                                    "w-10 h-5 rounded-full transition-all duration-300 relative border border-transparent shrink-0",
+                                                                                    field.value
+                                                                                        ? "bg-primary shadow-[0_0_10px_-2px_rgba(59,130,246,0.5)]"
+                                                                                        : "bg-zinc-300 dark:bg-zinc-700 border-zinc-400/50 shadow-inner"
+                                                                                )}
+                                                                            >
+                                                                                <div className={cn(
+                                                                                    "absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-sm",
+                                                                                    field.value ? "right-0.5" : "left-0.5"
+                                                                                )} />
+                                                                            </button>
+                                                                        </FormControl>
+                                                                    </FormItem>
+                                                                )}
+                                                            />
+                                                            <FormField
+                                                                name={`units.${index}.allowsFinancing`}
+                                                                render={({ field }) => (
+                                                                    <FormItem className="flex items-center justify-between rounded-xl border border-border/30 px-3 py-3.5 bg-white/5 h-[60px]">
+                                                                        <FormLabel className="text-[10px] font-bold uppercase tracking-wider mb-0 cursor-pointer">Financ.</FormLabel>
+                                                                        <FormControl>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => field.onChange(!field.value)}
+                                                                                className={cn(
+                                                                                    "w-10 h-5 rounded-full transition-all duration-300 relative border border-transparent shrink-0",
+                                                                                    field.value
+                                                                                        ? "bg-primary shadow-[0_0_10px_-2px_rgba(59,130,246,0.5)]"
+                                                                                        : "bg-zinc-300 dark:bg-zinc-700 border-zinc-400/50 shadow-inner"
+                                                                                )}
+                                                                            >
+                                                                                <div className={cn(
+                                                                                    "absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-sm",
+                                                                                    field.value ? "right-0.5" : "left-0.5"
+                                                                                )} />
+                                                                            </button>
+                                                                        </FormControl>
+                                                                    </FormItem>
+                                                                )}
+                                                            />
+                                                            <FormField
+                                                                name={`units.${index}.isCondo`}
+                                                                render={({ field }) => (
+                                                                    <FormItem className="flex items-center justify-between rounded-xl border border-border/30 px-3 py-3.5 bg-white/5 h-[60px]">
+                                                                        <FormLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0 cursor-pointer">Condom.</FormLabel>
+                                                                        <FormControl>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => field.onChange(!field.value)}
+                                                                                className={cn(
+                                                                                    "w-10 h-5 rounded-full transition-all duration-300 relative border border-transparent shrink-0",
+                                                                                    field.value
+                                                                                        ? "bg-primary shadow-[0_0_10px_-2px_rgba(59,130,246,0.5)]"
+                                                                                        : "bg-zinc-300 dark:bg-zinc-700 border-zinc-400/50 shadow-inner"
+                                                                                )}
+                                                                            >
+                                                                                <div className={cn(
+                                                                                    "absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all duration-300",
+                                                                                    field.value ? "right-0.5" : "left-0.5"
+                                                                                )} />
+                                                                            </button>
+                                                                        </FormControl>
+                                                                    </FormItem>
+                                                                )}
+                                                            />
+                                                        </div>
 
-                                                    {form.watch(`units.${index}.isCondo`) && (
-                                                        <FormField
-                                                            name={`units.${index}.condoFee`}
-                                                            render={({ field }) => (
-                                                                <FormItem className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-300">
-                                                                    <FormLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Taxa Condomínio (R$)</FormLabel>
-                                                                    <FormControl>
-                                                                        <Input placeholder="Ex: 350" {...field} className="bg-white/5 border-border h-10 rounded-lg text-sm" />
-                                                                    </FormControl>
-                                                                </FormItem>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                                                            <FormField
+                                                                name={`units.${index}.downPayment`}
+                                                                render={({ field }) => (
+                                                                    <FormItem className="space-y-2">
+                                                                        <FormLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Entrada (R$)</FormLabel>
+                                                                        <FormControl>
+                                                                            <Input placeholder="Opcional" {...field} className="bg-white/5 border-border h-11 rounded-lg text-sm" />
+                                                                        </FormControl>
+                                                                    </FormItem>
+                                                                )}
+                                                            />
+                                                            {form.watch(`units.${index}.isCondo`) && (
+                                                                <FormField
+                                                                    name={`units.${index}.condoFee`}
+                                                                    render={({ field }) => (
+                                                                        <FormItem className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                                                                            <FormLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Taxa Condomínio (R$)</FormLabel>
+                                                                            <FormControl>
+                                                                                <Input placeholder="Ex: 350" {...field} className="bg-white/5 border-border h-11 rounded-lg text-sm" />
+                                                                            </FormControl>
+                                                                        </FormItem>
+                                                                    )}
+                                                                />
                                                             )}
-                                                        />
-                                                    )}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}

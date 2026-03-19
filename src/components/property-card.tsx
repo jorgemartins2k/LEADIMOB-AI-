@@ -7,6 +7,7 @@ import { Home, MapPin, Minimize2, Bed, Car, Trash2, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { deleteProperty } from "@/lib/actions/properties";
 import { toast } from "sonner";
+import Link from "next/link";
 
 interface PropertyCardProps {
     property: {
@@ -95,9 +96,11 @@ export function PropertyCard({ property }: PropertyCardProps) {
             </CardContent>
 
             <CardFooter className="p-4 pt-0 flex justify-between gap-2">
-                <Button variant="outline" size="sm" className="flex-1 border-border bg-card hover:bg-muted hover:text-primary transition-all text-xs font-bold uppercase tracking-wider rounded-xl">
-                    <Edit className="h-3.5 w-3.5 mr-2" /> Editar
-                </Button>
+                <Link href={`/imoveis/${property.id}/editar`} className="flex-1">
+                    <Button variant="outline" size="sm" className="w-full border-border bg-card hover:bg-muted hover:text-primary transition-all text-xs font-bold uppercase tracking-wider rounded-xl">
+                        <Edit className="h-3.5 w-3.5 mr-2" /> Editar
+                    </Button>
+                </Link>
                 <Button
                     variant="ghost"
                     size="icon"
