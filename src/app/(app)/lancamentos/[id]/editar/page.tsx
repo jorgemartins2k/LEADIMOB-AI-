@@ -135,7 +135,7 @@ export default function EditLaunchPage() {
                         bathrooms: u.bathrooms ? String(u.bathrooms) : "",
                         parkingSpots: u.parkingSpots ? String(u.parkingSpots) : "",
                         targetAudience: u.targetAudience || []
-                    })) : [{ name: "", areaSqm: "", bedrooms: "", bathrooms: "", parkingSpots: "", price: "", photo: "", minhaCasaMinhaVida: false, allowsFinancing: false, downPayment: "", condoFee: "", isCondo: false, targetAudience: [] }],
+                    })) : [],
                 });
             } else {
                 toast.error("Lançamento não encontrado");
