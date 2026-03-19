@@ -99,7 +99,7 @@ export default function NewLaunchPage() {
             targetAudience: [],
             status: "pre_launch",
             photos: [],
-            units: [{ name: "", areaSqm: "", bedrooms: "", bathrooms: "", parkingSpots: "", price: "", photo: "", minhaCasaMinhaVida: false, allowsFinancing: false, downPayment: "", condoFee: "", isCondo: false, targetAudience: [] }],
+            units: [],
         },
     });
 
