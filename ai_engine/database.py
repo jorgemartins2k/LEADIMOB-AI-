@@ -26,17 +26,43 @@ class Database:
 
     def get_broker_data(self, user_id: str) -> Optional[Dict[str, Any]]:
         """
-        Busca o perfil completo de um corretor específico
+        Busca o perfil completo de um corretor específico, incluindo o Foco Diário validado
         """
-        response = self.supabase.table("users").select("name, whatsapp, creci, real_estate_agency, presentation").eq("id", user_id).limit(1).execute()
+        response = self.supabase.table("users").select("name, whatsapp, creci, real_estate_agency, presentation, daily_focus, daily_focus_date").eq("id", user_id).limit(1).execute()
         if response.data:
             broker: Dict[str, Any] = response.data[0]
+            
+            valid_focus = None
+            daily_focus = broker.get('daily_focus')
+            focus_date = broker.get('daily_focus_date')
+            
+            if daily_focus and focus_date:
+                try:
+                    from datetime import datetime
+                    import pytz # pyre-ignore
+                    tz = pytz.timezone('America/Sao_Paulo')
+                    now = datetime.now(tz)
+                    today_str = now.strftime('%Y-%m-%d')
+                    
+                    if focus_date == today_str:
+                        # Verifica o expediente
+                        js_day = (now.weekday() + 1) % 7
+                        schedule_resp = self.supabase.table("work_schedules").select("end_time").eq("user_id", user_id).eq("day_of_week", js_day).limit(1).execute()
+                        if schedule_resp.data:
+                            end_time_str = schedule_resp.data[0]['end_time']
+                            current_time_str = now.strftime('%H:%M:%S')
+                            if current_time_str <= end_time_str:
+                                valid_focus = daily_focus
+                except Exception as e:
+                    print("Erro ao validar daily focus:", e)
+
             return {
                 "broker_name": broker.get('name', 'Corretor'),
                 "broker_whatsapp": broker.get('whatsapp', ''),
                 "broker_creci": broker.get('creci', 'Não informado'),
                 "broker_agency": broker.get('real_estate_agency', 'Autônomo'),
                 "broker_presentation": broker.get('presentation', ''),
+                "daily_focus": valid_focus,
                 "user_id": user_id
             }
         return None

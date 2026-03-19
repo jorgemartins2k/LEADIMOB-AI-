@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { LeadImportModal } from './lead-import-modal';
 import { getLeads, deleteLead, checkBusinessStatus, cleanupLeads, processAutomation, getLeadLimitServerAction } from '@/lib/actions/leads';
+import { DailyFocusCard } from '@/components/dashboard/daily-focus-card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
@@ -186,6 +187,9 @@ export function LeadsView() {
                     </Button>
                 </div>
             </div>
+
+            {/* Daily Focus Feature */}
+            <DailyFocusCard />
 
             {/* Daily Progress */}
             <div className="card-premium p-6 sm:p-10 md:p-12 relative overflow-hidden group">

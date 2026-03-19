@@ -20,6 +20,8 @@ export const users = pgTable('users', {
     hotLeadAlert: boolean('hot_lead_alert').default(true),
     browserPush: boolean('browser_push').default(false),
     weeklyPerformance: boolean('weekly_performance').default(true),
+    dailyFocus: text('daily_focus'),
+    dailyFocusDate: date('daily_focus_date'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
