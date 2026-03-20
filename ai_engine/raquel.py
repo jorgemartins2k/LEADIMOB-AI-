@@ -307,6 +307,7 @@ class RaquelAgent:
     def send_to_zapi(self, phone: str, content: str) -> None:
         instance_id: Optional[str] = os.getenv("ZAPI_INSTANCE_ID")
         token: Optional[str] = os.getenv("ZAPI_TOKEN")
+        client_token: Optional[str] = os.getenv("ZAPI_CLIENT_TOKEN")
         
         if not instance_id or not token:
             print("⚠️ ERRO: ZAPI_INSTANCE_ID ou ZAPI_TOKEN ausentes no ambiente.")
@@ -315,7 +316,10 @@ class RaquelAgent:
         url: str = f"https://api.z-api.io/instances/{instance_id}/token/{token}/send-text"
         
         payload: Dict[str, str] = {"phone": phone, "message": content}
-        headers: Dict[str, str] = {"Content-Type": "application/json"}
+        headers: Dict[str, str] = {
+            "Content-Type": "application/json",
+            "Client-Token": client_token or ""
+        }
         
         try:
             response: requests.Response = requests.post(url, json=payload, headers=headers)
@@ -327,6 +331,7 @@ class RaquelAgent:
     def send_image_to_zapi(self, phone: str, image_url: str) -> None:
         instance_id: Optional[str] = os.getenv("ZAPI_INSTANCE_ID")
         token: Optional[str] = os.getenv("ZAPI_TOKEN")
+        client_token: Optional[str] = os.getenv("ZAPI_CLIENT_TOKEN")
         
         if not instance_id or not token:
             print("⚠️ ERRO: ZAPI_INSTANCE_ID ou ZAPI_TOKEN ausentes no ambiente.")
@@ -335,7 +340,10 @@ class RaquelAgent:
         url: str = f"https://api.z-api.io/instances/{instance_id}/token/{token}/send-image"
         
         payload: Dict[str, str] = {"phone": phone, "image": image_url}
-        headers: Dict[str, str] = {"Content-Type": "application/json"}
+        headers: Dict[str, str] = {
+            "Content-Type": "application/json",
+            "Client-Token": client_token or ""
+        }
         
         try:
             response: requests.Response = requests.post(url, json=payload, headers=headers)
