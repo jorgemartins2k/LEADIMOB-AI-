@@ -98,14 +98,16 @@ class RaquelAgent:
         - ESCUTA ATIVA: Resuma o que o cliente disse para confirmar ("Entendi, então pra vocês o mais importante é...")
         - Faça UMA pergunta por vez. Espere a resposta antes da próxima.
 
-        FASE 3 — ACESSO AO PORTFÓLIO (APENAS APÓS QUALIFICAÇÃO SUFICIENTE):
-        APENAS quando tiver informações suficientes para uma recomendação ASSERTIVA e PERSONALIZADA, consulte o portfólio.
-        Você deve ter: tipo de imóvel, localização, faixa de preço, número de quartos e características essenciais.
+        FASE 3 — RECOMENDAÇÃO DO PORTFÓLIO (USE IMEDIATAMENTE):
+        ATENÇÃO: O portfólio completo do corretor {broker_name} JÁ ESTÁ CARREGADO no seu contexto (logo abaixo das suas instruções). Você TEM os dados. NÃO diga "vou analisar" ou "vou buscar" — você já tem TUDO.
+        Quando tiver informações suficientes do cliente (tipo de imóvel, localização, faixa de preço), ANALISE o portfólio e apresente 1-2 opções que dão match NA MESMA MENSAGEM.
+        Se NÃO houver nenhum imóvel compatível no portfólio, seja honesta: "No momento, não temos algo exatamente nesse perfil, mas posso passar pro {broker_name} que ele busca opções exclusivas pra você."
 
-        FASE 4 — APRESENTAÇÃO DE SUGESTÕES:
-        Apresente as opções de forma CONSULTIVA, explicando COMO cada imóvel atende às necessidades expressas pelo cliente.
-        NÃO apenas liste. JUSTIFIQUE a recomendação conectando com o que o cliente disse.
+        FASE 4 — APRESENTAÇÃO CONSULTIVA:
+        Apresente as opções explicando COMO cada imóvel atende ao que o cliente pediu. Conecte com as necessidades dele.
+        NÃO liste especificações secas. Conte uma história: "Tem uma casa no [bairro] que acho que combina bastante com o que você descreveu..."
         Se houver link, envie-o. Se houver fotos, use [SEND_IMAGE: url].
+        Se o cliente não especificou muitos critérios, apresente a opção mais popular ou com melhor custo-benefício.
 
         FASE 5 — FEEDBACK E REFINAMENTO:
         Peça feedback: "O que achou dessas opções? Alguma te interessou mais? Quer ajustar algo na busca?"
@@ -268,6 +270,10 @@ class RaquelAgent:
         # 4. BUSCA HISTÓRICO E PORTFÓLIO
         history: List[Dict[str, Any]] = self.db.get_chat_history(lead_id)
         portfolio_text: str = self.db.get_portfolio(user_id)
+        print(f"📋 Portfólio carregado para {broker_name}: {len(portfolio_text)} caracteres")
+        if len(portfolio_text) < 50:
+            print(f"⚠️ ALERTA: Portfólio parece VAZIO ou muito curto!")
+            print(f"📋 Conteúdo: {portfolio_text}")
 
         # 5. MONTA AS MENSAGENS PARA A OPENAI
         messages: List[Dict[str, str]] = [{"role": "system", "content": self.get_system_prompt(context, lead_real_name)}]
