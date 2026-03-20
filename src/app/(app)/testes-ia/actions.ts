@@ -37,12 +37,12 @@ export async function createImmediateTestLead(data: z.infer<typeof testSchema>) 
         // 2. INSERT LEAD DIRECTLY IGNORING LIMITS AND QUARANTINE
         const [newLead] = await db.insert(leads).values({
             userId: user.id,
-            name: validated.name + " (TESTE IA)",
+            name: validated.name,
             phone: formattedPhone,
-            source: "test_environment",
+            source: validated.source || "indicacao",
             temperature: validated.temperature || "quente",
-            notes: validated.notes || "TESTE IMEDIATO IA",
-            status: "waiting", // Required for logic, but we will advance it immediately
+            notes: validated.notes || "",
+            status: "waiting",
             scheduledDate: new Date().toISOString().split('T')[0],
         }).returning({ id: leads.id });
 
