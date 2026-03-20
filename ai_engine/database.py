@@ -10,7 +10,11 @@ class Database:
     def __init__(self) -> None:
         url: Optional[str] = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
         key: Optional[str] = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        db_url: Optional[str] = os.getenv("DATABASE_URL") or os.getenv("URL_DO_BANCO_DE_DADOS")
         
+        if not db_url:
+            print("⚠️ ERRO: DATABASE_URL ou URL_DO_BANCO_DE_DADOS ausente do ambiente.")
+
         if not url or not key:
             print(f"❌ ERRO CRÍTICO: Variáveis do Supabase ausentes! URL: {'OK' if url else 'FALTANDO'}, KEY: {'OK' if key else 'FALTANDO'}")
             raise RuntimeError("Variáveis do Supabase ausentes no Railway.")
