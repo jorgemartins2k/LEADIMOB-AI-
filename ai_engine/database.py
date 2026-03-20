@@ -71,13 +71,33 @@ class Database:
             }
         return None
 
+    def get_lead_by_phone(self, phone: str) -> Optional[Dict[str, Any]]:
+        """
+        Busca um lead pelo telefone, considerando a variação do nono dígito para números brasileiros.
+        """
+        try:
+            # Tolerância para o nono dígito do Brasil (Ex: 553499789 vs 55349789)
+            phone_variants = [phone]
+            if phone.startswith("55") and len(phone) == 13: # Com o 9 (Ex: 55 34 9 97894822)
+                phone_variants.append(phone[:4] + phone[5:]) # Remove o 9
+            elif phone.startswith("55") and len(phone) == 12: # Sem o 9 (Ex: 55 34 97894822)
+                phone_variants.append(phone[:4] + "9" + phone[4:]) # Adiciona o 9
+                
+            response = self.supabase.table("leads").select("*").in_("phone", phone_variants).execute()
+            leads = response.data
+            if leads:
+                return leads[0]
+            return None
+        except Exception as e:
+            print(f"Erro ao buscar lead por telefone: {e}")
+            return None
+
     def get_broker_by_lead_phone(self, phone: str) -> Optional[Dict[str, Any]]:
         """
         Busca o corretor associado a um lead via telefone com perfil completo e notas do lead
         """
-        response = self.supabase.table("leads").select("user_id, name, notes").eq("phone", phone).limit(1).execute()
-        if response.data:
-            lead: Dict[str, Any] = response.data[0]
+        lead = self.get_lead_by_phone(phone)
+        if lead:
             broker_data = self.get_broker_data(lead['user_id'])
             if broker_data:
                 broker_data["lead_name"] = lead.get('name', 'Cliente')
