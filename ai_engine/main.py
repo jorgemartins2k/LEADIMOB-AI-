@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request # pyre-ignore
+from fastapi import FastAPI, Request, BackgroundTasks # pyre-ignore
 from typing import Dict, Any, Optional
 import uvicorn # pyre-ignore
 import os
@@ -26,7 +26,7 @@ def home() -> Dict[str, str]:
     return {"status": "online", "agent": "Raquel", "scheduler": "active"}
 
 @app.post("/webhook/zapi")
-async def handle_zapi_webhook(request: Request) -> Dict[str, str]:
+async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTasks) -> Dict[str, str]:
     """
     Recebe mensagens do WhatsApp via Z-API
     """
@@ -61,7 +61,7 @@ async def handle_zapi_webhook(request: Request) -> Dict[str, str]:
 
         if message_text or is_audio:
             print(f"📩 Mensagem ({message_type}) recebida de {sender_name} ({phone_str})")
-            raquel.process_message(phone_str, str(message_text or ""), sender_name, is_audio=is_audio, audio_url=audio_url)
+            background_tasks.add_task(raquel.process_message, phone_str, str(message_text or ""), sender_name, is_audio=is_audio, audio_url=audio_url)
             return {"status": "processed"}
         
         print(f"ℹ️ Webhook recebido mas ignorado (tipo: {message_type}) de {phone}")
