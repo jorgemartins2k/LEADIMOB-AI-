@@ -243,9 +243,9 @@ class RaquelAgent:
             return "Desculpe, tive um problema técnico momentâneo."
 
         # 7. SALVA NO BANCO 
-        if lead_id:
-            self.db.save_message(lead_id, "user", message)
-            self.db.save_message(lead_id, "assistant", reply_content)
+        if lead_id and user_id:
+            self.db.save_message(lead_id, user_id, "user", message)
+            self.db.save_message(lead_id, user_id, "assistant", reply_content)
 
         import re
         images_to_send = re.findall(r'\[SEND_IMAGE:\s*(.*?)\]', reply_content)

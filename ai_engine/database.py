@@ -113,7 +113,7 @@ class Database:
         response = self.supabase.table("conversations")\
             .select("role, content")\
             .eq("lead_id", lead_id)\
-            .order("created_at", desc=True)\
+            .order("sent_at", desc=True)\
             .limit(limit)\
             .execute()
         
@@ -165,13 +165,14 @@ class Database:
             .execute()
         return response.data if response.data else []
 
-    def save_message(self, lead_id: str, role: str, content: str) -> None:
+    def save_message(self, lead_id: str, user_id: str, role: str, content: str) -> None:
         """
         Salva uma nova mensagem e atualiza o timestamp do lead
         """
-        if not lead_id: return
+        if not lead_id or not user_id: return
         self.supabase.table("conversations").insert({
             "lead_id": lead_id,
+            "user_id": user_id,
             "role": role,
             "content": content
         }).execute()
