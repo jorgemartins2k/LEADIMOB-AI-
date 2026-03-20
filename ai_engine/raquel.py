@@ -206,6 +206,7 @@ class RaquelAgent:
             return "Lead não encontrado no banco."
 
         user_id: str = context.get('user_id', '')
+        lead_id: str = context.get('lead_id', '')
         lead_real_name: str = context.get('lead_name', 'Cliente')
         broker_name: str = context.get('broker_name', 'Corretor')
 
@@ -218,7 +219,7 @@ class RaquelAgent:
         schedule = self.db.get_broker_schedule(user_id)
 
         # 4. BUSCA HISTÓRICO E PORTFÓLIO
-        history: List[Dict[str, Any]] = self.db.get_chat_history(phone)
+        history: List[Dict[str, Any]] = self.db.get_chat_history(lead_id)
         portfolio_text: str = self.db.get_portfolio(user_id)
 
         # 5. MONTA AS MENSAGENS PARA A OPENAI
@@ -242,8 +243,9 @@ class RaquelAgent:
             return "Desculpe, tive um problema técnico momentâneo."
 
         # 7. SALVA NO BANCO 
-        self.db.save_message(phone, "user", message)
-        self.db.save_message(phone, "assistant", reply_content)
+        if lead_id:
+            self.db.save_message(lead_id, "user", message)
+            self.db.save_message(lead_id, "assistant", reply_content)
 
         import re
         images_to_send = re.findall(r'\[SEND_IMAGE:\s*(.*?)\]', reply_content)

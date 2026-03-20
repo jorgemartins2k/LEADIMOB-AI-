@@ -100,18 +100,19 @@ class Database:
         if lead:
             broker_data = self.get_broker_data(lead['user_id'])
             if broker_data:
+                broker_data["lead_id"] = lead.get('id')
                 broker_data["lead_name"] = lead.get('name', 'Cliente')
                 broker_data["lead_notes"] = lead.get('notes', '')
                 return broker_data
         return None
 
-    def get_chat_history(self, phone: str, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_chat_history(self, lead_id: str, limit: int = 10) -> List[Dict[str, Any]]:
         """
         Busca o histórico de conversas do lead
         """
         response = self.supabase.table("conversations")\
             .select("role, content")\
-            .eq("phone", phone)\
+            .eq("lead_id", lead_id)\
             .order("created_at", desc=True)\
             .limit(limit)\
             .execute()
@@ -164,18 +165,19 @@ class Database:
             .execute()
         return response.data if response.data else []
 
-    def save_message(self, phone: str, role: str, content: str) -> None:
+    def save_message(self, lead_id: str, role: str, content: str) -> None:
         """
         Salva uma nova mensagem e atualiza o timestamp do lead
         """
+        if not lead_id: return
         self.supabase.table("conversations").insert({
-            "phone": phone,
+            "lead_id": lead_id,
             "role": role,
             "content": content
         }).execute()
         
         # Atualiza o lead para que o follow-up saibam que houve interação
-        self.supabase.table("leads").update({"updated_at": "now()"}).eq("phone", phone).execute()
+        self.supabase.table("leads").update({"updated_at": "now()"}).eq("id", lead_id).execute()
 
     def confirm_hot_lead(self, broker_phone: str) -> bool:
         """
