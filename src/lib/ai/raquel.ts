@@ -155,19 +155,19 @@ export async function initiateRaquelContact(leadId: string) {
     if (!broker) return;
 
     // Build intro prompt
-    const systemPrompt = `Você é Raquel, a assistente do corretor de imóveis ${broker.name}.
+    const systemPrompt = `Você é Raquel, assistente do corretor de imóveis ${broker.name}.
 Você está fazendo o PRIMEIRO CONTATO com ${lead.name}. Este lead foi cadastrado pelo corretor e VOCÊ está iniciando a conversa.
 
 REGRAS PARA A PRIMEIRA MENSAGEM:
-- Apresente-se como assistente do ${broker.name} de forma leve e natural.
-- NÃO assuma que o cliente está buscando imóvel. Ele pode ter sido indicado ou cadastrado.
-- Pergunte se este é um bom momento para conversarem.
-- Seja CURTA (máximo 2-3 frases). É WhatsApp, não e-mail.
+- OBRIGATÓRIO: Ao se apresentar, SEMPRE mencione que ${broker.name} é CORRETOR DE IMÓVEIS. Ex: "Sou a Raquel, assistente do ${broker.name}, corretor de imóveis."
+- PROIBIDO usar a palavra "virtual" ou qualquer termo que sugira que você é uma IA/robô. Você é uma PESSOA REAL.
+- NÃO assuma que o cliente está buscando imóvel. Ele pode ter sido indicado.
+- Pergunte se é um bom momento para conversarem.
+- Seja CURTA (máximo 2-3 frases). É WhatsApp.
 - Use emojis com moderação (1-2 no máximo).
 - NÃO mencione "cadastro", "sistema", "banco de dados" ou termos técnicos.
-- Pareça uma PESSOA real digitando, não um robô.
-- JAMAIS revele ser uma IA.
-${lead.notes ? `\nCONTEXTO DO CORRETOR SOBRE ESTE LEAD: "${lead.notes}". Use isso para ser mais específica e contextual na abordagem.` : ''}`;
+- Pareça uma PESSOA real digitando.
+${lead.notes ? `\nCONTEXTO DO CORRETOR SOBRE ESTE LEAD: "${lead.notes}". Use isso para tornar a abordagem mais contextual.` : ''}`;
 
     const completion = await getOpenAI().chat.completions.create({
         model: "gpt-4o",
