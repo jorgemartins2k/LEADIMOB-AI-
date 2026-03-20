@@ -48,7 +48,11 @@ export async function createImmediateTestLead(data: z.infer<typeof testSchema>) 
 
         // 3. FORCE IMMEDIATE AI CONTACT IGNORING BUSINESS HOURS
         console.log(`[TESTE IA] Iniciando contato imediato para o lead teste ${newLead.id}...`);
-        await initiateRaquelContact(newLead.id);
+        const aiResult = await initiateRaquelContact(newLead.id);
+
+        if (aiResult && !aiResult.success) {
+            throw new Error(`Z-API falhou ao enviar: ${JSON.stringify(aiResult.error)}`);
+        }
 
         // 4. Update status to active as if scheduler did it
         await db.update(leads)

@@ -186,5 +186,6 @@ DIRETRIZES:
     });
 
     // Send via Z-API
-    await sendWhatsAppMessage({ phone: lead.phone, message: reply });
+    const res = await sendWhatsAppMessage({ phone: lead.phone, message: reply });
+    return res;
 }
