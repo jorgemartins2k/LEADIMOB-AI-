@@ -13,7 +13,7 @@ interface SendTextMessageParams {
 export async function sendWhatsAppMessage({ phone, message }: SendTextMessageParams) {
     const instanceId = process.env.ZAPI_INSTANCE_ID;
     const token = process.env.ZAPI_TOKEN;
-    const clientToken = process.env.ZAPI_CLIENT_TOKEN;
+    const clientToken = process.env.ZAPI_CLIENT_TOKEN || "Fda343e96334040afb68f54effe118108S";
 
     if (!instanceId || !token) {
         console.error("Z-API credentials not configured");
@@ -27,7 +27,7 @@ export async function sendWhatsAppMessage({ phone, message }: SendTextMessagePar
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                ...(clientToken ? { "client-token": clientToken } : {})
+                "Client-Token": clientToken,
             },
             body: JSON.stringify({
                 phone: phone,

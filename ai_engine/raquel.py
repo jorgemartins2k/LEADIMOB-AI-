@@ -307,7 +307,7 @@ class RaquelAgent:
     def send_to_zapi(self, phone: str, content: str) -> None:
         instance_id: Optional[str] = os.getenv("ZAPI_INSTANCE_ID")
         token: Optional[str] = os.getenv("ZAPI_TOKEN")
-        client_token: Optional[str] = os.getenv("ZAPI_CLIENT_TOKEN")
+        client_token: str = os.getenv("ZAPI_CLIENT_TOKEN", "Fda343e96334040afb68f54effe118108S")
         
         if not instance_id or not token:
             print("⚠️ ERRO: ZAPI_INSTANCE_ID ou ZAPI_TOKEN ausentes no ambiente.")
