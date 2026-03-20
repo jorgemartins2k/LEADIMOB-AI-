@@ -79,9 +79,9 @@ class Database:
             # Tolerância para o nono dígito do Brasil (Ex: 553499789 vs 55349789)
             phone_variants = [phone]
             if phone.startswith("55") and len(phone) == 13: # Com o 9 (Ex: 55 34 9 97894822)
-                phone_variants.append(phone[:4] + phone[5:]) # Remove o 9
+                phone_variants.append(phone[:4] + phone[5:]) # pyre-ignore
             elif phone.startswith("55") and len(phone) == 12: # Sem o 9 (Ex: 55 34 97894822)
-                phone_variants.append(phone[:4] + "9" + phone[4:]) # Adiciona o 9
+                phone_variants.append(phone[:4] + "9" + phone[4:]) # pyre-ignore
                 
             response = self.supabase.table("leads").select("*").in_("phone", phone_variants).execute()
             leads = response.data
