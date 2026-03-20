@@ -43,6 +43,7 @@ import { getPropertyById, updateProperty } from "@/lib/actions/properties";
 
 const propertySchema = z.object({
     title: z.string().min(5, "O título deve ter pelo menos 5 caracteres"),
+    description: z.string().optional(),
     websiteUrl: z.string().optional(),
     type: z.enum(["apartamento", "casa", "terreno", "comercial"]),
     city: z.string().min(2, "Informe a cidade"),
@@ -77,6 +78,7 @@ export default function EditPropertyPage() {
         resolver: zodResolver(propertySchema),
         defaultValues: {
             title: "",
+            description: "",
             websiteUrl: "",
             type: "casa",
             city: "",
@@ -106,6 +108,7 @@ export default function EditPropertyPage() {
             if (data) {
                 form.reset({
                     title: data.title || "",
+                    description: data.description || "",
                     websiteUrl: data.websiteUrl || "",
                     type: (data.type as any) || "casa",
                     city: data.city || "",
@@ -221,6 +224,26 @@ export default function EditPropertyPage() {
                                                     placeholder="Ex: Apartamento 3 quartos - Centro"
                                                     {...field}
                                                     className="bg-muted/10 border-border/40 h-12 sm:h-14 rounded-xl sm:rounded-2xl px-4 sm:px-6 font-bold text-sm sm:text-base focus-visible:ring-accent/20 transition-all placeholder:opacity-30"
+                                                />
+                                            </FormControl>
+                                            <FormMessage className="text-[10px] font-bold uppercase" />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    name="description"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-3">
+                                            <div className="flex items-center gap-2 ml-1">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                                                <FormLabel className="text-[10px] sm:text-sm font-black uppercase tracking-widest text-foreground opacity-70">Descrição Detalhada (Essencial para a IA)</FormLabel>
+                                            </div>
+                                            <FormControl>
+                                                <textarea
+                                                    placeholder="Descreva detalhes que a IA deve usar para convencer o cliente..."
+                                                    {...field}
+                                                    className="bg-muted/10 border-border/40 min-h-[120px] w-full rounded-xl sm:rounded-2xl px-4 sm:px-6 py-4 font-bold text-sm sm:text-base focus-visible:ring-accent/20 transition-all placeholder:opacity-30 resize-none"
                                                 />
                                             </FormControl>
                                             <FormMessage className="text-[10px] font-bold uppercase" />

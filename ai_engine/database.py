@@ -242,7 +242,7 @@ class Database:
             .execute()
         
         launches_resp = self.supabase.table("launches")\
-            .select("name, description, price_from, city, neighborhood, standard, target_audience, website_url, photos")\
+            .select("name, description, price_from, city, neighborhood, standard, target_audience, website_url, photos, launch_units:launch_units(name, area_sqm, bedrooms, bathrooms, parking_spots, price, minha_casa_minha_vida, allows_financing, down_payment, condo_fee, is_condo, target_audience)")\
             .eq("user_id", user_id)\
             .execute()
 
@@ -290,6 +290,14 @@ class Database:
                 photos = l.get('photos', [])
                 if photos: item.append(f"Fotos: {photos}")
                 
+                units = l.get('launch_units', [])
+                if units:
+                    item.append("UNIDADES/PLANTAS DISPONÍVEIS:")
+                    for u in units:
+                        u_info = f"- {u.get('name', 'Planta')}: {u.get('area_sqm', '')}m², {u.get('bedrooms', 0)} dorms, R$ {u.get('price', 'Sob consulta')}"
+                        if u.get('minha_casa_minha_vida'): u_info += " (MCMV)"
+                        item.append(u_info)
+
                 portfolio_parts.append("\n".join(item) + "\n\n")
         if events_resp.data:
             portfolio_parts.append("--- EVENTOS E LANÇAMENTOS PRÓXIMOS ---\n")

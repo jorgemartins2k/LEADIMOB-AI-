@@ -43,6 +43,7 @@ import { createProperty } from "@/lib/actions/properties";
 
 const propertySchema = z.object({
     title: z.string().min(5, "O título deve ter pelo menos 5 caracteres"),
+    description: z.string().optional(),
     websiteUrl: z.string().optional(),
     type: z.enum(["apartamento", "casa", "terreno", "comercial"]),
     city: z.string().min(2, "Informe a cidade"),
@@ -74,6 +75,7 @@ export default function NewPropertyPage() {
         resolver: zodResolver(propertySchema),
         defaultValues: {
             title: "",
+            description: "",
             websiteUrl: "",
             type: "casa",
             city: "",
