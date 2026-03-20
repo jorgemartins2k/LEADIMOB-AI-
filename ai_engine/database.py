@@ -236,7 +236,7 @@ class Database:
         Busca o portfólio completo do corretor (Imóveis e Lançamentos) formatado para o prompt
         """
         props_resp = self.supabase.table("properties")\
-            .select("title, description, price, type, city, neighborhood, standard, target_audience, website_url, photos")\
+            .select("title, description, price, type, city, neighborhood, standard, target_audience, website_url, photos, bedrooms, bathrooms, parking_spots, area_sqm, allows_financing, minha_casa_minha_vida")\
             .eq("user_id", user_id)\
             .eq("status", "available")\
             .execute()
@@ -261,7 +261,13 @@ class Database:
                     f"Tipo: {p.get('type', 'Indefinido')}",
                     f"Preço: R$ {p.get('price', 'Sob consulta')}",
                     f"Local: {p.get('neighborhood', '')}, {p.get('city', '')}",
+                    f"Quartos: {p.get('bedrooms', 'N/I')}",
+                    f"Banheiros: {p.get('bathrooms', 'N/I')}",
+                    f"Vagas: {p.get('parking_spots', 'N/I')}",
+                    f"Área: {p.get('area_sqm', 'N/I')}m²",
                     f"Padrão: {p.get('standard', '')}",
+                    f"Aceita Financiamento: {'Sim' if p.get('allows_financing') else 'Não'}",
+                    f"MCMV: {'Sim' if p.get('minha_casa_minha_vida') else 'Não'}",
                     f"Descrição: {p.get('description', 'Sem descrição')}",
                     f"Público-alvo: {p.get('target_audience', [])}"
                 ]
