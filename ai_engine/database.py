@@ -246,25 +246,63 @@ class Database:
             .eq("user_id", user_id)\
             .execute()
 
+        events_resp = self.supabase.table("events")\
+            .select("name, event_date, event_time, location, description, standard, target_audience")\
+            .eq("user_id", user_id)\
+            .execute()
+
         portfolio_parts: List[str] = []
         
         if props_resp.data:
             portfolio_parts.append("--- IMÓVEIS PRONTOS ---\n")
             for p in props_resp.data:
+                item = [
+                    f"Título: {p.get('title', 'Sem título')}",
+                    f"Tipo: {p.get('type', 'Indefinido')}",
+                    f"Preço: R$ {p.get('price', 'Sob consulta')}",
+                    f"Local: {p.get('neighborhood', '')}, {p.get('city', '')}",
+                    f"Padrão: {p.get('standard', '')}",
+                    f"Descrição: {p.get('description', 'Sem descrição')}",
+                    f"Público-alvo: {p.get('target_audience', [])}"
+                ]
                 url = p.get('website_url')
-                if url:
-                    portfolio_parts.append(f"Título: {p.get('title', 'Sem título')}\nLink do Imóvel: {url}\nTipo: {p.get('type', 'Indefinido')}\nPreço: R$ {p.get('price', 'Sob consulta')}\nLocal: {p.get('neighborhood', '')}, {p.get('city', '')}\nPúblico-alvo: {p.get('target_audience', [])}\n\n")
-                else:
-                    portfolio_parts.append(f"Título: {p.get('title', 'Sem título')}\nTipo: {p.get('type', 'Indefinido')}\nPreço: R$ {p.get('price', 'Sob consulta')}\nLocal: {p.get('neighborhood', '')}, {p.get('city', '')}\nPadrão: {p.get('standard', '')}\nDescrição: {p.get('description', 'Sem descrição')}\nPúblico-alvo: {p.get('target_audience', [])}\nFotos: {p.get('photos', [])}\n\n")
+                if url: item.append(f"Link do Imóvel: {url}")
+                
+                photos = p.get('photos', [])
+                if photos: item.append(f"Fotos: {photos}")
+                
+                portfolio_parts.append("\n".join(item) + "\n\n")
 
         if launches_resp.data:
             portfolio_parts.append("--- LANÇAMENTOS ---\n")
             for l in launches_resp.data:
+                item = [
+                    f"Nome: {l.get('name', 'Sem nome')}",
+                    f"Preço a partir: R$ {l.get('price_from', 'Sob consulta')}",
+                    f"Local: {l.get('neighborhood', '')}, {l.get('city', '')}",
+                    f"Padrão: {l.get('standard', '')}",
+                    f"Descrição: {l.get('description', 'Sem descrição')}",
+                    f"Público-alvo: {l.get('target_audience', [])}"
+                ]
                 url = l.get('website_url')
-                if url:
-                    portfolio_parts.append(f"Nome: {l.get('name', 'Sem nome')}\nLink do Empreendimento: {url}\nPreço a partir: R$ {l.get('price_from', 'Sob consulta')}\nLocal: {l.get('neighborhood', '')}, {l.get('city', '')}\nPúblico-alvo: {l.get('target_audience', [])}\n\n")
-                else:
-                    portfolio_parts.append(f"Nome: {l.get('name', 'Sem nome')}\nPreço a partir: R$ {l.get('price_from', 'Sob consulta')}\nLocal: {l.get('neighborhood', '')}, {l.get('city', '')}\nPadrão: {l.get('standard', '')}\nDescrição: {l.get('description', 'Sem descrição')}\nPúblico-alvo: {l.get('target_audience', [])}\nFotos: {l.get('photos', [])}\n\n")
+                if url: item.append(f"Link do Empreendimento: {url}")
+                
+                photos = l.get('photos', [])
+                if photos: item.append(f"Fotos: {photos}")
+                
+                portfolio_parts.append("\n".join(item) + "\n\n")
+        if events_resp.data:
+            portfolio_parts.append("--- EVENTOS E LANÇAMENTOS PRÓXIMOS ---\n")
+            for e in events_resp.data:
+                item = [
+                    f"Evento: {e.get('name', 'Sem nome')}",
+                    f"Data: {e.get('event_date', '')} às {e.get('event_time', '')}",
+                    f"Local: {e.get('location', 'Não informado')}",
+                    f"Padrão: {e.get('standard', '')}",
+                    f"Descrição: {e.get('description', 'Sem descrição')}",
+                    f"Público-alvo: {e.get('target_audience', [])}"
+                ]
+                portfolio_parts.append("\n".join(item) + "\n\n")
 
         return "".join(portfolio_parts) if portfolio_parts else "Nenhum imóvel ou lançamento cadastrado no portfólio."
 
