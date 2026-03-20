@@ -11,6 +11,7 @@ import { getOrCreateInternalUser } from "@/lib/auth-utils";
 import { initiateRaquelContact } from "@/lib/ai/raquel";
 import { isCurrentlyInBusinessHours } from "@/lib/utils/business-hours";
 import { getLeadLimitStatus } from "@/lib/utils/lead-limits";
+import { formatWhatsAppNumber } from "@/lib/utils";
 
 const leadSchema = z.object({
     name: z.string().min(2, "O nome deve ter pelo menos 2 caracteres"),
@@ -63,8 +64,10 @@ export async function createLead(data: z.infer<typeof leadSchema>) {
     }
 
     try {
+        const formattedPhone = formatWhatsAppNumber(validated.phone);
+
         // 1. Check quarantine
-        const inQuarantine = await checkQuarantine(validated.phone);
+        const inQuarantine = await checkQuarantine(formattedPhone);
         if (inQuarantine) {
             return { error: `🔒 Este número está em quarentena até ${new Date(inQuarantine.quarantineUntil!).toLocaleDateString()}. Só é possível atender o mesmo lead a cada 15 dias.` };
         }
@@ -73,7 +76,7 @@ export async function createLead(data: z.infer<typeof leadSchema>) {
         const result = await db.insert(leads).values({
             userId: user.id,
             name: validated.name,
-            phone: validated.phone,
+            phone: formattedPhone,
             source: validated.source || "manual",
             temperature: validated.temperature || "frio",
             notes: validated.notes,

@@ -7,6 +7,7 @@ import { eq, and, gte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import OpenAI from "openai";
 import { getLeadLimitStatus } from "@/lib/utils/lead-limits";
+import { formatWhatsAppNumber } from "@/lib/utils";
 
 let openaiClient: OpenAI | null = null;
 
@@ -116,7 +117,7 @@ export async function bulkInsertLeads(leadsData: { name: string; phone: string }
                 }
 
                 // Clean phone
-                const cleanPhone = leadData.phone.replace(/\D/g, '');
+                const cleanPhone = formatWhatsAppNumber(leadData.phone);
                 if (!cleanPhone || cleanPhone.length < 10) {
                     results.errors++;
                     continue;
