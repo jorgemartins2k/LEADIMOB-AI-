@@ -54,7 +54,6 @@ export default function DashboardPage() {
 
     const stats = statsData ? [
         { title: "Leads Ativos", value: statsData.leads.toString(), icon: Users, color: "text-primary", href: "/leads" },
-        { title: "Meus Imóveis", value: statsData.properties.toString(), icon: HomeIcon, color: "text-accent", href: "/imoveis" },
         { title: "Lançamentos", value: statsData.launches.toString(), icon: Megaphone, color: "text-purple", href: "/lancamentos" },
         { title: "Agenda Hoje", value: statsData.appointmentsCount.toString(), icon: Calendar, color: "text-cyan", href: "/agenda" },
     ] : [];

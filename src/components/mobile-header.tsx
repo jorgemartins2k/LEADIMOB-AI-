@@ -13,7 +13,6 @@ import { getProfile } from "@/lib/actions/profile";
 const navigation = [
     { name: "Visão Geral", href: "/dashboard", icon: LayoutDashboard },
     { name: "Leads", href: "/leads", icon: Users },
-    { name: "Imóveis", href: "/imoveis", icon: Home },
     { name: "Lançamentos", href: "/lancamentos", icon: Rocket },
     { name: "Eventos", href: "/eventos", icon: Calendar },
     { name: "Campanhas", href: "/campanhas", icon: Megaphone },

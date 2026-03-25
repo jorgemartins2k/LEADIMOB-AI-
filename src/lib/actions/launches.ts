@@ -2,7 +2,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { launches, launchUnits, users } from "@/lib/db/schema";
+import { launches, launchUnits, users, campaigns, appointments } from "@/lib/db/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -174,14 +174,34 @@ export async function updateLaunch(id: string, data: z.infer<typeof launchSchema
 }
 
 export async function deleteLaunch(id: string) {
-    const user = await getOrCreateInternalUser();
+    try {
+        const user = await getOrCreateInternalUser();
 
-    await db
-        .delete(launches)
-        .where(and(eq(launches.id, id), eq(launches.userId, user.id)));
+        // 1. Verify ownership
+        const launch = await db.query.launches.findFirst({
+            where: and(eq(launches.id, id), eq(launches.userId, user.id))
+        });
 
-    revalidatePath("/lancamentos");
-    return { success: true };
+        if (!launch) {
+            return { error: "Lançamento não encontrado ou você não tem permissão para excluí-lo." };
+        }
+
+        // 2. Remove references from related tables to prevent foreign key constraint errors
+        await db.update(campaigns).set({ launchId: null }).where(eq(campaigns.launchId, id));
+        await db.update(appointments).set({ launchId: null }).where(eq(appointments.launchId, id));
+
+        // 3. Delete all dependent launch units
+        await db.delete(launchUnits).where(eq(launchUnits.launchId, id));
+
+        // 4. Finally, delete the primary launch record
+        await db.delete(launches).where(eq(launches.id, id));
+
+        revalidatePath("/lancamentos");
+        return { success: true };
+    } catch (err: any) {
+        console.error("Error deleting launch:", err);
+        return { error: err.message || "Erro interno ao excluir lançamento." };
+    }
 }
 
 export async function getLaunchById(id: string) {

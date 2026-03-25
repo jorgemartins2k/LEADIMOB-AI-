@@ -235,12 +235,6 @@ class Database:
         """
         Busca o portfólio completo do corretor (Imóveis e Lançamentos) formatado para o prompt
         """
-        props_resp = self.supabase.table("properties")\
-            .select("title, description, price, type, city, neighborhood, standard, target_audience, website_url, photos, bedrooms, bathrooms, parking_spots, area_sqm, allows_financing, minha_casa_minha_vida")\
-            .eq("user_id", user_id)\
-            .eq("status", "available")\
-            .execute()
-        
         launches_resp = self.supabase.table("launches")\
             .select("name, description, price_from, city, neighborhood, standard, target_audience, website_url, photos, launch_units:launch_units(name, area_sqm, bedrooms, bathrooms, parking_spots, price, minha_casa_minha_vida, allows_financing, down_payment, condo_fee, is_condo, target_audience)")\
             .eq("user_id", user_id)\
@@ -253,32 +247,6 @@ class Database:
 
         portfolio_parts: List[str] = []
         
-        if props_resp.data:
-            portfolio_parts.append("--- IMÓVEIS PRONTOS ---\n")
-            for p in props_resp.data:
-                item = [
-                    f"Título: {p.get('title', 'Sem título')}",
-                    f"Tipo: {p.get('type', 'Indefinido')}",
-                    f"Preço: R$ {p.get('price', 'Sob consulta')}",
-                    f"Local: {p.get('neighborhood', '')}, {p.get('city', '')}",
-                    f"Quartos: {p.get('bedrooms', 'N/I')}",
-                    f"Banheiros: {p.get('bathrooms', 'N/I')}",
-                    f"Vagas: {p.get('parking_spots', 'N/I')}",
-                    f"Área: {p.get('area_sqm', 'N/I')}m²",
-                    f"Padrão: {p.get('standard', '')}",
-                    f"Aceita Financiamento: {'Sim' if p.get('allows_financing') else 'Não'}",
-                    f"MCMV: {'Sim' if p.get('minha_casa_minha_vida') else 'Não'}",
-                    f"Descrição: {p.get('description', 'Sem descrição')}",
-                    f"Público-alvo: {p.get('target_audience', [])}"
-                ]
-                url = p.get('website_url')
-                if url: item.append(f"Link do Imóvel: {url}")
-                
-                photos = p.get('photos', [])
-                if photos: item.append(f"Fotos: {photos}")
-                
-                portfolio_parts.append("\n".join(item) + "\n\n")
-
         if launches_resp.data:
             portfolio_parts.append("--- LANÇAMENTOS ---\n")
             for l in launches_resp.data:
@@ -318,7 +286,7 @@ class Database:
                 ]
                 portfolio_parts.append("\n".join(item) + "\n\n")
 
-        return "".join(portfolio_parts) if portfolio_parts else "Nenhum imóvel ou lançamento cadastrado no portfólio."
+        return "".join(portfolio_parts) if portfolio_parts else "Nenhum lançamento ou evento cadastrado no portfólio."
 
     def get_broker_schedule(self, user_id: str) -> List[Dict[str, Any]]:
         """

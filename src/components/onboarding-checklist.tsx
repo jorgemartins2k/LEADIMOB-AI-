@@ -13,7 +13,6 @@ const initialSteps = [
     { id: "profile", title: "Completar Perfil", description: "Adicione sua foto e nome da imobiliária.", completed: false },
     { id: "whatsapp", title: "WhatsApp de Notificações", description: "Cadastre seu número para receber alertas quando Raquel aquecer um lead.", completed: false },
     { id: "schedule", title: "Configurar Expediente", description: "Defina os horários que você quer que a Raquel trabalhe.", completed: false },
-    { id: "properties", title: "Adicionar Imóveis", description: "Cadastre seu portfólio para a Raquel oferecer aos leads.", completed: false },
 ];
 
 export function OnboardingChecklist() {
@@ -91,7 +90,7 @@ export function OnboardingChecklist() {
                                 step.id === "profile" ? "/configuracoes?tab=dados" :
                                     step.id === "whatsapp" ? "/configuracoes?tab=dados" :
                                         step.id === "schedule" ? "/configuracoes?tab=horarios" :
-                                            "/imoveis/novo"
+                                            "/"
                             }>
                                 <Button size="icon" variant="ghost" className="rounded-full shadow-sm hover:bg-primary/10 hover:text-primary">
                                     <ArrowRight className="h-5 w-5" />

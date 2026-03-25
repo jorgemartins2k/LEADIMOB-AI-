@@ -61,10 +61,10 @@ export default function LaunchesPage() {
                 setLaunches(prev => prev.filter(l => l.id !== launchToDelete.id));
                 setIsDeleteDialogOpen(false);
             } else {
-                toast.error("Erro ao excluir lançamento.");
+                toast.error(result.error || "Erro ao excluir lançamento.");
             }
-        } catch (error) {
-            toast.error("Erro ao excluir lançamento.");
+        } catch (error: any) {
+            toast.error(error.message || "Erro de rede ao excluir lançamento.");
         } finally {
             setIsDeleting(false);
         }
