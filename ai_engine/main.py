@@ -4,8 +4,12 @@ import uvicorn # pyre-ignore
 import os
 from dotenv import load_dotenv # pyre-ignore
 from contextlib import asynccontextmanager
+import asyncio
 from scheduler import start_scheduler # pyre-ignore
 from raquel import RaquelAgent # pyre-ignore
+
+# Buffer para agrupar mensagens (debouncing de 25-30s)
+message_buffers: Dict[str, Dict[str, Any]] = {}
 
 load_dotenv()
 
@@ -23,7 +27,25 @@ raquel = RaquelAgent() # pyre-ignore
 
 @app.get("/")
 def home() -> Dict[str, str]:
-    return {"status": "online", "agent": "Raquel", "scheduler": "active"}
+    return {"status": "online", "agent": "Raquel", "scheduler": "active", "debouncing": "25s"}
+
+async def process_delayed_messages(phone_str: str):
+    """
+    Aguarda o tempo estipulado e processa todas as mensagens acumuladas do lead.
+    """
+    await asyncio.sleep(25)  # Janela de espera de 25 segundos
+    
+    buffer = message_buffers.pop(phone_str, None)
+    if buffer:
+        print(f"🕒 Janela de debouncing fechada para {phone_str}. Processando grupo de mensagens...")
+        # Chamamos o processamento real da Raquel (agora assíncrono)
+        await raquel.process_message(
+            phone_str, 
+            buffer['content'], 
+            buffer['sender_name'], 
+            is_audio=buffer['is_audio'], 
+            audio_url=buffer.get('audio_url')
+        )
 
 @app.post("/webhook/zapi")
 async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTasks) -> Dict[str, str]:
@@ -55,14 +77,42 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
                 return {"status": "broker_confirmed"}
             return {"status": "ok_ignored"}
 
-        # 2. Processamento de Mensagem (Texto ou Áudio)
+        # 2. Processamento de Mensagem com Debouncing (Espera 25s)
         is_audio: bool = message_type in ["audio", "ptt"]
         audio_url: Optional[str] = data.get("audio", {}).get("url") if is_audio else None
+        incoming_text = str(message_text or "")
 
-        if message_text or is_audio:
-            print(f"📩 Mensagem ({message_type}) recebida de {sender_name} ({phone_str})")
-            background_tasks.add_task(raquel.process_message, phone_str, str(message_text or ""), sender_name, is_audio=is_audio, audio_url=audio_url)
-            return {"status": "processed"}
+        if incoming_text or is_audio:
+            print(f"📩 Mensagem recebida de {sender_name} ({phone_str}). Adicionando ao buffer...")
+            
+            # Se já houver uma tarefa de espera para este telefone, cancelamos para reiniciar o cronômetro
+            if phone_str in message_buffers:
+                old_buffer = message_buffers[phone_str]
+                if old_buffer.get('task'):
+                    old_buffer['task'].cancel()
+                
+                # Acumula o conteúdo
+                new_content = old_buffer['content'] + "\n" + incoming_text if incoming_text else old_buffer['content']
+                message_buffers[phone_str]['content'] = new_content.strip()
+                # Se vier um áudio novo, priorizamos ou mantemos o anterior (simplificado: mantém o último)
+                if is_audio:
+                    message_buffers[phone_str]['is_audio'] = True
+                    message_buffers[phone_str]['audio_url'] = audio_url
+            else:
+                # Cria novo buffer
+                message_buffers[phone_str] = {
+                    "content": incoming_text,
+                    "sender_name": sender_name,
+                    "is_audio": is_audio,
+                    "audio_url": audio_url,
+                    "task": None
+                }
+
+            # Inicia/Reinicia a tarefa de processamento atrasado
+            task = asyncio.create_task(process_delayed_messages(phone_str))
+            message_buffers[phone_str]['task'] = task
+            
+            return {"status": "buffering", "wait": "25s"}
         
         print(f"ℹ️ Webhook recebido mas ignorado (tipo: {message_type}) de {phone}")
         return {"status": "ignored"}
