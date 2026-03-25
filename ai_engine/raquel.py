@@ -441,6 +441,7 @@ class RaquelAgent:
 
             RESPONDA APENAS O BRIEFING FORMATADO:
             👤 *Cliente*: {name}
+            📞 *Contato*: {context.get('phone', 'N/A')}
             🎯 *Objetivo*: (Moradia/Investimento/etc)
             📍 *Interesse*: (Bairros e tipo de imóvel)
             👨‍👩‍👧 *Perfil*: (Composição familiar se houver)
