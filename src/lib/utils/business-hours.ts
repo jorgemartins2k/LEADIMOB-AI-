@@ -7,9 +7,9 @@ import { eq, and } from "drizzle-orm";
  * Returns true if the user is in an active schedule slot, false otherwise.
  */
 export async function isCurrentlyInBusinessHours(userId: string): Promise<boolean> {
-    const now = new Date();
-    // JavaScript day: 0 (Sun) - 6 (Sat)
-    // database day: 0-6 matching JS
+    // Forçar fuso de Brasília (America/Sao_Paulo) independente de onde o servidor está rodando
+    const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    // database day: 0 (Sun) - 6 (Sat)
     const dayOfWeek = now.getDay();
 
     const schedules = await db.query.workSchedules.findMany({
@@ -35,7 +35,7 @@ export async function isCurrentlyInBusinessHours(userId: string): Promise<boolea
  * If currently in business hours, it might return 'now'.
  */
 export async function getNextBusinessSessionStart(userId: string): Promise<Date | null> {
-    const now = new Date();
+    const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
 
     // Check next 7 days
     for (let i = 0; i < 7; i++) {

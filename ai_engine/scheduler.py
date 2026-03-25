@@ -224,8 +224,8 @@ def daily_end_of_shift_cleanup() -> None:
                 
                 # Se passou de 0 a 5 minutos do fim do expediente (o job roda a cada 5 mins)
                 if 0 <= time_diff < 300:
-                    print(f"🧹 Expediente ENCERRADO para {broker.get('name', 'Corretor')}. Limpando fila de leads inativos...")
-                    db.supabase.table("leads").delete().eq("user_id", user_id).eq("status", "waiting").execute()
+                    print(f"🧹 Expediente ENCERRADO para {broker.get('name', 'Corretor')}. Fila de leads preservada para o próximo turno.")
+                    # db.supabase.table("leads").delete().eq("user_id", user_id).eq("status", "waiting").execute()
                     
     except Exception as e:
         print(f"Erro no cleanup auto: {e}")

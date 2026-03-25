@@ -11,8 +11,8 @@ interface SendTextMessageParams {
 }
 
 export async function sendWhatsAppMessage({ phone, message }: SendTextMessageParams) {
-    const instanceId = process.env.ZAPI_INSTANCE_ID;
-    const token = process.env.ZAPI_TOKEN;
+    const instanceId = process.env.ZAPI_INSTANCE_ID || process.env.ID_INSTANCIA_ZAPI || process.env.ID_INSTÂNCIA_ZAPI;
+    const token = process.env.ZAPI_TOKEN || process.env.ZAPI_TOKEN_WHATSAPP || process.env.ZAPI_TÔKEN;
     const clientToken = process.env.ZAPI_CLIENT_TOKEN || "Fda343e96334040afb68f54effe118108S";
 
     if (!instanceId || !token) {
