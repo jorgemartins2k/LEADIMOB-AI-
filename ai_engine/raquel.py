@@ -180,32 +180,36 @@ class RaquelAgent:
         """
         Baixa o áudio da Z-API e transcreve usando OpenAI Whisper
         """
-        temp_path: str = "temp_audio.ogg"
+        temp_path: str = f"temp_{int(datetime.datetime.now().timestamp())}.ogg"
         try:
-            print(f"🎙️ Baixando áudio para transcrição: {audio_url}")
-            audio_response: requests.Response = requests.get(audio_url)
+            print(f"🎙️ Baixando áudio Z-API: {audio_url}")
+            audio_response: requests.Response = requests.get(audio_url, timeout=15)
             audio_response.raise_for_status()
             
             with open(temp_path, "wb") as f:
                 f.write(audio_response.content)
+            
+            print(f"✅ Áudio salvo localmente ({len(audio_response.content)} bytes). Enviando para Whisper...")
             
             with open(temp_path, "rb") as audio_file:
                 transcript = self.client.audio.transcriptions.create(
                     model="whisper-1", 
                     file=audio_file
                 )
-            return str(transcript.text)
+            
+            text = str(transcript.text).strip()
+            print(f"📝 Transcrição concluída: {text}")
+            return text
         except Exception as e:
-            print(f"❌ Erro na transcrição: {e}")
+            print(f"❌ Erro na transcrição ({audio_url}): {e}")
             return "[Erro ao transcrever áudio]"
         finally:
             if os.path.exists(temp_path):
                 try: os.remove(temp_path)
                 except: pass
-        return "[Erro ao transcrever áudio]"
 
-    async def process_message(self, phone: str, message: str, sender_name: str, is_audio: bool = False, audio_url: Optional[str] = None) -> str:
-        print(f"📥 Processando mensagem de {sender_name} ({phone})")
+    async def process_message(self, phone: str, message: str, sender_name: str, is_audio: bool = False, audio_urls: List[str] = []) -> str:
+        print(f"📥 Processando mensagem de {sender_name} ({phone}). Áudios: {len(audio_urls)}")
         
         # 1. Busca dados do corretor
         context: Optional[Dict[str, Any]] = self.db.get_broker_by_lead_phone(phone)
@@ -218,10 +222,21 @@ class RaquelAgent:
         lead_real_name: str = context.get('lead_name', 'Cliente')
         broker_name: str = context.get('broker_name', 'Corretor')
 
-        # 2. SE FOR ÁUDIO, TRANSCREVE
-        if is_audio and audio_url:
-            message = self.transcribe_audio(audio_url)
-            print(f"📝 Transcrição: {message}")
+        # 2. SE HOUVER ÁUDIOS, TRANSCREVE TODOS E ACUMULA
+        if is_audio and audio_urls:
+            transcriptions = []
+            for url in audio_urls:
+                t = self.transcribe_audio(url)
+                if t and t != "[Erro ao transcrever áudio]":
+                    transcriptions.append(t)
+            
+            if transcriptions:
+                audio_text = "\n".join(transcriptions)
+                message = (message + "\n" + audio_text).strip() if message else audio_text
+            else:
+                print("⚠️ Falha em todas as transcrições ou áudios vazios.")
+                if not message:
+                    return "Desculpe, não consegui entender o áudio. Pode escrever por favor?"
 
         # 3. VERIFICAÇÃO DE EXPEDIENTE (ANTES BLOQUEAVA, AGORA A IA ATENDE 24/7)
         schedule = self.db.get_broker_schedule(user_id)

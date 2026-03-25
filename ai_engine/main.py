@@ -37,15 +37,18 @@ async def process_delayed_messages(phone_str: str):
     
     buffer = message_buffers.pop(phone_str, None)
     if buffer:
-        print(f"🕒 Janela de debouncing fechada para {phone_str}. Processando grupo de mensagens...")
-        # Chamamos o processamento real da Raquel (agora assíncrono)
-        await raquel.process_message(
-            phone_str, 
-            buffer['content'], 
-            buffer['sender_name'], 
-            is_audio=buffer['is_audio'], 
-            audio_url=buffer.get('audio_url')
-        )
+        try:
+            print(f"🕒 Janela de debouncing fechada para {phone_str}. Processando {len(buffer['content'])} chars + audio={buffer['is_audio']}")
+            # Chamamos o processamento real da Raquel (agora assíncrono)
+            await raquel.process_message(
+                phone_str, 
+                buffer['content'], 
+                buffer['sender_name'], 
+                is_audio=buffer['is_audio'], 
+                audio_urls=buffer.get('audio_urls', [])
+            )
+        except Exception as e:
+            print(f"❌ Erro ao processar mensagem atrasada para {phone_str}: {e}")
 
 @app.post("/webhook/zapi")
 async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTasks) -> Dict[str, str]:
@@ -79,7 +82,7 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
 
         # 2. Processamento de Mensagem com Debouncing (Espera 25s)
         is_audio: bool = message_type in ["audio", "ptt"]
-        audio_url: Optional[str] = data.get("audio", {}).get("url") if is_audio else None
+        audio_url: Optional[str] = data.get("audio", {}).get("url") or data.get("audioUrl") if is_audio else None
         incoming_text = str(message_text or "")
 
         if incoming_text or is_audio:
@@ -94,17 +97,17 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
                 # Acumula o conteúdo
                 new_content = old_buffer['content'] + "\n" + incoming_text if incoming_text else old_buffer['content']
                 message_buffers[phone_str]['content'] = new_content.strip()
-                # Se vier um áudio novo, priorizamos ou mantemos o anterior (simplificado: mantém o último)
+                
                 if is_audio:
                     message_buffers[phone_str]['is_audio'] = True
-                    message_buffers[phone_str]['audio_url'] = audio_url
+                    message_buffers[phone_str].setdefault('audio_urls', []).append(audio_url)
             else:
                 # Cria novo buffer
                 message_buffers[phone_str] = {
                     "content": incoming_text,
                     "sender_name": sender_name,
                     "is_audio": is_audio,
-                    "audio_url": audio_url,
+                    "audio_urls": [audio_url] if audio_url else [],
                     "task": None
                 }
 
