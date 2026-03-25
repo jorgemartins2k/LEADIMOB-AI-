@@ -262,13 +262,15 @@ class RaquelAgent:
         # 6. GERA RESPOSTA
         try:
             response = self.client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-4o-mini",
                 messages=messages # pyre-ignore
             )
             reply_content: str = response.choices[0].message.content or "Desculpe, não consegui formular uma resposta."
         except Exception as e:
             print(f"❌ Erro na OpenAI: {e}")
-            return "Desculpe, tive um problema técnico momentâneo."
+            error_msg = "Desculpe, tive um problema técnico momentâneo."
+            self.send_to_zapi(phone, error_msg)
+            return error_msg
 
         # 7. SALVA NO BANCO 
         if lead_id and user_id:
@@ -279,8 +281,9 @@ class RaquelAgent:
         images_to_send = re.findall(r'\[SEND_IMAGE:\s*(.*?)\]', reply_content)
         clean_reply = re.sub(r'\[SEND_IMAGE:\s*.*?\]', '', reply_content).strip()
 
-        # 8. VERIFICA SE PRECISA ALERTAR O CORRETOR (LEAD QUENTE)
-        if "[ALERT_BROKER]" in clean_reply:
+        # 8. PROCESSA ALERTA DE LEAD QUENTE
+        is_hot = "[ALERT_BROKER]" in clean_reply
+        if is_hot:
             print(f"🔥 LEAD QUENTE DETECTADO: {lead_real_name}")
             clean_reply = clean_reply.replace("[ALERT_BROKER]", "").strip()
             
@@ -289,35 +292,29 @@ class RaquelAgent:
                 next_day, next_time = self.get_next_working_slot(schedule)
                 pass_baton_msg = f"\n\n*Observação:* O nosso escritório no momento está fechado. O corretor {broker_name} estará em atendimento {next_day} a partir das {next_time} e entrará em contato com você assim que possível!"
                 clean_reply += pass_baton_msg
-            
-            typing_delay = random.uniform(2.0, 4.0)
-            await asyncio.sleep(typing_delay)
-            
-            if clean_reply:
-                self.send_to_zapi(phone, clean_reply)
-            for img_url in images_to_send:
-                time.sleep(1)
-                self.send_image_to_zapi(phone, img_url)
-            
-            if is_ooh:
-                print(f"⏳ Alerta adiado para o próximo expediente de {broker_name}.")
                 self.db.update_lead_status(phone, "ooh_hot_alert_pending")
             else:
-                self.alert_broker(context, clean_reply)
+                self.alert_broker(context, message)
                 self.db.update_lead_status(phone, "hot_alert_sent")
                 self.db.set_lead_transfer_time(phone)
-            
-            # 8. Melhoria Contínua (Ranking e Auditoria)
-            asyncio.create_task(self.evaluate_and_rank_lead(phone, sender_name, context))
-            asyncio.create_task(self.audit_and_log_mistakes(phone, sender_name, message, reply_content, context))
 
-            return clean_reply
-        
+        # 9. ENVIA RESPOSTA AO CLIENTE
         typing_delay = random.uniform(2.0, 4.0)
         await asyncio.sleep(typing_delay)
         
         if clean_reply:
+            print(f"📤 Enviando resposta para {phone}: {clean_reply[:50]}...")
             self.send_to_zapi(phone, clean_reply)
+        
+        for img_url in images_to_send:
+            time.sleep(1)
+            self.send_image_to_zapi(phone, img_url)
+
+        # 10. MELHORIA CONTÍNUA (BACKGROUND)
+        asyncio.create_task(self.evaluate_and_rank_lead(phone, sender_name, context))
+        asyncio.create_task(self.audit_and_log_mistakes(phone, sender_name, message, reply_content, context))
+
+        return clean_reply
         for img_url in images_to_send:
             time.sleep(1)
             self.send_image_to_zapi(phone, img_url)
