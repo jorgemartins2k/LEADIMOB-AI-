@@ -64,7 +64,7 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
         text_data = data.get("text", {})
         message_text: Optional[str] = text_data.get("message") if isinstance(text_data, dict) else None
         
-        sender_name: str = str(data.get("senderName", "Corretor"))
+        sender_name: str = str(data.get("senderName", "Cliente"))
         message_type: str = str(data.get("type", "text"))
         
         if not phone:
@@ -87,7 +87,14 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
 
         # 2. Processamento de Mensagem com Debouncing (Espera 25s)
         is_audio: bool = message_type in ["audio", "ptt"]
-        audio_url: Optional[str] = data.get("audio", {}).get("url") or data.get("audioUrl") if is_audio else None
+        
+        # Extração Robusta da URL de Áudio (Z-API pode enviar em diferentes campos)
+        audio_url: Optional[str] = None
+        if is_audio:
+            audio_url = data.get("audioUrl") or \
+                        (data.get("audio", {}) if isinstance(data.get("audio"), str) else data.get("audio", {}).get("url")) or \
+                        data.get("url")
+        
         incoming_text = str(message_text or "")
 
         if incoming_text or is_audio:

@@ -179,19 +179,33 @@ class RaquelAgent:
 
     def transcribe_audio(self, audio_url: str) -> str:
         """
-        Baixa o áudio da Z-API e transcreve usando OpenAI Whisper
+        Baixa o áudio da Z-API e transcreve usando OpenAI Whisper.
+        Usa /tmp para garantir permissões de escrita em ambientes como Railway/Docker.
         """
-        temp_path: str = f"temp_{int(datetime.datetime.now().timestamp())}.ogg"
+        import tempfile
+        suffix = ".ogg"
+        if ".mp3" in audio_url.lower(): suffix = ".mp3"
+        elif ".wav" in audio_url.lower(): suffix = ".wav"
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            temp_path = tmp.name
+            
         try:
             print(f"🎙️ Baixando áudio Z-API: {audio_url}")
-            audio_response: requests.Response = requests.get(audio_url, timeout=15)
+            # Algumas instâncias do Z-API podem exigir o token no download se não estiver na URL
+            audio_response: requests.Response = requests.get(audio_url, timeout=20)
             audio_response.raise_for_status()
             
             with open(temp_path, "wb") as f:
                 f.write(audio_response.content)
             
-            print(f"✅ Áudio salvo localmente ({len(audio_response.content)} bytes). Enviando para Whisper...")
+            file_size = os.path.getsize(temp_path)
+            print(f"✅ Áudio salvo em {temp_path} ({file_size} bytes). Enviando para Whisper...")
             
+            if file_size < 100:
+                print("⚠️ Áudio muito pequeno, possivelmente vazio ou erro de download.")
+                return "[Áudio muito curto]"
+
             with open(temp_path, "rb") as audio_file:
                 transcript = self.client.audio.transcriptions.create(
                     model="whisper-1", 
