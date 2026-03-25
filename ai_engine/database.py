@@ -236,6 +236,37 @@ class Database:
             return "\n\n".join(cases)
         return "Ainda não há casos modelo salvos para este corretor."
 
+    def add_mistake_log(self, user_id: str, lead_id: str, error_context: str, user_correction: str, lesson: str) -> None:
+        """
+        Registra uma confusão ou alucinação da IA para evitar repetição.
+        """
+        try:
+            self.supabase.table("ai_mistakes_log").insert({
+                "user_id": user_id,
+                "lead_id": lead_id,
+                "error_context": error_context,
+                "user_correction": user_correction,
+                "lesson_learned": lesson
+            }).execute()
+        except Exception as e:
+            print(f"Erro ao registrar erro da IA: {e}")
+
+    def get_recent_lessons(self, user_id: str, limit: int = 5) -> str:
+        """
+        Busca as lições aprendidas com erros passados para injetar como Restrições Negativas.
+        """
+        response = self.supabase.table("ai_mistakes_log")\
+            .select("lesson_learned")\
+            .eq("user_id", user_id)\
+            .order("created_at", desc=True)\
+            .limit(limit)\
+            .execute()
+        
+        if response.data:
+            lessons = [f"- {d['lesson_learned']}" for d in response.data]
+            return "\n".join(lessons)
+        return "Nenhum erro registrado ainda. Continue mantendo a precisão."
+
     def get_portfolio(self, user_id: str) -> str:
         """
         Busca o portfólio completo do corretor (Imóveis e Lançamentos) formatado para o prompt

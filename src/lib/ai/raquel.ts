@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { db } from "@/lib/db";
-import { leads, conversations, users, properties, launches, events, bestLeadsRanking } from "@/lib/db/schema";
-import { eq, and, asc, sql } from "drizzle-orm";
+import { leads, conversations, users, properties, launches, events, bestLeadsRanking, aiMistakesLog } from "@/lib/db/schema";
+import { eq, and, asc, sql, desc } from "drizzle-orm";
 import { sendWhatsAppMessage } from "@/lib/zapi";
 import { notifyBrokerByWhatsApp } from "./notify";
 
@@ -71,20 +71,33 @@ export async function processLeadMessage({ phone, message }: ProcessMessageParam
         }),
     ]);
 
-    // 4.5 Fetch top ranking cases for few-shot prompting
-    const rankingCases = await db.query.bestLeadsRanking.findMany({
-        where: eq(leads.userId, broker.id),
-        orderBy: [asc(bestLeadsRanking.rank)],
-        limit: 3,
-    });
+    const [rankingCases, recentLessons] = await Promise.all([
+        db.query.bestLeadsRanking.findMany({
+            where: eq(bestLeadsRanking.userId, broker.id),
+            orderBy: [asc(bestLeadsRanking.rank)],
+            limit: 3,
+        }),
+        db.query.aiMistakesLog.findMany({
+            where: eq(aiMistakesLog.userId, broker.id),
+            orderBy: [desc(aiMistakesLog.createdAt)],
+            limit: 5,
+        })
+    ]);
 
     const rankingText = rankingCases.length > 0
         ? rankingCases.map((c, i) => `EXEMPLO ${i + 1}:\nPerfil: ${c.leadSummary}\nDestaque: ${c.interactionHighlights}`).join("\n\n")
         : "Ainda não há casos modelo salvos.";
 
+    const lessonsText = recentLessons.length > 0
+        ? recentLessons.map(l => `- ${l.lessonLearned}`).join("\n")
+        : "Nenhum erro registrado ainda. Continue mantendo a precisão.";
+
     // 5. Build system prompt (Raquel personality)
     const systemPrompt = `Você é Raquel, a assistente virtual inteligente do corretor de imóveis ${broker.name}.
 Seu objetivo é atender ${lead.name} de forma consultiva, educada e persuasiva pelo WhatsApp.
+
+===== LIÇÕES APRENDIDAS (NÃO REPITA ESTES ERROS) =====
+${lessonsText}
 
 ===== EXEMPLOS DE ATENDIMENTO NOTA 10 (MODELOS) =====
 Use estes exemplos reais do seu histórico para manter o padrão de excelência:
@@ -94,7 +107,7 @@ DIRETRIZES:
 - VOCÊ É A RAQUEL — CONSULTORA IMOBILIÁRIA ESPECIALISTA.
 - Seu objetivo não é apenas triagem, é gerar valor e qualificar profundamente o cliente ${lead.name}.
 - **SEM EMOJIS**: É terminantemente PROIBIDO o uso de emojis. Mesmo que o cliente ou o histórico contenham emojis, VOCÊ não deve usar nenhum.
-- **TOM CONSULTIVO**: Você é autoridade no setor. Dê dicas baseadas no que o cliente disser (infraestrutura, escolas, hospitais).
+- **TOM CONSULTIVO**: Você é autoridade no setor. Dê dicas baseadas no que o cliente disser (ex: se ele quer morar perto de um local específico em uma cidade, mencione as vantagens da infraestrutura local).
 - **ORDEM OBRIGATÓRIA**: 
   1. Objetivo e Perfil (Moradia ou investimento? Casa ou Apartamento?).
   2. Localização e Proximidade (Onde quer morar? **DICA MESTRE**: Se for mudança por trabalho/estudo e não conhecer a cidade, PERGUNTE o local de trabalho/estudo para sugerir bairros próximos).
@@ -170,6 +183,35 @@ EVENTOS: ${JSON.stringify(brokerEvents.map(e => ({ name: e.name, date: e.eventDa
 
         // 11. Evaluate and Rank (Continuous Improvement)
         evaluateAndRankLead(lead.id, broker.id).catch(err => console.error("Ranking error:", err));
+        auditAndLogMistakes(lead.id, broker.id, message, completion.choices[0].message.content || "").catch(err => console.error("Audit error:", err));
+    }
+}
+
+async function auditAndLogMistakes(leadId: string, userId: string, userMsg: string, aiReply: string) {
+    try {
+        const completion = await getOpenAI().chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                { role: "system", content: "Você é um auditor crítico de conversas de IA." },
+                { role: "user", content: `Analise o diálogo e identifique erros ou alucinações.\n\nMSG CLIENTE: ${userMsg}\nRESP IA: ${aiReply}\n\nResponda JSON com has_error, error_context, user_correction, lesson_learned.` }
+            ],
+            response_format: { type: "json_object" }
+        });
+
+        const data = JSON.parse(completion.choices[0].message.content || "{}");
+
+        if (data.has_error) {
+            await db.insert(aiMistakesLog).values({
+                userId,
+                leadId,
+                errorContext: data.error_context || "Hallucinação",
+                userCorrection: data.user_correction || "Correção do usuário",
+                lessonLearned: data.lesson_learned || "Evitar assumir dados não fornecidos"
+            });
+            console.log(`⚠️ Erro da IA registrado: ${data.lesson_learned}`);
+        }
+    } catch (err) {
+        console.error("Erro na auditoria:", err);
     }
 }
 

@@ -218,3 +218,13 @@ export const bestLeadsRanking = pgTable('best_leads_ranking', {
     interactionHighlights: text('interaction_highlights'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
+
+export const aiMistakesLog = pgTable('ai_mistakes_log', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    leadId: uuid('lead_id').notNull().references(() => leads.id, { onDelete: 'cascade' }),
+    errorContext: text('error_context').notNull(),
+    userCorrection: text('user_correction').notNull(),
+    lessonLearned: text('lesson_learned').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});

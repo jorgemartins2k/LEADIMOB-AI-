@@ -44,11 +44,15 @@ class RaquelAgent:
         """ if daily_focus else ""
 
         ranking_examples = self.db.get_top_ranking_cases(context.get('user_id', ''), limit=3)
+        recent_lessons = self.db.get_recent_lessons(context.get('user_id', ''), limit=5)
         
         return f"""
         VOCÊ É A RAQUEL — CONSULTORA IMOBILIÁRIA ESPECIALISTA
         Você é a assistente estratégica e consultiva do corretor de imóveis {broker_name} (CRECI: {creci}, Agência: {agency}).
         Seu objetivo não é apenas triagem, é gerar valor e qualificar profundamente o cliente {lead_name}.
+
+        ===== LIÇÕES APRENDIDAS (NÃO REPITA ESTES ERROS) =====
+        {recent_lessons}
 
         ===== EXEMPLOS DE ATENDIMENTO NOTA 10 (MODELOS) =====
         Use estes exemplos reais do seu histórico para manter o padrão de excelência:
@@ -56,7 +60,7 @@ class RaquelAgent:
 
         ===== DIRETRIZES DE OURO (NÃO NEGOCIÁVEIS) =====
         1. **SEM EMOJIS**: É terminantemente PROIBIDO o uso de emojis em qualquer parte da conversa. **Mesmo que o cliente ou o histórico de mensagens contenham emojis, VOCÊ não deve usar nenhum.**
-        2. **TOM CONSULTIVO**: Você é uma autoridade no setor. Dê dicas baseadas no que o cliente disser (ex: se ele quer morar perto do Hospital Albert Einstein em Goiânia, mencione que o Setor Oeste é excelente em infraestrutura, escolas e conveniência).
+        2. **TOM CONSULTIVO**: Você é uma autoridade no setor. Dê dicas baseadas no que o cliente disser (ex: se ele quer morar perto de um hospital específico em uma cidade, mencione que a vizinhança X é excelente em infraestrutura, escolas e conveniência). 
         3. **NÃO É ROBÔ**: Nunca use a palavra "virtual", "sistema" ou "IA". Você é a assistente real dele.
         4. **UMA PERGUNTA POR VEZ**: Mantenha a conversa fluida, respondendo e então fazendo a próxima pergunta.
         5. **ESTUDO DE PERFIL**: Use as informações para entender as dores do cliente (ex: se tem filhos, priorize lazer e segurança).
@@ -286,9 +290,10 @@ class RaquelAgent:
                 self.db.update_lead_status(phone, "hot_alert_sent")
                 self.db.set_lead_transfer_time(phone)
             
-            # Se for um lead qualificado, dispara avaliação para o ranking
+            # 8. Melhoria Contínua (Ranking e Auditoria)
             asyncio.create_task(self.evaluate_and_rank_lead(phone, sender_name, context))
-            
+            asyncio.create_task(self.audit_and_log_mistakes(phone, sender_name, message, reply_content, context))
+
             return clean_reply
         
         typing_delay = random.uniform(2.0, 4.0)
@@ -300,6 +305,9 @@ class RaquelAgent:
             time.sleep(1)
             self.send_image_to_zapi(phone, img_url)
             
+        # 8. Auditoria de Erros (Melhoria Contínua)
+        asyncio.create_task(self.audit_and_log_mistakes(phone, sender_name, message, reply_content, context))
+
         return clean_reply
 
     async def evaluate_and_rank_lead(self, phone: str, name: str, context: Dict[str, Any]) -> None:
@@ -348,6 +356,52 @@ class RaquelAgent:
             print(f"✅ Lead {name} adicionado ao ranking de melhoria contínua.")
         except Exception as e:
             print(f"Erro ao avaliar lead para ranking: {e}")
+
+    async def audit_and_log_mistakes(self, phone: str, name: str, user_msg: str, ai_reply: str, context: Dict[str, Any]) -> None:
+        """
+        Analisa se houve confusão ou erro da IA e registra no banco.
+        """
+        try:
+            lead_id = context.get('lead_id')
+            user_id = context.get('user_id')
+            if not lead_id or not user_id: return
+
+            audit_prompt = f"""
+            Analise o diálogo abaixo e identifique se a Raquel (IA) cometeu algum erro, alucinação ou se o cliente precisou corrigi-la.
+            
+            MENSAGEM DO CLIENTE: "{user_msg}"
+            RESPOSTA DA RAQUEL: "{ai_reply}"
+
+            Responda APENAS EM JSON:
+            {{
+                "has_error": true/false,
+                "error_context": "O que a IA disse de errado?",
+                "user_correction": "Como o usuário corrigiu?",
+                "lesson_learned": "O que a IA NUNCA deve repetir baseado nisso? (Ex: Não assumir que o cliente mora em [Cidade] se ele não disse)"
+            }}
+            """
+
+            response = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "system", "content": "Você é um auditor crítico de conversas de IA."}, 
+                          {"role": "user", "content": audit_prompt}],
+                response_format={ "type": "json_object" }
+            )
+            
+            import json
+            data = json.loads(response.choices[0].message.content)
+            
+            if data.get("has_error"):
+                self.db.add_mistake_log(
+                    user_id=user_id,
+                    lead_id=lead_id,
+                    error_context=data.get("error_context", ""),
+                    user_correction=data.get("user_correction", ""),
+                    lesson=data.get("lesson_learned", "")
+                )
+                print(f"⚠️ Erro da IA registrado para melhoria: {data.get('lesson_learned')}")
+        except Exception as e:
+            print(f"Erro na auditoria da IA: {e}")
 
     def alert_broker(self, context: Dict[str, Any], message_context: str) -> None:
         broker_whatsapp: str = context.get('broker_whatsapp', '')
