@@ -5,6 +5,7 @@ import pytz # pyre-ignore
 import time
 import random
 import asyncio
+import json
 from typing import List, Dict, Any, Optional, Union
 from openai import OpenAI # pyre-ignore
 from dotenv import load_dotenv # pyre-ignore
@@ -404,7 +405,6 @@ class RaquelAgent:
                 response_format={ "type": "json_object" }
             )
             
-            import json
             data = json.loads(response.choices[0].message.content)
             
             if data.get("has_error"):
@@ -419,23 +419,71 @@ class RaquelAgent:
         except Exception as e:
             print(f"Erro na auditoria da IA: {e}")
 
+    def generate_lead_briefing(self, lead_id: str, context: Dict[str, Any]) -> str:
+        """
+        Gera um briefing consultivo sobre o lead usando IA.
+        """
+        try:
+            name: str = context.get('lead_name', 'Cliente')
+            # 1. Busca histórico recente
+            history = self.db.get_chat_history(context.get('phone', ''), limit=15)
+            chat_text = "\n".join([f"{m['role']}: {m['content']}" for m in history]) if history else "Sem histórico."
+
+            prompt = f"""
+            Gere um resumo executivo para o corretor sobre o lead {name}.
+            Baseie-se nestas informações e no histórico abaixo:
+            
+            HISTÓRICO:
+            {chat_text}
+            
+            INFO DISPONÍVEL:
+            {json.dumps(context, indent=2)}
+
+            RESPONDA APENAS O BRIEFING FORMATADO:
+            👤 *Cliente*: {name}
+            🎯 *Objetivo*: (Moradia/Investimento/etc)
+            📍 *Interesse*: (Bairros e tipo de imóvel)
+            👨‍👩‍👧 *Perfil*: (Composição familiar se houver)
+            💰 *Budget*: (Se mencionado)
+            
+            📝 *Resumo do Atendimento*: (2 frases sobre a última dor/desejo do cliente)
+            """
+
+            response = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "system", "content": "Você é um assistente de vendas especialista."}, 
+                          {"role": "user", "content": prompt}]
+            )
+            return response.choices[0].message.content or f"Lead {name} qualificado."
+        except Exception as e:
+            print(f"Erro ao gerar briefing: {e}")
+            return f"Lead {context.get('lead_name', 'Cliente')} qualificado e aguardando."
+
     def alert_broker(self, context: Dict[str, Any], message_context: str) -> None:
         broker_whatsapp: str = context.get('broker_whatsapp', '')
         lead_name: str = context.get('lead_name', 'Cliente')
+        lead_id: str = context.get('lead_id', '')
+        user_id: str = context.get('user_id', '')
+
+        if not broker_whatsapp:
+            print(f"⚠️ Alerta ignorado: Corretor sem WhatsApp cadastrado.")
+            return
+
+        print(f"🚀 Gerando briefing e disparando ALERTA QUENTE para o corretor ({broker_whatsapp})...")
         
-        message_context_abridged = ""
-        for i, char in enumerate(message_context):
-            if i >= 100: break
-            message_context_abridged += char
-            
-        alert_msg: str = f"🚨 *LEAD QUENTE: {lead_name}*\n\nEste lead demonstrou alto interesse ou pediu visita!\n\n*Resumo da conversa:* {message_context_abridged}...\n\nAssuma o atendimento agora!"
-        self.send_to_zapi(broker_whatsapp, alert_msg)
+        # 1. Gera o briefing inteligente
+        briefing = self.generate_lead_briefing(lead_id, context)
+        
+        # 2. Salva na tabela de notificações do painel
+        self.db.add_broker_notification(user_id, lead_id, briefing)
+
+        # 3. Envia para o WhatsApp do corretor
+        final_alert = f"🔥 *LEAD QUENTE QUALIFICADO!* 🔥\n\n{briefing}\n\nEnviando para você agora mesmo. Por favor, responda com *ok* para confirmar que recebeu."
+        self.send_to_zapi(broker_whatsapp, final_alert)
 
     def send_to_zapi(self, phone: str, content: str) -> None:
         instance_id: Optional[str] = os.getenv("ZAPI_INSTANCE_ID") or os.getenv("ID_INSTÂNCIA_ZAPI") or os.getenv("ID_INSTANCIA_ZAPI")
         token: Optional[str] = os.getenv("ZAPI_TOKEN") or os.getenv("ZAPI_TÔKEN")
-        client_token: str = os.getenv("ZAPI_CLIENT_TOKEN", "Fda343e96334040afb68f54effe118108S")
-        
         if not instance_id or not token:
             print("⚠️ ERRO: ZAPI_INSTANCE_ID ou ZAPI_TOKEN ausentes no ambiente.")
             return

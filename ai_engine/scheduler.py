@@ -1,9 +1,11 @@
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from apscheduler.schedulers.asyncio import AsyncIOScheduler # pyre-ignore
 import asyncio
 import datetime
 import pytz # pyre-ignore
 import time
+import random
+import json
 from raquel import RaquelAgent # pyre-ignore
 from database import Database # pyre-ignore
 
@@ -66,28 +68,44 @@ def is_within_schedule(schedule: List[Dict[str, Any]], now: datetime.datetime) -
 async def monitor_hot_leads() -> None:
     """
     Protocolo de Alerta Quente:
-    Se o corretor não confirmar ("ok") em 5 min, envia a segunda notificação.
+    Se o corretor não confirmar em 5 min, repete a notificação com o briefing.
     """
     print("⏲️ Monitorando confirmações de Leads Quentes...")
     pending_leads = db.find_pending_hot_alerts(minutes=5)
     
     for lead in pending_leads:
         user_id: str = str(lead.get('user_id', ''))
+        lead_id: str = str(lead.get('id', ''))
+        lead_phone: str = str(lead.get('phone', ''))
+        
         context = db.get_broker_data(user_id)
         if context:
             context['lead_name'] = lead.get('name', 'Cliente')
+            context['lead_id'] = lead_id
+            context['phone'] = lead_phone
+            
             broker_name: str = context.get('broker_name', 'Corretor')
-            lead_name: str = str(lead.get('name', 'Cliente'))
             broker_whatsapp: str = context.get('broker_whatsapp', '')
             
-            print(f"⚠️ Re-notificando corretor {broker_name} sobre o lead {lead_name}")
+            print(f"⚠️ Re-notificando corretor {broker_name} sobre o lead {context['lead_name']}")
             
-            # Segunda notificação conforme o manual
-            alert_msg: str = f"⚠️ *SEGUNDO ALERTA: {lead_name}*\n\nVocê ainda não confirmou o recebimento deste lead quente nas últimas 5 minutos. O cliente está aguardando!\n\nPor favor, envie 'ok' para confirmar."
+            # Busca a última notificação (briefing) salva para este lead
+            notif_resp = db.supabase.table("broker_notifications")\
+                .select("message")\
+                .eq("lead_id", lead_id)\
+                .order("created_at", desc=True)\
+                .limit(1).execute()
+            
+            briefing = notif_resp.data[0]['message'] if notif_resp.data else "Lead aguardando sua atenção!"
+            
+            alert_msg: str = f"⚠️ *LEMBRETE: LEAD QUENTE AGUARDANDO!* ⚠️\n\n{briefing}\n\nO cliente ainda não foi atendido. Por favor, envie *ok* para confirmar que assumiu."
             raquel.send_to_zapi(broker_whatsapp, alert_msg)
             
-            # Marca como notificado pela segunda vez para não repetir infinitamente
-            db.update_lead_status(str(lead.get('phone', '')), "hot_alert_final")
+            # Atualiza o timestamp de transferência para contar mais 5 minutos até a próxima repetição
+            db.supabase.table("leads").update({
+                "status": "hot_alert_retry",
+                "transferred_at": "now()"
+            }).eq("id", lead_id).execute()
 
 async def check_24h_followups() -> None:
     """

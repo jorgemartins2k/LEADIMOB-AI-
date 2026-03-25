@@ -228,3 +228,13 @@ export const aiMistakesLog = pgTable('ai_mistakes_log', {
     lessonLearned: text('lesson_learned').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
+
+export const brokerNotifications = pgTable('broker_notifications', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    leadId: uuid('lead_id').notNull().references(() => leads.id, { onDelete: 'cascade' }),
+    type: text('type').notNull().default('hot_lead'),
+    message: text('message').notNull(),
+    status: text('status').notNull().default('unread'), // 'unread' | 'read'
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});

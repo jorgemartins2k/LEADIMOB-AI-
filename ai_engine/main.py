@@ -64,7 +64,7 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
         text_data = data.get("text", {})
         message_text: Optional[str] = text_data.get("message") if isinstance(text_data, dict) else None
         
-        sender_name: str = str(data.get("senderName", "Cliente"))
+        sender_name: str = str(data.get("senderName", "Corretor"))
         message_type: str = str(data.get("type", "text"))
         
         if not phone:

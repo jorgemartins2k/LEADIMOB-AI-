@@ -137,19 +137,64 @@ class Database:
             "transferred_at": "now()"
         }).eq("phone", phone).execute()
 
+    def add_broker_notification(self, user_id: str, lead_id: str, message: str) -> None:
+        """
+        Salva o briefing da notificação na tabela do painel
+        """
+        try:
+            self.supabase.table("broker_notifications").insert({
+                "user_id": user_id,
+                "lead_id": lead_id,
+                "message": message,
+                "status": "unread"
+            }).execute()
+        except Exception as e:
+            print(f"Erro ao salvar notificação: {e}")
+
+    def confirm_hot_lead(self, broker_phone: str) -> bool:
+        """
+        Marca todos os leads pendentes de confirmação como 'active' para este corretor.
+        Também marca as notificações do painel como lidas.
+        """
+        try:
+            # 1. Busca o ID do corretor pelo telefone
+            broker = self.supabase.table("users").select("id").eq("whatsapp", broker_phone).execute()
+            if not broker.data: return False
+            user_id = broker.data[0]['id']
+
+            # 2. Confirma os leads pendentes
+            self.supabase.table("leads").update({"status": "active"})\
+                .eq("user_id", user_id)\
+                .in_("status", ["hot_alert_sent", "hot_alert_retry", "hot_alert_final"])\
+                .execute()
+            
+            # 3. Marca notificações como lidas
+            self.supabase.table("broker_notifications").update({"status": "read"})\
+                .eq("user_id", user_id)\
+                .eq("status", "unread")\
+                .execute()
+                
+            return True
+        except Exception as e:
+            print(f"Erro ao confirmar lead quente: {e}")
+            return False
+
     def find_pending_hot_alerts(self, minutes: int = 5) -> List[Dict[str, Any]]:
         """
-        Busca leads que receberam alerta há mais de X minutos e não foram confirmados
+        Busca leads em estado 'hot_alert_sent' ou 'hot_alert_retry' que não foram confirmados.
+        Baseia-se no transferred_at para o intervalo.
         """
-        from datetime import datetime, timedelta, timezone
-        threshold = datetime.now(timezone.utc) - timedelta(minutes=minutes)
+        limit_time = (datetime.datetime.now(pytz.timezone('America/Sao_Paulo')) - datetime.timedelta(minutes=minutes)).isoformat()
         
+        # Buscamos leads cujo status indica alerta enviado mas sem confirmação (status != 'active' ou 'hot_confirmed')
+        # Na verdade, usamos o status 'hot_alert_sent' e 'hot_alert_retry'
         response = self.supabase.table("leads")\
             .select("*")\
-            .eq("status", "hot_alert_sent")\
-            .lt("transferred_at", threshold.isoformat())\
+            .in_("status", ["hot_alert_sent", "hot_alert_retry"])\
+            .lt("transferred_at", limit_time)\
             .execute()
-        return response.data if response.data else []
+        
+        return response.data if hasattr(response, 'data') and response.data else []
 
     def find_leads_for_followup(self, hours: int = 24) -> List[Dict[str, Any]]:
         """
