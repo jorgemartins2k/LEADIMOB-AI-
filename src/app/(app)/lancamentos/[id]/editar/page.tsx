@@ -50,7 +50,7 @@ import { getLaunchById, updateLaunch } from "@/lib/actions/launches";
 
 const launchSchema = z.object({
     name: z.string().min(3, "O nome do lançamento deve ter pelo menos 3 caracteres"),
-    websiteUrl: z.string().optional(),
+    websiteUrl: z.string().url("Informe uma URL válida (ex: https://meusite.com.br/lancamento)"),
     developer: z.string().optional(),
     description: z.string().optional(),
     city: z.string().min(2, "Informe a cidade"),
@@ -159,7 +159,7 @@ export default function EditLaunchPage() {
         try {
             const result = await updateLaunch(id as string, {
                 ...data,
-                websiteUrl: data.websiteUrl || undefined,
+                websiteUrl: data.websiteUrl,
                 priceFrom: data.priceFrom || undefined,
                 photos: data.photos || [],
                 units: data.units.map((u) => ({
@@ -267,7 +267,7 @@ export default function EditLaunchPage() {
                                             <FormItem className="space-y-3">
                                                 <div className="flex items-center gap-2 ml-1">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-                                                    <FormLabel className="text-[10px] sm:text-sm font-black uppercase tracking-widest text-foreground opacity-70">Link no Site do Corretor (Opcional)</FormLabel>
+                                                    <FormLabel className="text-[10px] sm:text-sm font-black uppercase tracking-widest text-foreground opacity-70">Link no Site do Corretor <span className="text-destructive">*</span></FormLabel>
                                                 </div>
                                                 <FormControl>
                                                     <Input
