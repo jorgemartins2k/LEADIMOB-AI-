@@ -73,12 +73,17 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
 
         phone_str: str = str(phone)
 
-        # 1. Lógica de Confirmação do Corretor ("ok")
-        if message_text and message_text.lower().strip() == "ok":
-            if raquel.db.confirm_hot_lead(phone_str):
-                print(f"✅ Corretor {sender_name} ({phone_str}) confirmou recebimento do lead quente.")
+        # 1. Lógica de Confirmação do Corretor (Qualquer mensagem do número do corretor)
+        is_broker_msg = raquel.db.confirm_hot_lead(phone_str)
+        if is_broker_msg:
+            print(f"✅ Corretor {sender_name} ({phone_str}) confirmou recebimento. Mensagem: {message_text}")
+            # Se a mensagem for "ok", paramos aqui. Se for outra coisa, ele também confirmou ("lei como lida")
+            # mas retornamos para não processar o "ok" como uma mensagem de lead.
+            if message_text and message_text.lower().strip() == "ok":
                 return {"status": "broker_confirmed"}
-            return {"status": "ok_ignored"}
+            
+            # Para qualquer outra mensagem do corretor, também retornamos confirmado para evitar que a Raquel responda a ele como se fosse um lead
+            return {"status": "broker_confirmed"}
 
         # 2. Processamento de Mensagem com Debouncing (Espera 25s)
         is_audio: bool = message_type in ["audio", "ptt"]
