@@ -294,33 +294,31 @@ class RaquelAgent:
                 clean_reply += pass_baton_msg
                 self.db.update_lead_status(phone, "ooh_hot_alert_pending")
             else:
-                self.alert_broker(context, message)
+                # Disparamos o alerta em background para não travar a resposta ao cliente
+                print(f"📡 Disparando alerta para o corretor em background...")
+                loop = asyncio.get_event_loop()
+                loop.run_in_executor(None, self.alert_broker, context, message)
+                
                 self.db.update_lead_status(phone, "hot_alert_sent")
                 self.db.set_lead_transfer_time(phone)
 
         # 9. ENVIA RESPOSTA AO CLIENTE
-        typing_delay = random.uniform(2.0, 4.0)
+        typing_delay = random.uniform(1.8, 3.2)
         await asyncio.sleep(typing_delay)
         
         if clean_reply:
             print(f"📤 Enviando resposta para {phone}: {clean_reply[:50]}...")
             self.send_to_zapi(phone, clean_reply)
         
+        # Envia imagens se houver
         for img_url in images_to_send:
             time.sleep(1)
             self.send_image_to_zapi(phone, img_url)
 
         # 10. MELHORIA CONTÍNUA (BACKGROUND)
-        asyncio.create_task(self.evaluate_and_rank_lead(phone, sender_name, context))
-        asyncio.create_task(self.audit_and_log_mistakes(phone, sender_name, message, reply_content, context))
-
-        return clean_reply
-        for img_url in images_to_send:
-            time.sleep(1)
-            self.send_image_to_zapi(phone, img_url)
-            
-        # 8. Auditoria de Erros (Melhoria Contínua)
-        asyncio.create_task(self.audit_and_log_mistakes(phone, sender_name, message, reply_content, context))
+        loop = asyncio.get_event_loop()
+        loop.run_in_executor(None, self.evaluate_and_rank_lead, phone, sender_name, context)
+        loop.run_in_executor(None, self.audit_and_log_mistakes, phone, sender_name, message, reply_content, context)
 
         return clean_reply
 
@@ -486,12 +484,15 @@ class RaquelAgent:
             print("⚠️ ERRO: ZAPI_INSTANCE_ID ou ZAPI_TOKEN ausentes no ambiente.")
             return
 
+        client_token: str = os.getenv("ZAPI_CLIENT_TOKEN", "Fda343e96334040afb68f54effe118108S")
+        
         url: str = f"https://api.z-api.io/instances/{instance_id}/token/{token}/send-text"
         
         payload: Dict[str, str] = {"phone": phone, "message": content}
-        headers: Dict[str, str] = {"Content-Type": "application/json"}
-        if client_token:
-            headers["client-token"] = client_token
+        headers: Dict[str, str] = {
+            "Content-Type": "application/json",
+            "Client-Token": client_token
+        }
         
         try:
             response: requests.Response = requests.post(url, json=payload, headers=headers)
@@ -512,9 +513,10 @@ class RaquelAgent:
         url: str = f"https://api.z-api.io/instances/{instance_id}/token/{token}/send-image"
         
         payload: Dict[str, str] = {"phone": phone, "image": image_url}
-        headers: Dict[str, str] = {"Content-Type": "application/json"}
-        if client_token:
-            headers["client-token"] = client_token
+        headers: Dict[str, str] = {
+            "Content-Type": "application/json",
+            "Client-Token": client_token
+        }
         
         try:
             response: requests.Response = requests.post(url, json=payload, headers=headers)
