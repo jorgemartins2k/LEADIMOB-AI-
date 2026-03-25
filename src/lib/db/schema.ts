@@ -208,3 +208,13 @@ export const launchUnitsRelations = relations(launchUnits, ({ one }) => ({
         references: [launches.id],
     }),
 }));
+
+export const bestLeadsRanking = pgTable('best_leads_ranking', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    leadId: uuid('lead_id').notNull().references(() => leads.id, { onDelete: 'cascade' }),
+    rank: smallint('rank').notNull(),
+    leadSummary: text('lead_summary').notNull(),
+    interactionHighlights: text('interaction_highlights'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});

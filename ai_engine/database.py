@@ -195,41 +195,46 @@ class Database:
             return True
         return False
 
-    def add_to_best_practices(self, lead_id: str, summary: str, score: int) -> None:
+    def add_to_ranking(self, user_id: str, lead_id: str, summary: str, highlights: str) -> None:
         """
-        Adiciona uma conversa ao banco de 200 melhores práticas.
-        Se exceder 200, remove a de menor score.
+        Adiciona o lead ao Top 1 do ranking, empurrando os outros para baixo.
+        Mantém apenas os 100 melhores por corretor.
         """
-        count_resp = self.supabase.table("ai_brain_samples").select("id", count="exact").execute()
-        count = count_resp.count if count_resp.count is not None else 0
-        
-        if count >= 200:
-            weakest = self.supabase.table("ai_brain_samples")\
-                .select("id")\
-                .order("score", desc=False)\
-                .limit(1)\
-                .execute()
-            if weakest.data:
-                self.supabase.table("ai_brain_samples").delete().eq("id", weakest.data[0]['id']).execute()
-        
-        self.supabase.table("ai_brain_samples").insert({
-            "lead_id": lead_id,
-            "summary": summary,
-            "score": score
-        }).execute()
+        try:
+            # 1. Empurra todos os existentes um degrau abaixo
+            self.supabase.rpc("increment_lead_ranks", {"p_user_id": user_id}).execute()
+            
+            # 2. Insere o novo como Rank 1
+            self.supabase.table("best_leads_ranking").insert({
+                "user_id": user_id,
+                "lead_id": lead_id,
+                "rank": 1,
+                "lead_summary": summary,
+                "interaction_highlights": highlights
+            }).execute()
+            
+            # 3. Remove quem passou do centésimo
+            self.supabase.table("best_leads_ranking").delete().eq("user_id", user_id).gt("rank", 100).execute()
+        except Exception as e:
+            print(f"Erro ao atualizar ranking: {e}")
 
-    def get_best_practices(self, limit: int = 10) -> str:
+    def get_top_ranking_cases(self, user_id: str, limit: int = 5) -> str:
         """
-        Retorna as melhores práticas para injetar no prompt (RAG simplificado)
+        Retorna os melhores casos do ranking para inspirar a IA (Few-Shot Prompting)
         """
-        response = self.supabase.table("ai_brain_samples")\
-            .select("summary")\
-            .order("score", desc=True)\
+        response = self.supabase.table("best_leads_ranking")\
+            .select("lead_summary, interaction_highlights")\
+            .eq("user_id", user_id)\
+            .order("rank", desc=False)\
             .limit(limit)\
             .execute()
+        
         if response.data:
-            return "\n---\n".join([str(d.get('summary', '')) for d in response.data])
-        return "Nenhum exemplo disponível ainda."
+            cases = []
+            for i, d in enumerate(response.data):
+                cases.append(f"EXEMPLO {i+1}:\nPerfil: {d['lead_summary']}\nDestaque: {d['interaction_highlights']}")
+            return "\n\n".join(cases)
+        return "Ainda não há casos modelo salvos para este corretor."
 
     def get_portfolio(self, user_id: str) -> str:
         """

@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { db } from "@/lib/db";
-import { leads, conversations, users, properties, launches, events } from "@/lib/db/schema";
-import { eq, and, asc } from "drizzle-orm";
+import { leads, conversations, users, properties, launches, events, bestLeadsRanking } from "@/lib/db/schema";
+import { eq, and, asc, sql } from "drizzle-orm";
 import { sendWhatsAppMessage } from "@/lib/zapi";
 import { notifyBrokerByWhatsApp } from "./notify";
 
@@ -71,9 +71,24 @@ export async function processLeadMessage({ phone, message }: ProcessMessageParam
         }),
     ]);
 
+    // 4.5 Fetch top ranking cases for few-shot prompting
+    const rankingCases = await db.query.bestLeadsRanking.findMany({
+        where: eq(leads.userId, broker.id),
+        orderBy: [asc(bestLeadsRanking.rank)],
+        limit: 3,
+    });
+
+    const rankingText = rankingCases.length > 0
+        ? rankingCases.map((c, i) => `EXEMPLO ${i + 1}:\nPerfil: ${c.leadSummary}\nDestaque: ${c.interactionHighlights}`).join("\n\n")
+        : "Ainda não há casos modelo salvos.";
+
     // 5. Build system prompt (Raquel personality)
     const systemPrompt = `Você é Raquel, a assistente virtual inteligente do corretor de imóveis ${broker.name}.
 Seu objetivo é atender ${lead.name} de forma consultiva, educada e persuasiva pelo WhatsApp.
+
+===== EXEMPLOS DE ATENDIMENTO NOTA 10 (MODELOS) =====
+Use estes exemplos reais do seu histórico para manter o padrão de excelência:
+${rankingText}
 
 DIRETRIZES:
 - VOCÊ É A RAQUEL — CONSULTORA IMOBILIÁRIA ESPECIALISTA.
@@ -152,6 +167,54 @@ EVENTOS: ${JSON.stringify(brokerEvents.map(e => ({ name: e.name, date: e.eventDa
                 reason: isPassBroker ? "pass_broker" : "warm"
             });
         }
+
+        // 11. Evaluate and Rank (Continuous Improvement)
+        evaluateAndRankLead(lead.id, broker.id).catch(err => console.error("Ranking error:", err));
+    }
+}
+
+async function evaluateAndRankLead(leadId: string, userId: string) {
+    try {
+        const history = await db.query.conversations.findMany({
+            where: eq(conversations.leadId, leadId),
+            orderBy: [asc(conversations.sentAt)],
+            limit: 20,
+        });
+
+        const chatStr = history.map(h => `${h.role}: ${h.content}`).join("\n");
+
+        const completion = await getOpenAI().chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                { role: "system", content: "Você é um auditor de qualidade de atendimento imobiliário." },
+                { role: "user", content: `Analise a conversa abaixo e gere um resumo técnico JSON com "summary" e "highlights".\n\nCONVERSA:\n${chatStr}` }
+            ],
+            response_format: { type: "json_object" }
+        });
+
+        const data = JSON.parse(completion.choices[0].message.content || "{}");
+
+        // Use a transaction or manual update to shift ranks
+        await db.transaction(async (tx) => {
+            // Shift ranks for this user
+            await tx.execute(sql`UPDATE best_leads_ranking SET rank = rank + 1 WHERE user_id = ${userId}`);
+
+            // Insert Rank 1
+            await tx.insert(bestLeadsRanking).values({
+                userId,
+                leadId,
+                rank: 1,
+                leadSummary: data.summary || "Lead qualificado",
+                interactionHighlights: data.highlights || "Bom atendimento"
+            });
+
+            // Delete > 100
+            await tx.execute(sql`DELETE FROM best_leads_ranking WHERE user_id = ${userId} AND rank > 100`);
+        });
+
+        console.log(`✅ Lead ${leadId} avaliado e rankeado.`);
+    } catch (err) {
+        console.error("Erro ao avaliar lead para ranking:", err);
     }
 }
 
