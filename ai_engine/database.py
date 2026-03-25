@@ -156,7 +156,7 @@ class Database:
     def confirm_hot_lead(self, broker_phone: str) -> bool:
         """
         Marca todos os leads pendentes de confirmação como 'active' para este corretor.
-        Também marca as notificações do painel como lidas.
+        Retorna True apenas se houver leads pendentes que foram confirmados.
         """
         try:
             # 1. Busca o ID do corretor pelo telefone
@@ -164,13 +164,22 @@ class Database:
             if not broker.data: return False
             user_id = broker.data[0]['id']
 
-            # 2. Confirma os leads pendentes
+            # 2. Verifica se existem leads pendentes ANTES de retornar True
+            pending = self.supabase.table("leads").select("id")\
+                .eq("user_id", user_id)\
+                .in_("status", ["hot_alert_sent", "hot_alert_retry", "hot_alert_final"])\
+                .execute()
+            
+            if not pending.data:
+                return False
+
+            # 3. Confirma os leads pendentes
             self.supabase.table("leads").update({"status": "active"})\
                 .eq("user_id", user_id)\
                 .in_("status", ["hot_alert_sent", "hot_alert_retry", "hot_alert_final"])\
                 .execute()
             
-            # 3. Marca notificações como lidas
+            # 4. Marca notificações como lidas
             self.supabase.table("broker_notifications").update({"status": "read"})\
                 .eq("user_id", user_id)\
                 .eq("status", "unread")\
