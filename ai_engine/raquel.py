@@ -333,9 +333,9 @@ class RaquelAgent:
             self.send_image_to_zapi(phone, img_url)
 
         # 10. MELHORIA CONTÍNUA (BACKGROUND)
-        loop = asyncio.get_event_loop()
-        loop.run_in_executor(None, self.evaluate_and_rank_lead, phone, sender_name, context)
-        loop.run_in_executor(None, self.audit_and_log_mistakes, phone, sender_name, message, reply_content, context)
+        # Usamos create_task porque agora os métodos são async def
+        asyncio.create_task(self.evaluate_and_rank_lead(phone, sender_name, context))
+        asyncio.create_task(self.audit_and_log_mistakes(phone, sender_name, message, reply_content, context))
 
         return clean_reply
 

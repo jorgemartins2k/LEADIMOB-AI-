@@ -97,16 +97,21 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
             if "text" in data and isinstance(data["text"], dict):
                 message_text = data["text"].get("message")
             
-            if "audio" in data and isinstance(data["audio"], dict):
-                is_audio = True
-                audio_url = data["audio"].get("url")
-            elif "ptt" in data and isinstance(data["ptt"], dict):
-                is_audio = True
-                audio_url = data["ptt"].get("url")
+            # Busca exaustiva pela URL do áudio no v2
+            audio_obj = data.get("audio") or data.get("ptt") or {}
+            if isinstance(audio_obj, dict) and audio_obj:
+                audio_url = audio_obj.get("url") or audio_obj.get("audioUrl")
             
-            # Fallback para campos v1 se o v2 falhar
-            if not audio_url and is_audio:
+            # Última tentativa: campos de topo
+            if not audio_url:
                 audio_url = data.get("audioUrl") or data.get("url")
+            
+            if audio_url:
+                is_audio = True
+                print(f"🎙️ [DEBUG] Audio URL extraída: {audio_url}")
+            elif "audio" in data or "ptt" in data:
+                is_audio = True # Sabemos que é áudio, mas o link falhou
+                print(f"⚠️ [DEBUG] É áudio mas a URL NÃO foi encontrada. Keys: {list(data.keys())}")
         else:
             # Compatibilidade com webhooks legados (v1)
             is_audio = raw_type in ["audio", "ptt"]
