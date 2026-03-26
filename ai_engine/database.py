@@ -329,7 +329,7 @@ class Database:
         Busca o portfólio completo do corretor (Imóveis e Lançamentos) formatado para o prompt
         """
         launches_resp = self.supabase.table("launches")\
-            .select("name, description, price_from, city, neighborhood, standard, target_audience, website_url, photos, launch_units:launch_units(name, area_sqm, bedrooms, bathrooms, parking_spots, price, minha_casa_minha_vida, allows_financing, down_payment, condo_fee, is_condo, target_audience)")\
+            .select("name, description, price_from, city, neighborhood, standard, target_audience, website_url, photos, delivery_date, launch_units:launch_units(name, area_sqm, bedrooms, bathrooms, parking_spots, price, minha_casa_minha_vida, allows_financing, down_payment, condo_fee, is_condo, target_audience)")\
             .eq("user_id", user_id)\
             .execute()
         portfolio_parts: List[str] = []
@@ -343,7 +343,8 @@ class Database:
                     f"Local: {l.get('neighborhood', '')}, {l.get('city', '')}",
                     f"Padrão: {l.get('standard', '')}",
                     f"Descrição: {l.get('description', 'Sem descrição')}",
-                    f"Público-alvo: {l.get('target_audience', [])}"
+                    f"Público-alvo: {l.get('target_audience', [])}",
+                    f"Previsão de Entrega: {l.get('delivery_date', 'Não informada')}"
                 ]
                 url = l.get('website_url')
                 if url: item.append(f"Link do Empreendimento: {url}")
