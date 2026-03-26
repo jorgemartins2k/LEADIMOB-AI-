@@ -84,19 +84,45 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
         
         phone: Optional[str] = data.get("phone")
         
-        text_data = data.get("text", {})
-        message_text: Optional[str] = text_data.get("message") if isinstance(text_data, dict) else None
+        phone_str: str = str(phone)
         
+        # --- PARSING ROBUSTO Z-API V2 ---
+        raw_type = data.get("type", "text")
+        is_audio = False
+        audio_url = None
+        message_text = None
+        
+        # Z-API v2 envia tudo como 'ReceivedCallback'
+        if raw_type == "ReceivedCallback":
+            if "text" in data and isinstance(data["text"], dict):
+                message_text = data["text"].get("message")
+            
+            if "audio" in data and isinstance(data["audio"], dict):
+                is_audio = True
+                audio_url = data["audio"].get("url")
+            elif "ptt" in data and isinstance(data["ptt"], dict):
+                is_audio = True
+                audio_url = data["ptt"].get("url")
+            
+            # Fallback para campos v1 se o v2 falhar
+            if not audio_url and is_audio:
+                audio_url = data.get("audioUrl") or data.get("url")
+        else:
+            # Compatibilidade com webhooks legados (v1)
+            is_audio = raw_type in ["audio", "ptt"]
+            text_data = data.get("text", {})
+            message_text = text_data.get("message") if isinstance(text_data, dict) else None
+            if is_audio:
+                audio_url = data.get("audioUrl") or (data.get("audio", {}).get("url") if isinstance(data.get("audio"), dict) else None)
+
+        incoming_text = str(message_text or "")
         sender_name: str = str(data.get("senderName", "Cliente"))
-        message_type: str = str(data.get("type", "text"))
         
         if not phone:
             print("⚠️ Webhook ignorado: campo 'phone' ausente.")
             return {"status": "ignored"}
 
-        phone_str: str = str(phone)
-
-        # 1. Lógica de Confirmação do Corretor (Qualquer mensagem do número do corretor)
+        # 1. Lógica de Confirmação do Corretor
         if not raquel:
             print("⚠️ Erro: RaquelAgent não foi inicializado corretamente.")
             return {"status": "error", "message": "RaquelAgent not initialized"}
@@ -104,26 +130,11 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
         is_broker_msg = raquel.db.confirm_hot_lead(phone_str)
         if is_broker_msg:
             print(f"✅ Corretor {sender_name} ({phone_str}) confirmou recebimento. Mensagem: {message_text}")
-            # Se a mensagem for "ok", paramos aqui. Se for outra coisa, ele também confirmou ("lei como lida")
-            # mas retornamos para não processar o "ok" como uma mensagem de lead.
             if message_text and message_text.lower().strip() == "ok":
                 return {"status": "broker_confirmed"}
-            
-            # Para qualquer outra mensagem do corretor, também retornamos confirmado para evitar que a Raquel responda a ele como se fosse um lead
             return {"status": "broker_confirmed"}
 
-        # 2. Processamento de Mensagem com Debouncing (Espera 25s)
-        is_audio: bool = message_type in ["audio", "ptt"]
-        
-        # Extração Robusta da URL de Áudio (Z-API pode enviar em diferentes campos)
-        audio_url: Optional[str] = None
-        if is_audio:
-            audio_url = data.get("audioUrl") or \
-                        (data.get("audio", {}) if isinstance(data.get("audio"), str) else data.get("audio", {}).get("url")) or \
-                        data.get("url")
-        
-        incoming_text = str(message_text or "")
-
+        # 2. Processamento de Mensagem com Debouncing
         if incoming_text or is_audio:
             print(f"📩 Mensagem recebida de {sender_name} ({phone_str}). Adicionando ao buffer...")
             
