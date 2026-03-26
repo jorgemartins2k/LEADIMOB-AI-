@@ -180,9 +180,10 @@ class RaquelAgent:
     def transcribe_audio(self, audio_url: str) -> str:
         """
         Baixa o áudio da Z-API e transcreve usando OpenAI Whisper.
-        Usa /tmp para garantir permissões de escrita em ambientes como Railway/Docker.
+        Adicionado log exaustivo para depuração.
         """
         import tempfile
+        import traceback
         suffix = ".ogg"
         if ".mp3" in audio_url.lower(): suffix = ".mp3"
         elif ".wav" in audio_url.lower(): suffix = ".wav"
@@ -191,21 +192,22 @@ class RaquelAgent:
             temp_path = tmp.name
             
         try:
-            print(f"🎙️ Baixando áudio Z-API: {audio_url}")
-            # Algumas instâncias do Z-API podem exigir o token no download se não estiver na URL
-            audio_response: requests.Response = requests.get(audio_url, timeout=20)
+            print(f"🎙️ [DEBUG] Iniciando download de: {audio_url}")
+            audio_response: requests.Response = requests.get(audio_url, timeout=30, verify=False)
+            print(f"🎙️ [DEBUG] Status Code: {audio_response.status_code}, Headers: {audio_response.headers.get('Content-Type')}")
             audio_response.raise_for_status()
             
             with open(temp_path, "wb") as f:
                 f.write(audio_response.content)
             
             file_size = os.path.getsize(temp_path)
-            print(f"✅ Áudio salvo em {temp_path} ({file_size} bytes). Enviando para Whisper...")
+            print(f"✅ [DEBUG] Áudio salvo em {temp_path} ({file_size} bytes).")
             
             if file_size < 100:
-                print("⚠️ Áudio muito pequeno, possivelmente vazio ou erro de download.")
-                return "[Áudio muito curto]"
+                print("⚠️ [DEBUG] Arquivo muito pequeno. Conteúdo recebido:", audio_response.content[:100])
+                return "[O áudio parece estar vazio ou inacessível]"
 
+            print(f"🎙️ [DEBUG] Enviando para OpenAI Whisper...")
             with open(temp_path, "rb") as audio_file:
                 transcript = self.client.audio.transcriptions.create(
                     model="whisper-1", 
@@ -213,11 +215,12 @@ class RaquelAgent:
                 )
             
             text = str(transcript.text).strip()
-            print(f"📝 Transcrição concluída: {text}")
+            print(f"📝 [DEBUG] Transcrição OK: {text}")
             return text
         except Exception as e:
-            print(f"❌ Erro na transcrição ({audio_url}): {e}")
-            return "[Erro ao transcrever áudio]"
+            print(f"❌ [DEBUG] ERRO CRÍTICO NA TRANSCRIÇÃO:")
+            traceback.print_exc()
+            return f"[Erro técnico no áudio: {str(e)}]"
         finally:
             if os.path.exists(temp_path):
                 try: os.remove(temp_path)

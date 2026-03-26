@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv # pyre-ignore
 from contextlib import asynccontextmanager
 import asyncio
+import json
 from scheduler import start_scheduler # pyre-ignore
 from raquel import RaquelAgent # pyre-ignore
 
@@ -58,6 +59,11 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
     try:
         data_raw: Any = await request.json()
         data: Dict[str, Any] = data_raw if isinstance(data_raw, dict) else {}
+        
+        # --- WEBHOOK DEBUGGER ---
+        with open("last_webhook.json", "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        # ------------------------
         
         phone: Optional[str] = data.get("phone")
         
