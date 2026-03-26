@@ -324,7 +324,8 @@ class RaquelAgent:
         
         if clean_reply:
             print(f"📤 Enviando resposta para {phone}: {clean_reply[:50]}...")
-            self.send_to_zapi(phone, clean_reply)
+            loop = asyncio.get_event_loop()
+            loop.run_in_executor(None, self.send_to_zapi, phone, clean_reply)
         
         # Envia imagens se houver
         for img_url in images_to_send:

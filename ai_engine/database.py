@@ -19,9 +19,10 @@ class Database:
 
         if not url or not key:
             print(f"❌ ERRO CRÍTICO: Variáveis do Supabase ausentes! URL: {'OK' if url else 'FALTANDO'}, KEY: {'OK' if key else 'FALTANDO'}")
-            raise RuntimeError("Variáveis do Supabase ausentes no Railway.")
-
-        self.supabase: Client = create_client(url, key)
+            # Não levantamos RuntimeError para evitar que o uvicorn morra no Railway, permitindo logs
+            self.supabase = None
+        else:
+            self.supabase: Client = create_client(url, key)
 
     def get_all_brokers(self) -> List[Dict[str, Any]]:
         """

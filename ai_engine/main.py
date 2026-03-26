@@ -25,7 +25,13 @@ app: FastAPI = FastAPI(
     title="Raquel AI Engine - Leadimob-AI",
     lifespan=lifespan
 )
-raquel = RaquelAgent() # pyre-ignore
+raquel: Optional[RaquelAgent] = None
+try:
+    raquel = RaquelAgent()
+except Exception as e:
+    print(f"⚠️ ERRO CRÍTICO ao inicializar RaquelAgent: {e}")
+    import traceback
+    traceback.print_exc()
 
 @app.get("/")
 def home() -> Dict[str, str]:
@@ -91,6 +97,10 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
         phone_str: str = str(phone)
 
         # 1. Lógica de Confirmação do Corretor (Qualquer mensagem do número do corretor)
+        if not raquel:
+            print("⚠️ Erro: RaquelAgent não foi inicializado corretamente.")
+            return {"status": "error", "message": "RaquelAgent not initialized"}
+
         is_broker_msg = raquel.db.confirm_hot_lead(phone_str)
         if is_broker_msg:
             print(f"✅ Corretor {sender_name} ({phone_str}) confirmou recebimento. Mensagem: {message_text}")
