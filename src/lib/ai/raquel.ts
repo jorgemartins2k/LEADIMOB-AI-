@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { db } from "@/lib/db";
-import { leads, conversations, users, properties, launches, events, bestLeadsRanking, aiMistakesLog } from "@/lib/db/schema";
+import { leads, conversations, users, properties, launches, bestLeadsRanking, aiMistakesLog } from "@/lib/db/schema";
 import { eq, and, asc, sql, desc } from "drizzle-orm";
 import { sendWhatsAppMessage } from "@/lib/zapi";
 import { notifyBrokerByWhatsApp } from "./notify";
@@ -53,20 +53,13 @@ export async function processLeadMessage({ phone, message }: ProcessMessageParam
     });
 
     // 4. Fetch broker's portfolio
-    const [brokerProperties, brokerLaunches, brokerEvents] = await Promise.all([
+    const [brokerProperties, brokerLaunches] = await Promise.all([
         db.query.properties.findMany({
             where: and(eq(properties.userId, broker.id), eq(properties.status, "available")),
             limit: 10,
         }),
         db.query.launches.findMany({
             where: eq(launches.userId, broker.id),
-            limit: 5,
-        }),
-        db.query.events.findMany({
-            where: (e, { eq, gte }) => and(
-                eq(e.userId, broker.id),
-                gte(e.eventDate, new Date().toISOString().split('T')[0])
-            ),
             limit: 5,
         }),
     ]);
@@ -127,7 +120,6 @@ ${broker.presentation || "Tom polido e focado em alta qualidade de atendimento."
 PORTFÓLIO DO CORRETOR:
 IMÓVEIS: ${JSON.stringify(brokerProperties.map(p => ({ title: p.title, price: p.price, city: p.city, bedrooms: p.bedrooms })))}
 LANÇAMENTOS: ${JSON.stringify(brokerLaunches.map(l => ({ name: l.name, from: l.priceFrom, city: l.city })))}
-EVENTOS: ${JSON.stringify(brokerEvents.map(e => ({ name: e.name, date: e.eventDate, location: e.location })))}
 `;
 
     // 6. Save lead message

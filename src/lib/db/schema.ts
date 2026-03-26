@@ -157,21 +157,6 @@ export const launchUnits = pgTable('launch_units', {
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
-export const events = pgTable('events', {
-    id: uuid('id').primaryKey().defaultRandom(),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-    name: text('name').notNull(),
-    eventDate: date('event_date').notNull(),
-    eventTime: time('event_time'),
-    location: text('location'),
-    description: text('description'),
-    targetAudience: text('target_audience').array().notNull().default(sql`'{}'`),
-    standard: text('standard'),
-    deletedAt: timestamp('deleted_at', { withTimezone: true }),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
-
 export const appointments = pgTable('appointments', {
     id: uuid('id').primaryKey().defaultRandom(),
     userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),

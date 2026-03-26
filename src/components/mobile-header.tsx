@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LayoutDashboard, Users, Home, Rocket, Calendar, Megaphone, Clock, Bell, Settings, LogOut } from "lucide-react";
+import { Menu, X, LayoutDashboard, Users, Home, Rocket, Megaphone, Clock, Bell, Settings, LogOut } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { LeadImobLogo } from "./LeadImobLogo";
@@ -14,7 +14,6 @@ const navigation = [
     { name: "Visão Geral", href: "/dashboard", icon: LayoutDashboard },
     { name: "Leads", href: "/leads", icon: Users },
     { name: "Lançamentos", href: "/lancamentos", icon: Rocket },
-    { name: "Eventos", href: "/eventos", icon: Calendar },
     { name: "Campanhas", href: "/campanhas", icon: Megaphone },
     { name: "Calendário", href: "/agenda", icon: Clock },
     { name: "Notificações", href: "/notificacoes", icon: Bell },

@@ -332,12 +332,6 @@ class Database:
             .select("name, description, price_from, city, neighborhood, standard, target_audience, website_url, photos, launch_units:launch_units(name, area_sqm, bedrooms, bathrooms, parking_spots, price, minha_casa_minha_vida, allows_financing, down_payment, condo_fee, is_condo, target_audience)")\
             .eq("user_id", user_id)\
             .execute()
-
-        events_resp = self.supabase.table("events")\
-            .select("name, event_date, event_time, location, description, standard, target_audience")\
-            .eq("user_id", user_id)\
-            .execute()
-
         portfolio_parts: List[str] = []
         
         if launches_resp.data:
@@ -366,20 +360,7 @@ class Database:
                         item.append(u_info)
 
                 portfolio_parts.append("\n".join(item) + "\n\n")
-        if events_resp.data:
-            portfolio_parts.append("--- EVENTOS E LANÇAMENTOS PRÓXIMOS ---\n")
-            for e in events_resp.data:
-                item = [
-                    f"Evento: {e.get('name', 'Sem nome')}",
-                    f"Data: {e.get('event_date', '')} às {e.get('event_time', '')}",
-                    f"Local: {e.get('location', 'Não informado')}",
-                    f"Padrão: {e.get('standard', '')}",
-                    f"Descrição: {e.get('description', 'Sem descrição')}",
-                    f"Público-alvo: {e.get('target_audience', [])}"
-                ]
-                portfolio_parts.append("\n".join(item) + "\n\n")
-
-        return "".join(portfolio_parts) if portfolio_parts else "Nenhum lançamento ou evento cadastrado no portfólio."
+        return "".join(portfolio_parts) if portfolio_parts else "Nenhum lançamento cadastrado no portfólio."
 
     def get_broker_schedule(self, user_id: str) -> List[Dict[str, Any]]:
         """
