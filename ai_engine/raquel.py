@@ -220,7 +220,7 @@ class RaquelAgent:
         except Exception as e:
             print(f"❌ [DEBUG] ERRO CRÍTICO NA TRANSCRIÇÃO:")
             traceback.print_exc()
-            return f"[Erro técnico no áudio: {str(e)}]"
+            return "[Erro ao transcrever áudio]"
         finally:
             if os.path.exists(temp_path):
                 try: os.remove(temp_path)

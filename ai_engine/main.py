@@ -116,7 +116,7 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
                 new_content = old_buffer['content'] + "\n" + incoming_text if incoming_text else old_buffer['content']
                 message_buffers[phone_str]['content'] = new_content.strip()
                 
-                if is_audio:
+                if is_audio and audio_url:
                     message_buffers[phone_str]['is_audio'] = True
                     message_buffers[phone_str].setdefault('audio_urls', []).append(audio_url)
             else:
@@ -125,7 +125,7 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
                     "content": incoming_text,
                     "sender_name": sender_name,
                     "is_audio": is_audio,
-                    "audio_urls": [audio_url] if audio_url else [],
+                    "audio_urls": [audio_url] if is_audio and audio_url else [],
                     "task": None
                 }
 
