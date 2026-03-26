@@ -6,6 +6,7 @@ from dotenv import load_dotenv # pyre-ignore
 from contextlib import asynccontextmanager
 import asyncio
 import json
+import datetime
 from scheduler import start_scheduler # pyre-ignore
 from raquel import RaquelAgent # pyre-ignore
 
@@ -49,7 +50,13 @@ async def process_delayed_messages(phone_str: str):
                 audio_urls=buffer.get('audio_urls', [])
             )
         except Exception as e:
-            print(f"❌ Erro ao processar mensagem atrasada para {phone_str}: {e}")
+            print(f"❌ Erro fatal ao processar mensagem para {phone_str}:")
+            import traceback
+            traceback.print_exc()
+
+@app.get("/ping")
+def ping() -> Dict[str, str]:
+    return {"status": "ok", "timestamp": str(datetime.datetime.now())}
 
 @app.post("/webhook/zapi")
 async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTasks) -> Dict[str, str]:
@@ -60,9 +67,13 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
         data_raw: Any = await request.json()
         data: Dict[str, Any] = data_raw if isinstance(data_raw, dict) else {}
         
-        # --- WEBHOOK DEBUGGER ---
-        with open("last_webhook.json", "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        # --- WEBHOOK DEBUGGER (SEGURO) ---
+        try:
+            debug_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "last_webhook.json")
+            with open(debug_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+        except Exception as dbg_err:
+            print(f"⚠️ Erro ao salvar log de webhook: {dbg_err}")
         # ------------------------
         
         phone: Optional[str] = data.get("phone")

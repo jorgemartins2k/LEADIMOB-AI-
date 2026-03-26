@@ -177,7 +177,7 @@ class RaquelAgent:
                         
         return "no próximo dia útil", "08:00"
 
-    def transcribe_audio(self, audio_url: str) -> str:
+    async def transcribe_audio(self, audio_url: str) -> str:
         """
         Baixa o áudio da Z-API e transcreve usando OpenAI Whisper.
         Adicionado log exaustivo para depuração.
@@ -188,43 +188,38 @@ class RaquelAgent:
         if ".mp3" in audio_url.lower(): suffix = ".mp3"
         elif ".wav" in audio_url.lower(): suffix = ".wav"
         
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-            temp_path = tmp.name
-            
-        try:
-            print(f"🎙️ [DEBUG] Iniciando download de: {audio_url}")
-            audio_response: requests.Response = requests.get(audio_url, timeout=30, verify=False)
-            print(f"🎙️ [DEBUG] Status Code: {audio_response.status_code}, Headers: {audio_response.headers.get('Content-Type')}")
-            audio_response.raise_for_status()
-            
-            with open(temp_path, "wb") as f:
-                f.write(audio_response.content)
-            
-            file_size = os.path.getsize(temp_path)
-            print(f"✅ [DEBUG] Áudio salvo em {temp_path} ({file_size} bytes).")
-            
-            if file_size < 100:
-                print("⚠️ [DEBUG] Arquivo muito pequeno. Conteúdo recebido:", audio_response.content[:100])
-                return "[O áudio parece estar vazio ou inacessível]"
+        # Operações de arquivo e rede em executor para não travar o loop
+        def do_transcribe():
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                temp_path = tmp.name
+                
+            try:
+                print(f"🎙️ [DEBUG] Iniciando download de: {audio_url}")
+                audio_response = requests.get(audio_url, timeout=30, verify=False)
+                audio_response.raise_for_status()
+                
+                with open(temp_path, "wb") as f:
+                    f.write(audio_response.content)
+                
+                file_size = os.path.getsize(temp_path)
+                if file_size < 100: return "[O áudio parece estar vazio]"
 
-            print(f"🎙️ [DEBUG] Enviando para OpenAI Whisper...")
-            with open(temp_path, "rb") as audio_file:
-                transcript = self.client.audio.transcriptions.create(
-                    model="whisper-1", 
-                    file=audio_file
-                )
-            
-            text = str(transcript.text).strip()
-            print(f"📝 [DEBUG] Transcrição OK: {text}")
-            return text
-        except Exception as e:
-            print(f"❌ [DEBUG] ERRO CRÍTICO NA TRANSCRIÇÃO:")
-            traceback.print_exc()
-            return "[Erro ao transcrever áudio]"
-        finally:
-            if os.path.exists(temp_path):
-                try: os.remove(temp_path)
-                except: pass
+                with open(temp_path, "rb") as audio_file:
+                    transcript = self.client.audio.transcriptions.create(
+                        model="whisper-1", 
+                        file=audio_file
+                    )
+                return str(transcript.text).strip()
+            except Exception as e:
+                print(f"❌ [DEBUG] ERRO NA TRANSCRIÇÃO: {e}")
+                return "[Erro ao transcrever áudio]"
+            finally:
+                if os.path.exists(temp_path):
+                    try: os.remove(temp_path)
+                    except: pass
+
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, do_transcribe)
 
     async def process_message(self, phone: str, message: str, sender_name: str, is_audio: bool = False, audio_urls: List[str] = []) -> str:
         print(f"📥 Processando mensagem de {sender_name} ({phone}). Áudios: {len(audio_urls)}")
@@ -244,7 +239,7 @@ class RaquelAgent:
         if is_audio and audio_urls:
             transcriptions = []
             for url in audio_urls:
-                t = self.transcribe_audio(url)
+                t = await self.transcribe_audio(url)
                 if t and t != "[Erro ao transcrever áudio]":
                     transcriptions.append(t)
             
@@ -276,11 +271,15 @@ class RaquelAgent:
 
         messages.append({"role": "user", "content": message})
 
-        # 6. GERA RESPOSTA
+        # 6. GERA RESPOSTA (SEM BLOQUEAR O LOOP)
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=messages # pyre-ignore
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None, 
+                lambda: self.client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=messages # pyre-ignore
+                )
             )
             reply_content: str = response.choices[0].message.content or "Desculpe, não consegui formular uma resposta."
         except Exception as e:
@@ -329,7 +328,7 @@ class RaquelAgent:
         
         # Envia imagens se houver
         for img_url in images_to_send:
-            time.sleep(1)
+            await asyncio.sleep(1)
             self.send_image_to_zapi(phone, img_url)
 
         # 10. MELHORIA CONTÍNUA (BACKGROUND)
