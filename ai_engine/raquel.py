@@ -476,19 +476,39 @@ class RaquelAgent:
         user_id: str = context.get('user_id', '')
 
         if not broker_whatsapp:
-            print(f"⚠️ Alerta ignorado: Corretor sem WhatsApp cadastrado.")
+            print(f"⚠️ Alerta ignorado: Corretor sem WhatsApp cadastrado no banco de dados.")
             return
 
-        print(f"🚀 Gerando briefing e disparando ALERTA QUENTE para o corretor ({broker_whatsapp})...")
+        # Garante que o número está formatado para o Z-API (apenas números)
+        import re
+        broker_whatsapp = re.sub(r'\D', '', str(broker_whatsapp))
+        if broker_whatsapp and not broker_whatsapp.startswith("55") and len(broker_whatsapp) >= 10:
+             broker_whatsapp = "55" + broker_whatsapp
+
+        print(f"🚀 [DEBUG] Gerando briefing para lead {lead_name}...")
+        print(f"🚀 [DEBUG] Destinatário (Corretor): {broker_whatsapp}")
         
         # 1. Gera o briefing inteligente
         briefing = self.generate_lead_briefing(lead_id, context)
+        print(f"🚀 [DEBUG] Briefing gerado com sucesso.")
         
         # 2. Salva na tabela de notificações do painel
         self.db.add_broker_notification(user_id, lead_id, briefing)
 
         # 3. Envia para o WhatsApp do corretor
         final_alert = f"🔥 *LEAD QUENTE QUALIFICADO!* 🔥\n\n{briefing}\n\nEnviando para você agora mesmo. Por favor, responda com *ok* para confirmar que recebeu."
+        
+        # Log persistente para depuração remota
+        try:
+            with open("last_notification.json", "w", encoding="utf-8") as f:
+                json.dump({
+                    "timestamp": datetime.datetime.now().isoformat(),
+                    "broker_whatsapp": broker_whatsapp,
+                    "lead_id": lead_id,
+                    "final_alert": final_alert
+                }, f, indent=2, ensure_ascii=False)
+        except: pass
+
         self.send_to_zapi(broker_whatsapp, final_alert)
 
     def send_to_zapi(self, phone: str, content: str) -> None:
@@ -510,10 +530,10 @@ class RaquelAgent:
         
         try:
             response: requests.Response = requests.post(url, json=payload, headers=headers)
+            print(f"✅ [Z-API] Resposta para {phone}: {response.status_code} - {response.text}")
             response.raise_for_status()
-            print(f"✅ Enviado para {phone}")
         except Exception as e:
-            print(f"❌ Erro Z-API ({phone}): {e}")
+            print(f"❌ [Z-API ERROR] Falha ao enviar para {phone}: {e}")
 
     def send_image_to_zapi(self, phone: str, image_url: str) -> None:
         instance_id: Optional[str] = os.getenv("ZAPI_INSTANCE_ID") or os.getenv("ID_INSTÂNCIA_ZAPI") or os.getenv("ID_INSTANCIA_ZAPI")

@@ -198,8 +198,6 @@ class Database:
         """
         limit_time = (datetime.datetime.now(pytz.timezone('America/Sao_Paulo')) - datetime.timedelta(minutes=minutes)).isoformat()
         
-        # Buscamos leads cujo status indica alerta enviado mas sem confirmação (status != 'active' ou 'hot_confirmed')
-        # Na verdade, usamos o status 'hot_alert_sent' e 'hot_alert_retry'
         response = self.supabase.table("leads")\
             .select("*")\
             .in_("status", ["hot_alert_sent", "hot_alert_retry"])\
@@ -236,21 +234,6 @@ class Database:
         
         # Atualiza o lead para que o follow-up saibam que houve interação
         self.supabase.table("leads").update({"updated_at": "now()"}).eq("id", lead_id).execute()
-
-    def confirm_hot_lead(self, broker_phone: str) -> bool:
-        """
-        Busca o corretor pelo telefone de WhatsApp e confirma todos os alertas quentes pendentes dele
-        """
-        broker_resp = self.supabase.table("users").select("id").eq("whatsapp", broker_phone).limit(1).execute()
-        if broker_resp.data:
-            user_id = broker_resp.data[0]['id']
-            self.supabase.table("leads")\
-                .update({"status": "active", "updated_at": "now()"})\
-                .eq("user_id", user_id)\
-                .in_("status", ["hot_alert_sent", "hot_alert_final"])\
-                .execute()
-            return True
-        return False
 
     def add_to_ranking(self, user_id: str, lead_id: str, summary: str, highlights: str) -> None:
         """
