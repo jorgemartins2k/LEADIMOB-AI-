@@ -71,6 +71,7 @@ export default function ConfiguraçõesPage() {
     const [isUploading, setIsUploading] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [profile, setProfile] = useState<any>(null);
+    const [allCities, setAllCities] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [workDays, setWorkDays] = useState<DaySchedule[]>([
@@ -142,6 +143,20 @@ export default function ConfiguraçõesPage() {
             }
         }
         loadData();
+
+        async function fetchCities() {
+            try {
+                const response = await fetch("https://servicodados.ibge.gov.br/api/v1/localidades/municipios?ordenar=nome");
+                if (response.ok) {
+                    const data = await response.json();
+                    const names = data.map((m: any) => m.nome);
+                    setAllCities(names);
+                }
+            } catch (err) {
+                console.error("Erro ao carregar cidades do IBGE:", err);
+            }
+        }
+        fetchCities();
     }, [form]);
 
     // ── Tabs ──
@@ -532,7 +547,14 @@ export default function ConfiguraçõesPage() {
                                         <FormItem className="space-y-4">
                                             <FormLabel className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4">Cidade de Atuação Principal</FormLabel>
                                             <FormControl>
-                                                <Input {...field} placeholder="Ex: Goiânia" className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all" />
+                                                <div className="relative">
+                                                    <Input {...field} list="cities-data" placeholder="Ex: Goiânia" className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all" />
+                                                    <datalist id="cities-data">
+                                                        {allCities.slice(0, 100).map(city => (
+                                                            <option key={city} value={city} />
+                                                        ))}
+                                                    </datalist>
+                                                </div>
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -545,9 +567,16 @@ export default function ConfiguraçõesPage() {
                                         <FormItem className="space-y-4">
                                             <FormLabel className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4">Regiões Metropolitanas</FormLabel>
                                             <FormControl>
-                                                <Input {...field} placeholder="Ex: Aparecida, Senador Canedo, Trindade" className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all" />
+                                                <div className="relative">
+                                                    <Input {...field} list="metro-cities-data" placeholder="Ex: Aparecida, Senador Canedo, Trindade" className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all" />
+                                                    <datalist id="metro-cities-data">
+                                                        {allCities.slice(0, 100).map(city => (
+                                                            <option key={city} value={city} />
+                                                        ))}
+                                                    </datalist>
+                                                </div>
                                             </FormControl>
-                                            <p className="text-[9px] font-bold text-muted-foreground opacity-40 ml-4">*Separe as cidades por vírgula para que a Raquel as identifique corretamente.</p>
+                                            <p className="text-[9px] font-bold text-muted-foreground opacity-40 ml-4">*Separe as cidades por vírgula para que a Raquel as identifique corretamente. O sistema ajuda sugerindo cidades individuais.</p>
                                             <FormMessage />
                                         </FormItem>
                                     )}
