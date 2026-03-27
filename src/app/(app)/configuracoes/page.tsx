@@ -159,6 +159,63 @@ export default function ConfiguraçõesPage() {
         fetchCities();
     }, [form]);
 
+    // ── Autocomplete Logic ──
+    const [filteredCitySuggestions, setFilteredCitySuggestions] = useState<string[]>([]);
+    const [filteredMetroSuggestions, setFilteredMetroSuggestions] = useState<string[]>([]);
+    const [showCityDropdown, setShowCityDropdown] = useState(false);
+    const [showMetroDropdown, setShowMetroDropdown] = useState(false);
+
+    const filterCities = (query: string, setFiltered: (c: string[]) => void) => {
+        if (!query || query.length < 2) {
+            setFiltered([]);
+            return;
+        }
+        const filtered = allCities
+            .filter(c => c.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(query.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")))
+            .slice(0, 8);
+        setFiltered(filtered);
+    };
+
+    const handleCityChange = (val: string) => {
+        form.setValue("city", val);
+        filterCities(val, setFilteredCitySuggestions);
+        setShowCityDropdown(true);
+    };
+
+    const handleMetroChange = (val: string) => {
+        form.setValue("metropolitanRegions", val);
+        const currentVal = val || "";
+        const parts = currentVal.split(",");
+        const lastPart = parts[parts.length - 1].trim();
+        filterCities(lastPart, setFilteredMetroSuggestions);
+        setShowMetroDropdown(true);
+    };
+
+    const selectCity = (city: string) => {
+        form.setValue("city", city);
+        setShowCityDropdown(false);
+    };
+
+    const selectMetroCity = (city: string) => {
+        const currentVal = form.getValues("metropolitanRegions") || "";
+        const parts = currentVal.split(",").map(p => p.trim());
+        parts[parts.length - 1] = city;
+        const newVal = parts.join(", ") + ", ";
+        form.setValue("metropolitanRegions", newVal);
+        setShowMetroDropdown(false);
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (showCityDropdown || showMetroDropdown) {
+                setShowCityDropdown(false);
+                setShowMetroDropdown(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [showCityDropdown, showMetroDropdown]);
+
     // ── Tabs ──
     const tabs = [
         { id: "horarios", label: "Horários de Atendimento", icon: Clock },
@@ -548,12 +605,28 @@ export default function ConfiguraçõesPage() {
                                             <FormLabel className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4">Cidade de Atuação Principal</FormLabel>
                                             <FormControl>
                                                 <div className="relative">
-                                                    <Input {...field} list="cities-data" placeholder="Ex: Goiânia" className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all" />
-                                                    <datalist id="cities-data">
-                                                        {allCities.slice(0, 100).map(city => (
-                                                            <option key={city} value={city} />
-                                                        ))}
-                                                    </datalist>
+                                                    <Input
+                                                        {...field}
+                                                        onChange={(e) => handleCityChange(e.target.value)}
+                                                        onFocus={() => { if (field.value) handleCityChange(field.value) }}
+                                                        autoComplete="off"
+                                                        placeholder="Ex: Goiânia"
+                                                        className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
+                                                    />
+                                                    {showCityDropdown && filteredCitySuggestions.length > 0 && (
+                                                        <div className="absolute z-50 w-full mt-2 bg-background/80 backdrop-blur-xl border border-border/50 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                                                            {filteredCitySuggestions.map((city) => (
+                                                                <button
+                                                                    key={city}
+                                                                    type="button"
+                                                                    className="w-full text-left p-4 px-8 font-bold hover:bg-primary hover:text-primary-foreground transition-colors border-b border-border/10 last:border-0"
+                                                                    onClick={() => selectCity(city)}
+                                                                >
+                                                                    {city}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </FormControl>
                                             <FormMessage />
@@ -568,15 +641,37 @@ export default function ConfiguraçõesPage() {
                                             <FormLabel className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4">Regiões Metropolitanas</FormLabel>
                                             <FormControl>
                                                 <div className="relative">
-                                                    <Input {...field} list="metro-cities-data" placeholder="Ex: Aparecida, Senador Canedo, Trindade" className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all" />
-                                                    <datalist id="metro-cities-data">
-                                                        {allCities.slice(0, 100).map(city => (
-                                                            <option key={city} value={city} />
-                                                        ))}
-                                                    </datalist>
+                                                    <Input
+                                                        {...field}
+                                                        onChange={(e) => handleMetroChange(e.target.value)}
+                                                        onFocus={() => {
+                                                            if (field.value) {
+                                                                const parts = field.value.split(",");
+                                                                const lastPart = parts[parts.length - 1].trim();
+                                                                if (lastPart) handleMetroChange(field.value);
+                                                            }
+                                                        }}
+                                                        autoComplete="off"
+                                                        placeholder="Ex: Aparecida, Senador Canedo, Trindade"
+                                                        className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
+                                                    />
+                                                    {showMetroDropdown && filteredMetroSuggestions.length > 0 && (
+                                                        <div className="absolute z-50 w-full mt-2 bg-background/80 backdrop-blur-xl border border-border/50 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                                                            {filteredMetroSuggestions.map((city) => (
+                                                                <button
+                                                                    key={city}
+                                                                    type="button"
+                                                                    className="w-full text-left p-4 px-8 font-bold hover:bg-primary hover:text-primary-foreground transition-colors border-b border-border/10 last:border-0"
+                                                                    onClick={() => selectMetroCity(city)}
+                                                                >
+                                                                    {city}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </FormControl>
-                                            <p className="text-[9px] font-bold text-muted-foreground opacity-40 ml-4">*Separe as cidades por vírgula para que a Raquel as identifique corretamente. O sistema ajuda sugerindo cidades individuais.</p>
+                                            <p className="text-[9px] font-bold text-muted-foreground opacity-40 ml-4 italic">*Separe as cidades por vírgula. O sistema sugerirá cidades conforme você digita cada uma.</p>
                                             <FormMessage />
                                         </FormItem>
                                     )}
