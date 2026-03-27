@@ -64,6 +64,23 @@ async def process_delayed_messages(phone_str: str):
 def ping() -> Dict[str, str]:
     return {"status": "ok", "timestamp": str(datetime.datetime.now())}
 
+@app.get("/clear-memory-secret-99")
+async def clear_memory_endpoint():
+    """
+    Endpoint temporário para resetar a memória da IA (conversas).
+    """
+    if not raquel or not raquel.db or not raquel.db.supabase:
+        return {"status": "error", "message": "Database not initialized"}
+    
+    try:
+        from datetime import datetime
+        future = "2099-01-01T00:00:00"
+        print("⏳ [HTTP] Apagando memória de conversas...")
+        result = raquel.db.supabase.table("conversations").delete().lt("sent_at", future).execute()
+        return {"status": "success", "messages_removed": len(result.data)}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.post("/webhook/zapi")
 async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTasks) -> Dict[str, str]:
     """
