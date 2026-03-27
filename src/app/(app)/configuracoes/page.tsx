@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { User, Bell, Clock, Save, Camera, Loader2, Plus, Trash2 } from "lucide-react";
+import { User, Bell, Clock, Save, Camera, Loader2, Plus, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
 import {
     AlertDialog,
@@ -73,6 +73,8 @@ export default function ConfiguraçõesPage() {
     const [profile, setProfile] = useState<any>(null);
     const [allCities, setAllCities] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const cityRef = useRef<HTMLDivElement>(null);
+    const metroRef = useRef<HTMLDivElement>(null);
 
     const [workDays, setWorkDays] = useState<DaySchedule[]>([
         { name: "Segunda-feira", dayOfWeek: 1, active: true, startTime: "09:00", endTime: "18:00" },
@@ -207,14 +209,16 @@ export default function ConfiguraçõesPage() {
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (showCityDropdown || showMetroDropdown) {
+            if (cityRef.current && !cityRef.current.contains(event.target as Node)) {
                 setShowCityDropdown(false);
+            }
+            if (metroRef.current && !metroRef.current.contains(event.target as Node)) {
                 setShowMetroDropdown(false);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [showCityDropdown, showMetroDropdown]);
+    }, []);
 
     // ── Tabs ──
     const tabs = [
@@ -604,15 +608,18 @@ export default function ConfiguraçõesPage() {
                                         <FormItem className="space-y-4">
                                             <FormLabel className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4">Cidade de Atuação Principal</FormLabel>
                                             <FormControl>
-                                                <div className="relative">
+                                                <div className="relative" ref={cityRef}>
                                                     <Input
                                                         {...field}
                                                         onChange={(e) => handleCityChange(e.target.value)}
                                                         onFocus={() => { if (field.value) handleCityChange(field.value) }}
                                                         autoComplete="off"
                                                         placeholder="Ex: Goiânia"
-                                                        className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
+                                                        className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 pr-16 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
                                                     />
+                                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 text-muted-foreground/30 pointer-events-none">
+                                                        <Search className="w-6 h-6" />
+                                                    </div>
                                                     {showCityDropdown && filteredCitySuggestions.length > 0 && (
                                                         <div className="absolute z-50 w-full mt-2 bg-background/80 backdrop-blur-xl border border-border/50 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
                                                             {filteredCitySuggestions.map((city) => (
@@ -640,7 +647,7 @@ export default function ConfiguraçõesPage() {
                                         <FormItem className="space-y-4">
                                             <FormLabel className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4">Regiões Metropolitanas</FormLabel>
                                             <FormControl>
-                                                <div className="relative">
+                                                <div className="relative" ref={metroRef}>
                                                     <Input
                                                         {...field}
                                                         onChange={(e) => handleMetroChange(e.target.value)}
@@ -653,8 +660,11 @@ export default function ConfiguraçõesPage() {
                                                         }}
                                                         autoComplete="off"
                                                         placeholder="Ex: Aparecida, Senador Canedo, Trindade"
-                                                        className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
+                                                        className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 pr-16 focus-visible:ring-primary/20 focus-visible:border-primary transition-all"
                                                     />
+                                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 text-muted-foreground/30 pointer-events-none">
+                                                        <Search className="w-6 h-6" />
+                                                    </div>
                                                     {showMetroDropdown && filteredMetroSuggestions.length > 0 && (
                                                         <div className="absolute z-50 w-full mt-2 bg-background/80 backdrop-blur-xl border border-border/50 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
                                                             {filteredMetroSuggestions.map((city) => (
