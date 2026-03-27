@@ -219,18 +219,6 @@ class RaquelAgent:
         return await loop.run_in_executor(None, do_transcribe)
 
     async def process_message(self, phone: str, message: str, sender_name: str, is_audio: bool = False, audio_urls: List[str] = []) -> str:
-        # --- COMANDO SECRETO DE RESET (PARA O CORRETOR) ---
-        if message and message.strip().upper() == "RESET_MEMORY_NOW_SECRET_99":
-            try:
-                from datetime import datetime
-                future = "2099-01-01T00:00:00"
-                print("⏳ [SECRET] Apagando memória de conversas...")
-                self.db.supabase.table("conversations").delete().lt("sent_at", future).execute()
-                return "✅ Memória de todas as conversas foi resetada com sucesso!"
-            except Exception as e:
-                return f"❌ Erro ao resetar memória: {e}"
-        # -------------------------------------------------
-
         print(f"📥 Processando mensagem de {sender_name} ({phone}). Áudios: {len(audio_urls)}")
         
         # 1. Busca dados do corretor
