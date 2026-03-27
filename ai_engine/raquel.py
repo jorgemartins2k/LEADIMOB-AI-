@@ -29,9 +29,6 @@ class RaquelAgent:
         self.db = Database()
         self.tz = pytz.timezone('America/Sao_Paulo')
 
-    def get_system_prompt(self, context: Dict[str, Any], lead_name: str) -> str:
-        broker_name: str = context.get('broker_name', 'Corretor')
-        creci: str = context.get('broker_creci', 'Não informado')
     def get_system_prompt(self, context: Dict[str, Any]) -> str:
         broker_name: str = context.get('broker_name', 'Corretor')
         broker_agency: str = context.get('broker_agency', 'Imobiliária')
