@@ -35,7 +35,7 @@ class Database:
         """
         Busca o perfil completo de um corretor específico, incluindo o Foco Diário validado
         """
-        response = self.supabase.table("users").select("name, whatsapp, creci, real_estate_agency, city, presentation, daily_focus, daily_focus_date").eq("id", user_id).limit(1).execute()
+        response = self.supabase.table("users").select("name, whatsapp, creci, real_estate_agency, city, metropolitan_regions, presentation, daily_focus, daily_focus_date").eq("id", user_id).limit(1).execute()
         if response.data:
             broker: Dict[str, Any] = response.data[0]
             
@@ -69,6 +69,7 @@ class Database:
                 "broker_creci": broker.get('creci', 'Não informado'),
                 "broker_agency": broker.get('real_estate_agency', 'Autônomo'),
                 "broker_city": broker.get('city', 'sua região'),
+                "broker_metropolitan_regions": broker.get('metropolitan_regions', ''),
                 "broker_presentation": broker.get('presentation', ''),
                 "daily_focus": valid_focus,
                 "user_id": user_id

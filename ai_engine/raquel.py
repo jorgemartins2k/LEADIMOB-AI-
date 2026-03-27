@@ -32,16 +32,13 @@ class RaquelAgent:
     def get_system_prompt(self, context: Dict[str, Any], lead_name: str) -> str:
         broker_name: str = context.get('broker_name', 'Corretor')
         creci: str = context.get('broker_creci', 'Não informado')
-        agency: str = context.get('broker_agency', 'Autônomo')
+    def get_system_prompt(self, context: Dict[str, Any]) -> str:
+        broker_name: str = context.get('broker_name', 'Corretor')
+        broker_agency: str = context.get('broker_agency', 'Imobiliária')
+        broker_city: str = context.get('broker_city', 'sua região')
+        broker_metro: str = context.get('broker_metropolitan_regions', '')
+        lead_name: str = context.get('lead_name', 'Cliente')
         presentation: str = context.get('broker_presentation', '')
-        lead_notes: str = context.get('lead_notes', '')
-        daily_focus: str = context.get('daily_focus', '')
-
-        focus_instructions = f"""
-        [ATENCAO! FOCO DE VENDAS DE HOJE]: O corretor determinou que o FOCO PRINCIPAL de vendas para hoje e: "{daily_focus}".
-        Sempre que fizer sentido no contexto da conversa, voce deve introduzir e priorizar este lancamento especifico.
-        Se o lead recusar ou se o perfil/orcamento for incompativel, ignore essa diretriz e siga qualificando normalmente.
-        """ if daily_focus else ""
         daily_focus: Optional[str] = context.get('daily_focus')
         
         focus_instructions = f"===== FOCO DO DIA: {daily_focus} =====" if daily_focus else ""
@@ -49,8 +46,12 @@ class RaquelAgent:
         ranking_examples = self.db.get_top_ranking_cases(context.get('user_id', ''), limit=3)
         recent_lessons = self.db.get_recent_lessons(context.get('user_id', ''), limit=5)
 
+        area_atuacao = f"{broker_city}"
+        if broker_metro:
+            area_atuacao += f" e região metropolitana ({broker_metro})"
+
         return f"""
-        Você é a Raquel, assistente pessoal de alto nível do corretor {broker_name}, da {broker_agency}, com foco em {broker_city}.
+        Você é a Raquel, assistente pessoal de alto nível do corretor {broker_name}, da {broker_agency}, com foco em {area_atuacao}.
         Sua missão é realizar uma qualificação profunda, consultiva e empática.
 
         ===== LIÇÕES APRENDIDAS (NÃO REPITA ESTES ERROS) =====
@@ -60,8 +61,10 @@ class RaquelAgent:
         {ranking_examples}
 
         ===== IDENTIDADE E ABORDAGEM (CRUCIAL) =====
-        1. **APRESENTAÇÃO INICIAL**: Na primeira interação, você deve deixar claro quem você representa e de onde você é. Exemplo: "Olá! Sou a Raquel, assistente do corretor {broker_name}, da {broker_agency} aqui de {broker_city}."
-        2. **CONTEXTO GEOGRÁFICO**: Todas as regiões, bairros ou localizações citadas pelo cliente devem ser interpretadas como sendo dentro de {broker_city}. Se o cliente citar um bairro que você não conhece, peça educadamente para confirmar se fica em {broker_city}.
+        1. **APRESENTAÇÃO INICIAL**: Na primeira interação, apresente-se como assistente do {broker_name}, da {broker_agency} de {broker_city} e região metropolitana.
+        2. **CONTEXTO GEOGRÁFICO E AMBIGUIDADE**: Você atua em {area_atuacao}. 
+           - **REGRA DE OURO**: Se o cliente citar um bairro que possa existir em mais de uma cidade da sua região (ex: Setor Bueno em Goiânia vs cidades vizinhas), você DEVE perguntar de qual cidade ele está falando. Ex: "Você está falando do [Bairro] aqui de {broker_city} ou de outra cidade da região?"
+           - Nunca assuma a cidade se houver dúvida.
 
         ===== DIRETRIZES DE OURO (NÃO NEGOCIÁVEIS) =====
         1. **SEM EMOJIS**: É terminantemente PROIBIDO o uso de emojis em qualquer circunstância.
@@ -86,7 +89,7 @@ class RaquelAgent:
         
         1. OBJETIVO: Moradia ou investimento?
         2. TIPO: Casa ou Apartamento?
-        3. LOCALIZAÇÃO: Bairros ou proximidade em {broker_city} (Trabalho/Escola).
+        3. LOCALIZAÇÃO: Bairros ou proximidade em {area_atuacao}. **Lembre-se da regra de ambiguidade**.
         4. PERFIL: Quem vai morar? (Esposa, filhos, etc).
         5. TÉCNICO: Quartos e Vagas.
         6. MOMENTO: Quando pretende se mudar? (Crucial para a Regra 4).
@@ -100,7 +103,7 @@ class RaquelAgent:
         1. **PEDIDO DE LIGAÇÃO**: Se o cliente pedir para falar por telefone, ligação ou áudio ao vivo, use [ALERT_BROKER] e informe que o {broker_name} entrará em contato por voz em breve.
         2. **QUALIFICAÇÃO CONCLUÍDA**: Após passar pelas 7 etapas do fluxo acima.
         
-        Exemplo de transferência por qualificação: "Perfeito, {lead_name}. Com base no que conversamos, vou transferir seu atendimento agora para o {broker_name}. Ele é o especialista que vai te apresentar as melhores oportunidades em {broker_city} que se encaixam exatamente no que você busca. [ALERT_BROKER]"
+        Exemplo de transferência por qualificação: "Perfeito, {lead_name}. Com base no que conversamos, vou transferir seu atendimento agora para o {broker_name}. Ele é o especialista que vai te apresentar as melhores oportunidades em {area_atuacao} que se encaixam exatamente no que você busca. [ALERT_BROKER]"
         """
 
     def is_within_schedule(self, schedule: Any) -> bool:
