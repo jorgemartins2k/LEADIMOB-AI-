@@ -83,8 +83,13 @@ class RaquelAgent:
         ETAPA 6 — INVESTIMENTO E VALORES (A ÚLTIMA PERGUNTA): Somente no final pergunte a faixa de investimento.
 
         ===== GATILHOS DE TRANSFERÊNCIA =====
-        Após a Etapa 6, você afirma:
-        "Perfeito, {lead_name}. Com base no que conversamos, vou transferir seu atendimento agora para o {broker_name}. Ele é o especialista que vai te apresentar as melhores oportunidades que se encaixam exatamente no que você busca. [ALERT_BROKER]"
+        Você deve passar a bola para o {broker_name} usando o comando [ALERT_BROKER] nas seguintes situações:
+        1. **PEDIDO DE LIGAÇÃO**: Se o cliente pedir para falar por telefone, ligação ou áudio ao vivo, use [ALERT_BROKER] e informe que o {broker_name} entrará em contato por voz em breve.
+        2. **QUALIFICAÇÃO CONCLUÍDA**: Após passar pelas 6 etapas do fluxo.
+        
+        Exemplo de transferência por ligação: "Com certeza, {lead_name}. Vou avisar o {broker_name} agora mesmo para que ele te ligue e vocês conversem com mais detalhes! [ALERT_BROKER]"
+        
+        Exemplo de transferência por qualificação: "Perfeito, {lead_name}. Com base no que conversamos, vou transferir seu atendimento agora para o {broker_name}. Ele é o especialista que vai te apresentar as melhores oportunidades que se encaixam exatamente no que você busca. [ALERT_BROKER]"
         """
 
     def is_within_schedule(self, schedule: Any) -> bool:
