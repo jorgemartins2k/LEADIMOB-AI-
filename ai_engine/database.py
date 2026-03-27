@@ -35,7 +35,7 @@ class Database:
         """
         Busca o perfil completo de um corretor específico, incluindo o Foco Diário validado
         """
-        response = self.supabase.table("users").select("name, whatsapp, creci, real_estate_agency, presentation, daily_focus, daily_focus_date").eq("id", user_id).limit(1).execute()
+        response = self.supabase.table("users").select("name, whatsapp, creci, real_estate_agency, city, presentation, daily_focus, daily_focus_date").eq("id", user_id).limit(1).execute()
         if response.data:
             broker: Dict[str, Any] = response.data[0]
             
@@ -62,12 +62,13 @@ class Database:
                                 valid_focus = daily_focus
                 except Exception as e:
                     print("Erro ao validar daily focus:", e)
-
+ 
             return {
                 "broker_name": broker.get('name', 'Corretor'),
                 "broker_whatsapp": broker.get('whatsapp', ''),
                 "broker_creci": broker.get('creci', 'Não informado'),
                 "broker_agency": broker.get('real_estate_agency', 'Autônomo'),
+                "broker_city": broker.get('city', 'sua região'),
                 "broker_presentation": broker.get('presentation', ''),
                 "daily_focus": valid_focus,
                 "user_id": user_id
