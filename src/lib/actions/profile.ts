@@ -14,6 +14,8 @@ export async function updateProfile(data: {
     realEstateAgency?: string;
     creci?: string;
     presentation?: string;
+    city?: string;
+    metropolitanRegions?: string;
     email?: string;
 }): Promise<{ success?: boolean; error?: string }> {
     try {
@@ -25,6 +27,8 @@ export async function updateProfile(data: {
                 name: data.name,
                 whatsapp: data.whatsapp,
                 email: data.email,
+                city: data.city,
+                metropolitanRegions: data.metropolitanRegions,
                 realEstateAgency: data.realEstateAgency,
                 creci: data.creci,
                 presentation: data.presentation,

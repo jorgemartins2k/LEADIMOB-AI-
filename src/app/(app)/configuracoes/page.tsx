@@ -55,6 +55,8 @@ const profileSchema = z.object({
     creci: z.string().optional(),
     presentation: z.string().optional(),
     realEstateAgency: z.string().optional(),
+    city: z.string().optional(),
+    metropolitanRegions: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -90,6 +92,8 @@ export default function ConfiguraçõesPage() {
             creci: "",
             presentation: "",
             realEstateAgency: "",
+            city: "",
+            metropolitanRegions: "",
         },
     });
 
@@ -113,6 +117,8 @@ export default function ConfiguraçõesPage() {
                     creci: profile.creci || "",
                     presentation: profile.presentation || "",
                     realEstateAgency: profile.realEstateAgency || "",
+                    city: profile.city || "",
+                    metropolitanRegions: profile.metropolitanRegions || "",
                 });
                 if (profile.avatarUrl) setAvatarUrl(profile.avatarUrl);
                 setProfile(profile);
@@ -515,6 +521,33 @@ export default function ConfiguraçõesPage() {
                                             <FormControl>
                                                 <Input {...field} className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all" />
                                             </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="city"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-4">
+                                            <FormLabel className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4">Cidade de Atuação Principal</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} placeholder="Ex: Goiânia" className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="metropolitanRegions"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-4">
+                                            <FormLabel className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-4">Regiões Metropolitanas</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} placeholder="Ex: Aparecida, Senador Canedo, Trindade" className="h-18 bg-muted/20 border-border/50 rounded-3xl font-black text-lg p-8 focus-visible:ring-primary/20 focus-visible:border-primary transition-all" />
+                                            </FormControl>
+                                            <p className="text-[9px] font-bold text-muted-foreground opacity-40 ml-4">*Separe as cidades por vírgula para que a Raquel as identifique corretamente.</p>
                                             <FormMessage />
                                         </FormItem>
                                     )}

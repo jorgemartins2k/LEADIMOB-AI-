@@ -13,6 +13,8 @@ export const users = pgTable('users', {
     realEstateAgency: text('real_estate_agency'),
     creci: text('creci'),
     presentation: text('presentation'),
+    city: text('city'),
+    metropolitanRegions: text('metropolitan_regions'),
     avatarUrl: text('avatar_url'),
     plan: text('plan').notNull().default('start'),
     planCycleStart: date('plan_cycle_start').notNull().default(sql`CURRENT_DATE`),
