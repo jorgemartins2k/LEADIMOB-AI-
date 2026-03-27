@@ -430,38 +430,57 @@ class RaquelAgent:
 
     def generate_lead_briefing(self, lead_id: str, context: Dict[str, Any]) -> str:
         """
-        Gera um briefing consultivo sobre o lead usando IA.
+        Gera um briefing consultivo e emocional sobre o lead usando IA.
         """
         try:
             name: str = context.get('lead_name', 'Cliente')
-            # 1. Busca histórico recente
-            history = self.db.get_chat_history(context.get('phone', ''), limit=15)
+            # 1. Busca histórico recente (CORREÇÃO: usar lead_id em vez de phone)
+            history = self.db.get_chat_history(lead_id, limit=30)
             chat_text = "\n".join([f"{m['role']}: {m['content']}" for m in history]) if history else "Sem histórico."
 
             prompt = f"""
-            Gere um resumo executivo para o corretor sobre o lead {name}.
-            Baseie-se nestas informações e no histórico abaixo:
+            Você é uma assistente de vendas de alto nível (Raquel).
+            O lead {name} acaba de ser qualificado como QUENTE.
+            Gere um BRIEFING EXECUTIVO DE ALTO IMPACTO para o corretor.
             
-            HISTÓRICO:
+            FOCO:
+            - Identificar a "Dor" ou o "Sonho" principal (emocional).
+            - Perfil da família (filhos, cônjuge, pets).
+            - Perfil Financeiro (Budget e origem do recurso se mencionado).
+            - Origem: Se é Investimento ou Moradia.
+            - Interesses específicos (Bairros, Lançamentos, Atributos do imóvel).
+
+            HISTÓRICO DA CONVERSA:
             {chat_text}
             
-            INFO DISPONÍVEL:
+            DADOS TÉCNICOS:
             {json.dumps(context, indent=2)}
 
-            RESPONDA APENAS O BRIEFING FORMATADO:
+            RESPONDA APENAS O BRIEFING FORMATADO EM MARKDOWN:
             👤 *Cliente*: {name}
-            📞 *Contato*: {context.get('phone', 'N/A')}
-            🎯 *Objetivo*: (Moradia/Investimento/etc)
-            📍 *Interesse*: (Bairros e tipo de imóvel)
-            👨‍👩‍👧 *Perfil*: (Composição familiar se houver)
-            💰 *Budget*: (Se mencionado)
+            📞 *WhatsApp*: {context.get('phone', 'N/A')}
             
-            📝 *Resumo do Atendimento*: (2 frases sobre a última dor/desejo do cliente)
+            🎯 *PERFIL E MOTIVAÇÃO*:
+            - **Objetivo**: (Moradia / Investimento)
+            - **Motivação**: (O que o move? Ex: Mais espaço para os filhos, sair do aluguel, investir em lançamentos)
+            - **Perfil Familiar**: (Quem vai morar? Filhos mencionados?)
+
+            📍 *PREFERÊNCIAS*:
+            - **Região**: (Bairros citados)
+            - **Imóvel**: (Número de quartos, suítes, vagas)
+            - **Interesse Especial**: (O que ele mais valorizou na conversa?)
+
+            💰 *CAPACIDADE FINANCEIRA*:
+            - **Investimento Estimado**: (Se mencionado ou deduzido)
+            - **Forma de Pagamento**: (À vista, Financiamento, FGTS, Permuta)
+
+            💡 *DICA PARA FECHAMENTO*:
+            (Sugestão de como o corretor deve abordar este cliente baseado no tom da conversa)
             """
 
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "system", "content": "Você é um assistente de vendas especialista."}, 
+                model="gpt-4o", # Usando gpt-4o para briefing mais inteligente
+                messages=[{"role": "system", "content": "Você é o braço direito do corretor de elite. Gere resumos afiados e consultivos."}, 
                           {"role": "user", "content": prompt}]
             )
             return response.choices[0].message.content or f"Lead {name} qualificado."
