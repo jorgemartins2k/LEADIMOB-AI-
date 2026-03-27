@@ -10,7 +10,6 @@ from typing import List, Dict, Any, Optional, Union
 import json
 from openai import OpenAI # pyre-ignore
 from dotenv import load_dotenv # pyre-ignore
-from scheduler import start_scheduler
 from database import Database
 
 load_dotenv()
