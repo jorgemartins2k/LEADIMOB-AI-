@@ -235,6 +235,28 @@ class Database:
         # Atualiza o lead para que o follow-up saibam que houve interação
         self.supabase.table("leads").update({"updated_at": "now()"}).eq("id", lead_id).execute()
 
+    def is_registered_broker(self, phone: str) -> bool:
+        """
+        Verifica se o telefone pertence a um corretor cadastrado na tabela de usuários.
+        """
+        try:
+            # Limpa o telefone para bater com o padrão do banco (apenas números)
+            import re
+            clean_phone = re.sub(r'\D', '', phone)
+            
+            # Testa variações (com e sem 55)
+            phone_variants = [clean_phone]
+            if clean_phone.startswith("55"):
+                phone_variants.append(clean_phone[2:])
+            else:
+                phone_variants.append("55" + clean_phone)
+
+            response = self.supabase.table("users").select("id").in_("whatsapp", phone_variants).execute()
+            return len(response.data) > 0 if response.data else False
+        except Exception as e:
+            print(f"Erro ao verificar corretor: {e}")
+            return False
+
     def add_to_ranking(self, user_id: str, lead_id: str, summary: str, highlights: str) -> None:
         """
         Adiciona o lead ao Top 1 do ranking, empurrando os outros para baixo.

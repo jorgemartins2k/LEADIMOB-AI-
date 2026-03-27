@@ -127,17 +127,22 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
             print("⚠️ Webhook ignorado: campo 'phone' ausente.")
             return {"status": "ignored"}
 
-        # 1. Lógica de Confirmação do Corretor
+        # 1. SEPARAÇÃO TOTAL: Corretor vs Lead
         if not raquel:
             print("⚠️ Erro: RaquelAgent não foi inicializado corretamente.")
             return {"status": "error", "message": "RaquelAgent not initialized"}
 
-        is_broker_msg = raquel.db.confirm_hot_lead(phone_str)
-        if is_broker_msg:
-            print(f"✅ Corretor {sender_name} ({phone_str}) confirmou recebimento. Mensagem: {message_text}")
-            if message_text and message_text.lower().strip() == "ok":
-                return {"status": "broker_confirmed"}
-            return {"status": "broker_confirmed"}
+        is_broker = raquel.db.is_registered_broker(phone_str)
+        if is_broker:
+            # Se for um corretor cadastrado, tratamos APENAS como ação de corretor
+            was_confirmed = raquel.db.confirm_hot_lead(phone_str)
+            if was_confirmed:
+                print(f"✅ Corretor {sender_name} ({phone_str}) confirmou recebimento de lead.")
+            else:
+                print(f"ℹ️ Interação de corretor ({sender_name}) ignorada pelo motor de leads.")
+            
+            # BLOQUEIO: Se é corretor, NUNCA segue para o processamento de Raquel como lead
+            return {"status": "broker_acknowledged"}
 
         # 2. Processamento de Mensagem com Debouncing
         if incoming_text or is_audio:
