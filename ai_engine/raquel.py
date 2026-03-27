@@ -7,8 +7,11 @@ import random
 import asyncio
 import json
 from typing import List, Dict, Any, Optional, Union
+import json
 from openai import OpenAI # pyre-ignore
 from dotenv import load_dotenv # pyre-ignore
+from scheduler import start_scheduler
+from utils.maps_service import MapsService
 from database import Database
 
 load_dotenv()
@@ -17,6 +20,7 @@ class RaquelAgent:
     client: OpenAI
     db: Database
     tz: datetime.tzinfo
+    maps_service: MapsService
 
     def __init__(self) -> None:
         # Validação robusta de chaves
@@ -29,6 +33,7 @@ class RaquelAgent:
         self.client = OpenAI(api_key=api_key)
         self.db = Database()
         self.tz = pytz.timezone('America/Sao_Paulo')
+        self.maps_service = MapsService()
 
     def get_system_prompt(self, context: Dict[str, Any], lead_name: str) -> str:
         broker_name: str = context.get('broker_name', 'Corretor')
@@ -86,14 +91,15 @@ class RaquelAgent:
         ETAPA 5 — PRAZO E MOMENTO: Urgência/Data de mudança (Crucial para a Regra 4).
         ETAPA 6 — INVESTIMENTO E VALORES (A ÚLTIMA PERGUNTA): Somente no final pergunte a faixa de investimento.
 
+        ===== GATILHOS DE PESQUISA (GOOGLE MAPS) =====
+        Você tem acesso a uma ferramenta de busca no Google Maps. 
+        Use-a SEMPRE que o cliente perguntar sobre escolas, hospitais, creches, comércios ou serviços próximos a uma localização. 
+        Não invente dados. Pesquise e repasse os nomes e endereços reais que encontrar.
+
         ===== GATILHOS DE TRANSFERÊNCIA =====
         Você deve passar a bola para o {broker_name} usando o comando [ALERT_BROKER] nas seguintes situações:
         1. **PEDIDO DE LIGAÇÃO**: Se o cliente pedir para falar por telefone, ligação ou áudio ao vivo, use [ALERT_BROKER] e informe que o {broker_name} entrará em contato por voz em breve.
         2. **QUALIFICAÇÃO CONCLUÍDA**: Após passar pelas 6 etapas do fluxo.
-        
-        Exemplo de transferência por ligação: "Com certeza, {lead_name}. Vou avisar o {broker_name} agora mesmo para que ele te ligue e vocês conversem com mais detalhes! [ALERT_BROKER]"
-        
-        Exemplo de transferência por qualificação: "Perfeito, {lead_name}. Com base no que conversamos, vou transferir seu atendimento agora para o {broker_name}. Ele é o especialista que vai te apresentar as melhores oportunidades que se encaixam exatamente no que você busca. [ALERT_BROKER]"
         """
 
     def is_within_schedule(self, schedule: Any) -> bool:
@@ -256,7 +262,7 @@ class RaquelAgent:
             print(f"📋 Conteúdo: {portfolio_text}")
 
         # 5. MONTA AS MENSAGENS PARA A OPENAI
-        messages: List[Dict[str, str]] = [{"role": "system", "content": self.get_system_prompt(context, lead_real_name)}]
+        messages: List[Dict[str, Any]] = [{"role": "system", "content": self.get_system_prompt(context, lead_real_name)}]
         messages.append({"role": "system", "content": f"PORTFÓLIO DISPONÍVEL:\n{portfolio_text}"})
 
         for h in history:
@@ -264,19 +270,66 @@ class RaquelAgent:
 
         messages.append({"role": "user", "content": message})
 
-        # 6. GERA RESPOSTA (SEM BLOQUEAR O LOOP)
+        # 6. DEFINIÇÃO DE TOOLS (GOOGLE MAPS)
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "search_nearby",
+                    "description": "Pesquisa locais próximos (escolas, hospitais, comércios) no Google Maps.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string", "description": "O que pesquisar (ex: 'escolas particulares', 'academias')"},
+                            "location": {"type": "string", "description": "A localização de referência (ex: 'perto do Hospital Albert Einstein em Goiânia')"}
+                        },
+                        "required": ["query", "location"]
+                    }
+                }
+            }
+        ]
+
+        # 7. GERA RESPOSTA COM SUPORTE A TOOLS
         try:
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None, 
-                lambda: self.client.chat.completions.create(
+            def run_chat():
+                response = self.client.chat.completions.create(
                     model="gpt-4o-mini",
-                    messages=messages # pyre-ignore
+                    messages=messages,
+                    tools=tools, # pyre-ignore
+                    tool_choice="auto"
                 )
-            )
-            reply_content: str = response.choices[0].message.content or "Desculpe, não consegui formular uma resposta."
+                
+                msg = response.choices[0].message
+                
+                # Se a IA quiser usar o Google Maps
+                if msg.tool_calls:
+                    messages.append(msg)
+                    for tool_call in msg.tool_calls:
+                        args = json.loads(tool_call.function.arguments)
+                        print(f"🗺️ [MAPS] Pesquisando: {args['query']} em {args['location']}")
+                        
+                        results = self.maps_service.find_nearby_places(args['query'], args['location'])
+                        
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": json.dumps(results, ensure_ascii=False)
+                        })
+                    
+                    # Segunda chamada para a IA processar os resultados do Maps
+                    second_response = self.client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=messages
+                    )
+                    return second_response.choices[0].message.content
+                
+                return msg.content
+
+            loop = asyncio.get_event_loop()
+            reply_content = await loop.run_in_executor(None, run_chat)
+            if not reply_content: reply_content = "Desculpe, não consegui formular uma resposta."
         except Exception as e:
-            print(f"❌ Erro na OpenAI: {e}")
+            print(f"❌ Erro na OpenAI/Tools: {e}")
             error_msg = "Desculpe, tive um problema técnico momentâneo."
             self.send_to_zapi(phone, error_msg)
             return error_msg
