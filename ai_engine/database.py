@@ -22,7 +22,11 @@ class Database:
             # Não levantamos RuntimeError para evitar que o uvicorn morra no Railway, permitindo logs
             self.supabase = None
         else:
-            self.supabase: Client = create_client(url, key)
+            try:
+                self.supabase: Client = create_client(url, key)
+            except Exception as e:
+                print(f"❌ ERRO AO CRIAR CLIENTE SUPABASE: {e}")
+                self.supabase = None # pyre-ignore
 
     def _normalize_phone(self, phone: str) -> str:
         """

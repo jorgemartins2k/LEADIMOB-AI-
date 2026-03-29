@@ -139,7 +139,7 @@ async def check_leads_and_followups() -> None:
     tz: datetime.tzinfo = pytz.timezone('America/Sao_Paulo')
     now: datetime.datetime = datetime.datetime.now(tz)
     
-    print(f"[{now}] 🔍 Varredura Broker-First (Novos, Reagendados e Follow-ups)...")
+    print(f"[{now}] 🔍 [HEARTBEAT] Iniciando Varredura Multi-Corretor...")
     
     try:
         brokers = db.get_all_brokers()
@@ -275,10 +275,29 @@ async def daily_end_of_shift_cleanup() -> None:
 
 def start_scheduler() -> None:
     scheduler = AsyncIOScheduler()
+    
+    # 1. Varredura Broker-First (Novos Leads, Reagendamento OOH e Follow-ups)
     scheduler.add_job(check_leads_and_followups, 'interval', minutes=5)
+    
+    # 2. Monitoramento de Leads Quentes (Alertas ao Corretor)
     scheduler.add_job(monitor_hot_leads, 'interval', minutes=2)
+    
+    # 3. Follow-up de Longo Prazo (24h)
     scheduler.add_job(check_24h_followups, 'interval', hours=1)
+    
+    # 4. Limpeza de Turno
     scheduler.add_job(daily_end_of_shift_cleanup, 'interval', minutes=5)
     
     scheduler.start()
-    print("🚀 Sistema de Agendamento Raquel Super-IA Ativo!")
+    
+    # Executa uma varredura imediata em background para depuração
+    print("🚀 [SCHEDULER] Sistema de Agendamento Raquel Super-IA Ativo!")
+    print("📢 [SCHEDULER] Iniciando varredura imediata de teste...")
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.create_task(check_leads_and_followups())
+        else:
+            loop.run_until_complete(check_leads_and_followups())
+    except Exception as e:
+        print(f"❌ [SCHEDULER] Erro na varredura inicial: {e}")
