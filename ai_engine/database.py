@@ -24,6 +24,13 @@ class Database:
         else:
             self.supabase: Client = create_client(url, key)
 
+    def _normalize_phone(self, phone: str) -> str:
+        """
+        Remove caracteres não numéricos.
+        """
+        import re
+        return re.sub(r'\D', '', str(phone))
+
     def get_all_brokers(self) -> List[Dict[str, Any]]:
         """
         Retorna todos os corretores ativos no sistema
@@ -81,12 +88,13 @@ class Database:
         Busca um lead pelo telefone, considerando a variação do nono dígito para números brasileiros.
         """
         try:
+            clean_phone = self._normalize_phone(phone)
             # Tolerância para o nono dígito do Brasil (Ex: 553499789 vs 55349789)
-            phone_variants = [phone]
-            if phone.startswith("55") and len(phone) == 13: # Com o 9 (Ex: 55 34 9 97894822)
-                phone_variants.append(phone[:4] + phone[5:]) # pyre-ignore
-            elif phone.startswith("55") and len(phone) == 12: # Sem o 9 (Ex: 55 34 97894822)
-                phone_variants.append(phone[:4] + "9" + phone[4:]) # pyre-ignore
+            phone_variants = [clean_phone]
+            if clean_phone.startswith("55") and len(clean_phone) == 13: # Com o 9 (Ex: 55 34 9 97894822)
+                phone_variants.append(clean_phone[:4] + clean_phone[5:])
+            elif clean_phone.startswith("55") and len(clean_phone) == 12: # Sem o 9 (Ex: 55 34 97894822)
+                phone_variants.append(clean_phone[:4] + "9" + clean_phone[4:])
                 
             response = self.supabase.table("leads").select("*").in_("phone", phone_variants).execute()
             leads = response.data
@@ -242,9 +250,7 @@ class Database:
         Verifica se o telefone pertence a um corretor cadastrado na tabela de usuários.
         """
         try:
-            # Limpa o telefone para bater com o padrão do banco (apenas números)
-            import re
-            clean_phone = re.sub(r'\D', '', phone)
+            clean_phone = self._normalize_phone(phone)
             
             # Testa variações (com e sem 55)
             phone_variants = [clean_phone]

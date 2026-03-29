@@ -145,61 +145,85 @@ async def check_leads_and_followups() -> None:
         brokers = db.get_all_brokers()
         
         for broker in brokers:
-            user_id: str = str(broker.get('id', ''))
-            broker_name: str = str(broker.get('name', 'Corretor'))
-            
-            schedule = db.get_broker_schedule(user_id)
-            if not schedule:
-                if now.hour < 8 or now.hour >= 19: continue
-            else:
-                schedule_list: List[Dict[str, Any]] = schedule if isinstance(schedule, list) else []
-                if not is_within_schedule(schedule_list, now): continue
+            try:
+                user_id: str = str(broker.get('id', ''))
+                broker_name: str = str(broker.get('name', 'Corretor'))
+                
+                schedule = db.get_broker_schedule(user_id)
+                if not schedule:
+                    # Default: 08:00 - 19:00 if no schedule set
+                    if now.hour < 8 or now.hour >= 19: 
+                        print(f"💤 {broker_name} fora do horário padrão (8-19h).")
+                        continue
+                else:
+                    schedule_list: List[Dict[str, Any]] = schedule if isinstance(schedule, list) else []
+                    if not is_within_schedule(schedule_list, now):
+                        print(f"💤 {broker_name} fora do expediente configurado.")
+                        continue
 
-            # -------------- Lógica de Alertas Pendentes (OOH) --------------
-            ooh_hot_resp = db.supabase.table("leads").select("*").eq("user_id", user_id).eq("status", "ooh_hot_alert_pending").execute()
-            ooh_hot_leads = ooh_hot_resp.data if hasattr(ooh_hot_resp, 'data') and ooh_hot_resp.data else []
-            
-            for lead in ooh_hot_leads:
-                lead_phone = str(lead.get('phone', ''))
-                context = db.get_broker_data(user_id)
-                if context:
-                    context['lead_name'] = str(lead.get('name', 'Cliente'))
-                    history = db.get_chat_history(lead_phone, limit=1)
-                    last_msg = str(history[0].get('content', '')) if history else "Novo interesse gerado fora de horário."
-                    last_msg = last_msg.replace("[ALERT_BROKER]", "").strip()
-                    
-                    print(f"⏰ Disparando alerta OOH pendente para o corretor {broker_name}")
-                    raquel.alert_broker(context, last_msg)
-                    db.update_lead_status(lead_phone, "hot_alert_sent")
-                    db.set_lead_transfer_time(lead_phone)
-                    time.sleep(2)
-            # -------------------------------------------------------------
+                # -------------- Lógica de Alertas Pendentes (OOH) ----------------
+                ooh_hot_resp = db.supabase.table("leads").select("*").eq("user_id", user_id).eq("status", "ooh_hot_alert_pending").execute()
+                ooh_hot_leads = ooh_hot_resp.data if hasattr(ooh_hot_resp, 'data') and ooh_hot_resp.data else []
+                
+                for lead in ooh_hot_leads:
+                    try:
+                        lead_phone = str(lead.get('phone', ''))
+                        context = db.get_broker_data(user_id)
+                        if context:
+                            context['lead_name'] = str(lead.get('name', 'Cliente'))
+                            history = db.get_chat_history(lead_phone, limit=1)
+                            last_msg = str(history[0].get('content', '')) if history else "Novo interesse gerado fora de horário."
+                            last_msg = last_msg.replace("[ALERT_BROKER]", "").strip()
+                            
+                            print(f"⏰ Disparando alerta OOH pendente para o corretor {broker_name}")
+                            raquel.alert_broker(context, last_msg)
+                            db.update_lead_status(lead_phone, "hot_alert_sent")
+                            db.set_lead_transfer_time(lead_phone)
+                            await asyncio.sleep(2)
+                    except Exception as e_ooh:
+                        print(f"❌ Erro ao processar lead OOH {lead.get('id')}: {e_ooh}")
+                # ---------------------------------------------------------------
 
-            # Busca leads em estados que permitem início de contato automático
-            response = db.supabase.table("leads")\
-                .select("*")\
-                .eq("user_id", user_id)\
-                .in_("status", ["waiting", "ooh_rescheduled", "follow_up_pending"])\
-                .execute()
-            
-            leads_data = response.data if hasattr(response, 'data') and response.data else []
-            
-            if leads_data:
-                for lead in leads_data:
-                    lead_name: str = str(lead.get('name', 'Cliente'))
-                    lead_phone: str = str(lead.get('phone', ''))
-                    lead_status: str = str(lead.get('status', 'waiting'))
-                    
-                    msg: str = "Olá! Recebi seu interesse. Sou a Raquel, assistente do seu corretor. Como posso te ajudar?"
-                    if lead_status == "ooh_rescheduled":
-                        msg = f"Olá {lead_name}! Como prometido, estou entrando em contato agora que iniciamos nosso expediente. Como posso te ajudar hoje?"
-                    
-                    await raquel.process_message(lead_phone, msg, lead_name)
-                    db.update_lead_status(lead_phone, "active")
-                    time.sleep(3)
+                # Busca leads em estados que permitem início de contato automático
+                response = db.supabase.table("leads")\
+                    .select("*")\
+                    .eq("user_id", user_id)\
+                    .in_("status", ["waiting", "ooh_rescheduled", "follow_up_pending"])\
+                    .execute()
+                
+                leads_data = response.data if hasattr(response, 'data') and response.data else []
+                
+                if leads_data:
+                    for lead in leads_data:
+                        try:
+                            lead_name: str = str(lead.get('name', 'Cliente'))
+                            lead_id: str = str(lead.get('id', ''))
+                            lead_phone: str = str(lead.get('phone', ''))
+                            lead_status: str = str(lead.get('status', 'waiting'))
+                            
+                            print(f"📢 Contatando lead {lead_name} ({lead_phone}) para o corretor {broker_name}")
+                            
+                            msg: str = "Olá! Recebi seu interesse. Sou a Raquel, assistente do seu corretor. Como posso te ajudar?"
+                            if lead_status == "ooh_rescheduled":
+                                msg = f"Olá {lead_name}! Como prometido, estou entrando em contato agora que iniciamos nosso expediente. Como posso te ajudar hoje?"
+                            
+                            # raquel.process_message retorna a resposta enviada ou um erro
+                            result = await raquel.process_message(lead_phone, msg, lead_name)
+                            
+                            # Se o processamento falhou (ex: lead não encontrado), não marcamos como ativo
+                            if "não encontrado" in result.lower():
+                                print(f"⚠️ [AVISO] Falha ao contatar lead {lead_id}: {result}")
+                                continue
+
+                            db.update_lead_status(lead_phone, "active")
+                            await asyncio.sleep(3) # Delay entre leads para evitar spam/bloqueios
+                        except Exception as e_lead:
+                            print(f"❌ Erro ao processar lead individual {lead.get('id')}: {e_lead}")
+            except Exception as e_broker:
+                print(f"❌ Erro crítico ao processar corretor {broker.get('id')}: {e_broker}")
 
     except Exception as e:
-        print(f"Erro na varredura multi-corretor: {e}")
+        print(f"❌ Erro fatal na varredura multi-corretor: {e}")
 
 async def daily_end_of_shift_cleanup() -> None:
     """

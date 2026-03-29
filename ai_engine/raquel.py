@@ -226,11 +226,12 @@ class RaquelAgent:
     async def process_message(self, phone: str, message: str, sender_name: str, is_audio: bool = False, audio_urls: List[str] = []) -> str:
         print(f"📥 Processando mensagem de {sender_name} ({phone}). Áudios: {len(audio_urls)}")
         
-        # 1. Busca dados do corretor
+        # 1. Busca dados do corretor (Normalizado)
         context: Optional[Dict[str, Any]] = self.db.get_broker_by_lead_phone(phone)
         if not context:
-            print(f"⚠️ Lead {phone} não encontrado no banco.")
-            return "Lead não encontrado no banco."
+            error_msg = f"⚠️ [ERRO] Lead {phone} não encontrado ou sem corretor no banco."
+            print(error_msg)
+            return error_msg
 
         user_id: str = context.get('user_id', '')
         lead_id: str = context.get('lead_id', '')
