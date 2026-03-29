@@ -464,7 +464,7 @@ class RaquelAgent:
 
             RESPONDA APENAS O BRIEFING FORMATADO EM MARKDOWN:
             👤 *Cliente*: {name}
-            📞 *WhatsApp*: {context.get('phone', 'N/A')}
+            📞 *WhatsApp*: {context.get('lead_phone', 'N/A')}
             
             🎯 *PERFIL E MOTIVAÇÃO*:
             - **Objetivo**: (Moradia / Investimento)
@@ -479,6 +479,9 @@ class RaquelAgent:
             💰 *CAPACIDADE FINANCEIRA*:
             - **Investimento Estimado**: (Se mencionado ou deduzido)
             - **Forma de Pagamento**: (À vista, Financiamento, FGTS, Permuta)
+
+            💬 *Resumo da Conversa*:
+            (Descreva aqui os pontos mais importantes ditos pelo cliente nesta interação)
 
             💡 *DICA PARA FECHAMENTO*:
             (Sugestão de como o corretor deve abordar este cliente baseado no tom da conversa)

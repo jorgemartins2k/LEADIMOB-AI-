@@ -115,6 +115,7 @@ class Database:
             if broker_data:
                 broker_data["lead_id"] = lead.get('id')
                 broker_data["lead_name"] = lead.get('name', 'Cliente')
+                broker_data["lead_phone"] = lead.get('phone', '')
                 broker_data["lead_notes"] = lead.get('notes', '')
                 return broker_data
         return None
