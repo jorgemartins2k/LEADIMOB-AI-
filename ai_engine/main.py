@@ -177,7 +177,7 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
             
             return {"status": "buffering", "wait": "25s"}
         
-        print(f"ℹ️ Webhook recebido mas ignorado (tipo: {message_type}) de {phone}")
+        print(f"ℹ️ Webhook recebido mas ignorado (tipo: {raw_type}) de {phone}")
         return {"status": "ignored"}
     except Exception as e:
         print(f"❌ Erro crítico no webhook Z-API: {e}")

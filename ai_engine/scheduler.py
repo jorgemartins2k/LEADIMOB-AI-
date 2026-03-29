@@ -143,6 +143,7 @@ async def check_leads_and_followups() -> None:
     
     try:
         brokers = db.get_all_brokers()
+        print(f"🕵️ [SCHEDULER] Verificando {len(brokers)} corretores...")
         
         for broker in brokers:
             try:
