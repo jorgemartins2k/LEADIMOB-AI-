@@ -266,7 +266,7 @@ class RaquelAgent:
             print(f"📋 Conteúdo: {portfolio_text}")
 
         # 5. MONTA AS MENSAGENS PARA A OPENAI
-        messages: List[Dict[str, Any]] = [{"role": "system", "content": self.get_system_prompt(context, lead_real_name)}]
+        messages: List[Dict[str, Any]] = [{"role": "system", "content": self.get_system_prompt(context)}]
         messages.append({"role": "system", "content": f"PORTFÓLIO DISPONÍVEL:\n{portfolio_text}"})
 
         for h in history:
