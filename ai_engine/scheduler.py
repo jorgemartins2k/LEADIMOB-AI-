@@ -207,15 +207,18 @@ async def check_leads_and_followups() -> None:
                             if lead_status == "ooh_rescheduled":
                                 msg = f"Olá {lead_name}! Como prometido, estou entrando em contato agora que iniciamos nosso expediente. Como posso te ajudar hoje?"
                             
-                            # raquel.process_message retorna a resposta enviada ou um erro
-                            result = await raquel.process_message(lead_phone, msg, lead_name)
+                            # 1. Envia o cumprimento inicial diretamente (sem disparar a "IA respondendo a IA")
+                            success = raquel.send_to_zapi(lead_phone, msg)
                             
-                            # Se o processamento falhou (ex: lead não encontrado), não marcamos como ativo
-                            if "não encontrado" in result.lower():
-                                print(f"⚠️ [AVISO] Falha ao contatar lead {lead_id}: {result}")
-                                continue
-
-                            db.update_lead_status(lead_phone, "active")
+                            if success:
+                                # 2. Registra no histórico como se fosse a Raquel falando
+                                db.save_message(lead_id, user_id, "assistant", msg)
+                                # 3. Ativa o lead para começar a responder via Webhook
+                                db.update_lead_status(lead_phone, "active")
+                                print(f"✅ Lead {lead_name} contatado com sucesso e status alterado para 'active'.")
+                                await asyncio.sleep(2) # Delay entre leads
+                            else:
+                                print(f"⚠️ Falha ao enviar WhatsApp para {lead_name}. Mantendo em espera.")
                             await asyncio.sleep(3) # Delay entre leads para evitar spam/bloqueios
                         except Exception as e_lead:
                             print(f"❌ Erro ao processar lead individual {lead.get('id')}: {e_lead}")
