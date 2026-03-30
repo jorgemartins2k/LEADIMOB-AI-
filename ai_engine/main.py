@@ -73,6 +73,16 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
         data_raw: Any = await request.json()
         data: Dict[str, Any] = data_raw if isinstance(data_raw, dict) else {}
         
+        # --- PREVENÇÃO DE LOOP INFINITO ---
+        # Ignora mensagens enviadas pela própria instância (ex: IA ou Corretor via WhatsApp Web)
+        is_from_me = data.get("fromMe", False)
+        if isinstance(is_from_me, str):
+            is_from_me = is_from_me.lower() == "true"
+            
+        if is_from_me:
+            print(f"ℹ️ Webhook ignorado (Prevenindo Loop): Mensagem enviada pelo próprio número (fromMe=True).")
+            return {"status": "ignored", "reason": "fromMe=True"}
+            
         # --- WEBHOOK DEBUGGER (SEGURO) ---
         try:
             debug_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "last_webhook.json")
