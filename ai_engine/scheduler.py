@@ -204,9 +204,24 @@ async def check_leads_and_followups() -> None:
                             
                             print(f"📢 Contatando lead {lead_name} ({lead_phone}) para o corretor {broker_name}")
                             
-                            msg: str = "Olá! Recebi seu interesse. Sou a Raquel, assistente do seu corretor. Como posso te ajudar?"
+                            # Recupera dados do corretor para a mensagem
+                            broker_data = db.get_broker_data(user_id)
+                            broker_agency = broker_data.get('broker_agency', 'Imobiliária') if broker_data else 'Imobiliária'
+                            broker_city = broker_data.get('broker_city', '') if broker_data else ''
+                            broker_metro = broker_data.get('broker_metropolitan_regions', '') if broker_data else ''
+                            
+                            area_text = f"da cidade de {broker_city}" if broker_city else ""
+                            if broker_city and broker_metro:
+                                area_text += " e região"
+                            
+                            greeting = f"Olá {lead_name}, aqui é a Raquel, assistente do corretor imobiliário {broker_name} da empresa {broker_agency}"
+                            if area_text:
+                                greeting += f", {area_text}"
+                                
+                            msg: str = f"{greeting}. Seria um bom momento para conversarmos?"
+                            
                             if lead_status == "ooh_rescheduled":
-                                msg = f"Olá {lead_name}! Como prometido, estou entrando em contato agora que iniciamos nosso expediente. Como posso te ajudar hoje?"
+                                msg = f"{greeting}. Como prometido, estou entrando em contato agora que iniciamos nosso expediente. Seria um bom momento para conversarmos?"
                             
                             # 1. Envia o cumprimento inicial diretamente (sem disparar a "IA respondendo a IA")
                             success = raquel.send_to_zapi(lead_phone, msg)
@@ -217,10 +232,12 @@ async def check_leads_and_followups() -> None:
                                 # 3. Ativa o lead para começar a responder via Webhook
                                 db.update_lead_status(lead_phone, "active")
                                 print(f"✅ Lead {lead_name} contatado com sucesso e status alterado para 'active'.")
-                                await asyncio.sleep(2) # Delay entre leads
+                                await asyncio.sleep(2) # Pequeno delay antes de iniciar a contagem longa
                             else:
                                 print(f"⚠️ Falha ao enviar WhatsApp para {lead_name}. Mantendo em espera.")
-                            await asyncio.sleep(3) # Delay entre leads para evitar spam/bloqueios
+                            
+                            print(f"⏳ Aguardando 90 segundos antes do próximo lead para evitar bloqueios de SPAM...")
+                            await asyncio.sleep(90) # Delay de 1.5 minutos sugerido para evitar ban
                         except Exception as e_lead:
                             print(f"❌ Erro ao processar lead individual {lead.get('id')}: {e_lead}")
             except Exception as e_broker:
