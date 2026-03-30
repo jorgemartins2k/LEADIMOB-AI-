@@ -15,6 +15,7 @@ import {
     Clock,
     Rocket,
     Bell,
+    Kanban,
 } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { LeadImobLogo } from "@/components/LeadImobLogo";
@@ -23,7 +24,8 @@ import { User as UserIcon } from "lucide-react";
 
 const navigation = [
     { name: "Visão Geral", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Leads", href: "/leads", icon: Users },
+    { name: "Painel Diário (Fila)", href: "/leads", icon: Users },
+    { name: "CRM de Vendas", href: "/crm", icon: Kanban },
     { name: "Lançamentos", href: "/lancamentos", icon: Rocket },
     { name: "Campanhas", href: "/campanhas", icon: Megaphone },
     { name: "Calendário", href: "/agenda", icon: Clock },

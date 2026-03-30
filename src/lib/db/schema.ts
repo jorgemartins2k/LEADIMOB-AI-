@@ -58,6 +58,8 @@ export const leads = pgTable('leads', {
     contactedAt: timestamp('contacted_at', { withTimezone: true }),
     transferredAt: timestamp('transferred_at', { withTimezone: true }),
     quarantineUntil: date('quarantine_until'),
+    followUpCount: smallint('follow_up_count').default(0),
+    nextFollowUpAt: timestamp('next_follow_up_at', { withTimezone: true }),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),

@@ -142,10 +142,35 @@ class Database:
         """
         Atualiza o status de um lead pelo telefone
         """
-        self.supabase.table("leads").update({
+        data = {
             "status": status,
             "updated_at": "now()"
-        }).eq("phone", phone).execute()
+        }
+        if status == "active":
+            data["follow_up_count"] = 0
+            data["next_follow_up_at"] = None
+
+        self.supabase.table("leads").update(data).eq("phone", phone).execute()
+
+    def schedule_follow_up(self, phone: str, schedule_str: str) -> None:
+        """
+        Agenda o follow-up explícito configurado pela IA (tag [SCHEDULE: ...])
+        """
+        try:
+            import datetime
+            import pytz # pyre-ignore
+            dt = datetime.datetime.strptime(schedule_str, "%Y-%m-%d %H:%M")
+            tz = pytz.timezone('America/Sao_Paulo')
+            dt = tz.localize(dt)
+            iso_str = dt.isoformat()
+
+            self.supabase.table("leads").update({
+                "status": "scheduled",
+                "next_follow_up_at": iso_str,
+                "follow_up_count": 0
+            }).eq("phone", phone).execute()
+        except Exception as e:
+            print(f"Erro ao agendar follow-up no banco para {phone} ({schedule_str}): {e}")
 
     def set_lead_transfer_time(self, phone: str) -> None:
         """

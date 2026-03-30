@@ -124,6 +124,9 @@ export function LeadsView() {
     };
 
     const filteredLeads = leadsList.filter((lead) => {
+        const isWaiting = lead.status === 'waiting' || lead.status === 'ooh_rescheduled';
+        if (!isWaiting) return false;
+
         const matchesSearch =
             lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             lead.phone.includes(searchTerm);
@@ -134,11 +137,11 @@ export function LeadsView() {
     });
 
     const stats = {
-        total: leadsList.length,
+        total: leadsList.filter(l => l.status === 'waiting' || l.status === 'ooh_rescheduled').length,
         processedToday: limitData?.addedToday || 0,
         dailyLimit: limitData?.dailyLimit || 100,
         plan: limitData?.plan || 'pro',
-        hot: leadsList.filter(l => l.temperature === 'very_hot' || l.temperature === 'quente').length,
+        hot: leadsList.filter(l => (l.status === 'waiting' || l.status === 'ooh_rescheduled') && (l.temperature === 'very_hot' || l.temperature === 'quente')).length,
     };
 
     const temperatures = [
@@ -151,8 +154,8 @@ export function LeadsView() {
         <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 px-1 sm:px-0">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="space-y-2">
-                    <h1 className="heading-xl text-foreground">Gestão de Leads</h1>
-                    <p className="text-body mt-1 font-medium">Controle total sobre o funil de vendas da Raquel.</p>
+                    <h1 className="heading-xl text-foreground">Fila de Entrada (Diária)</h1>
+                    <p className="text-body mt-1 font-medium">Controle de leads recém-chegados aguardando o primeiro contato da Raquel.</p>
                     {inBusinessHours && (
                         <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[9px] sm:text-[10px] font-black uppercase tracking-widest animate-pulse">
                             <AlertCircle className="w-3.5 h-3.5" />
@@ -233,8 +236,8 @@ export function LeadsView() {
                         <Users className="w-6 h-6 sm:w-8 sm:h-8" />
                     </div>
                     <div className="space-y-1 sm:space-y-2">
-                        <p className="font-black text-foreground uppercase tracking-tight text-base sm:text-lg">Total de Contatos</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground font-medium leading-relaxed">Você possui {stats.total} leads registrados sob cuidados da Raquel.</p>
+                        <p className="font-black text-foreground uppercase tracking-tight text-base sm:text-lg">Fila de Espera</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground font-medium leading-relaxed">Você possui {stats.total} leads aguardando o primeiro contato da Raquel.</p>
                     </div>
                 </div>
                 <div className="group flex items-start gap-4 sm:gap-6 p-6 sm:p-10 rounded-[30px] sm:rounded-[40px] bg-hot/5 border border-hot/10 shadow-sm hover:shadow-md transition-all">
@@ -242,8 +245,8 @@ export function LeadsView() {
                         <Flame className="w-6 h-6 sm:w-8 sm:h-8" />
                     </div>
                     <div className="space-y-1 sm:space-y-2">
-                        <p className="font-black text-foreground uppercase tracking-tight text-base sm:text-lg">Leads Quentes</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground font-medium leading-relaxed">{stats.hot} leads estão com alto potencial de fechamento neste momento.</p>
+                        <p className="font-black text-foreground uppercase tracking-tight text-base sm:text-lg">Prioridade Alta (Fila)</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground font-medium leading-relaxed">{stats.hot} leads na fila de entrada demonstram potencial quente inicial.</p>
                     </div>
                 </div>
             </div>

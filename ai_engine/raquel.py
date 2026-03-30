@@ -103,6 +103,13 @@ class RaquelAgent:
         ===== REGRA DE OURO DA MEMÓRIA (NÃO NEGOCIÁVEL) =====
         Antes de digitar, revise mentalmente: "Eu já sei a resposta para o que vou perguntar?". Se sim, você está ERRANDO. Avance para o próximo tópico. Se o cliente já deu várias informações de uma vez, agradeça, reafirme brevemente e pergunte o que SOBROU.
 
+        ===== AGENDAMENTO DE RETORNO (FOLLOW-UP) =====
+        Hoje é {datetime.datetime.now(self.tz).strftime('%d/%m/%Y %H:%M')} (Fuso de Brasília).
+        Se o cliente pedir para você retornar o contato depois (ex: "não posso falar", "me chama amanhã", "fala comigo sexta"):
+        1. Se ele não der dia e hora exatos, pergunte gentilmente: "Claro! Qual o melhor dia e horário para eu te chamar de novo?"
+        2. Se ele já informou hora e dia (mesmo que seja às 6h da manhã de sábado, fora do horário normal), inclua a tag [SCHEDULE: YYYY-MM-DD HH:MM] no final da sua resposta, preenchendo a data correta baseando-se em hoje.
+        Exemplo: "Combinado, {lead_name}! Te chamo amanhã às 14h então. Um abraço! [SCHEDULE: 2026-04-01 14:00]"
+
         ===== GATILHOS DE TRANSFERÊNCIA =====
         Você deve passar a bola para o {broker_name} usando o comando [ALERT_BROKER] nas seguintes situações:
         1. **PEDIDO DE LIGAÇÃO**: Se o cliente pedir para falar por telefone, ligação ou áudio ao vivo, use [ALERT_BROKER] e informe que o {broker_name} entrará em contato por voz em breve.
@@ -304,19 +311,29 @@ class RaquelAgent:
 
         import re
         images_to_send = re.findall(r'\[SEND_IMAGE:\s*(.*?)\]', reply_content)
-        clean_reply = re.sub(r'\[SEND_IMAGE:\s*.*?\]', '', reply_content).strip()
+        schedule_match = re.search(r'\[SCHEDULE:\s*(.*?)\]', reply_content)
+        
+        reply_content = re.sub(r'\[SEND_IMAGE:\s*.*?\]', '', reply_content).strip()
+        
+        is_scheduled = False
+        if schedule_match:
+            schedule_str = schedule_match.group(1).strip()
+            reply_content = re.sub(r'\[SCHEDULE:\s*.*?\]', '', reply_content).strip()
+            print(f"🗓️ Cliente pediu para agendar: {schedule_str}. Atualizando DB...")
+            self.db.schedule_follow_up(phone, schedule_str)
+            is_scheduled = True
 
         # 8. PROCESSA ALERTA DE LEAD QUENTE
-        is_hot = "[ALERT_BROKER]" in clean_reply
+        is_hot = "[ALERT_BROKER]" in reply_content
         if is_hot:
             print(f"🔥 LEAD QUENTE DETECTADO: {lead_real_name}")
-            clean_reply = clean_reply.replace("[ALERT_BROKER]", "").strip()
+            reply_content = reply_content.replace("[ALERT_BROKER]", "").strip()
             
             is_ooh = not self.is_within_schedule(schedule)
             if is_ooh:
                 next_day, next_time = self.get_next_working_slot(schedule)
                 pass_baton_msg = f"\n\n*Observação:* O nosso escritório no momento está fechado. O corretor {broker_name} estará em atendimento {next_day} a partir das {next_time} e entrará em contato com você assim que possível!"
-                clean_reply += pass_baton_msg
+                reply_content += pass_baton_msg
                 self.db.update_lead_status(phone, "ooh_hot_alert_pending")
             else:
                 # Disparamos o alerta em background para não travar a resposta ao cliente
@@ -326,6 +343,13 @@ class RaquelAgent:
                 
                 self.db.update_lead_status(phone, "hot_alert_sent")
                 self.db.set_lead_transfer_time(phone)
+
+        # Atualiza status normal se não for lead quente nem agendamento
+        if not is_hot and not is_scheduled:
+            # Reseta o contador para o follow-up types 1 e 2
+            self.db.update_lead_status(phone, "active")
+
+        clean_reply = reply_content
 
         # 9. ENVIA RESPOSTA AO CLIENTE
         typing_delay = random.uniform(1.8, 3.2)

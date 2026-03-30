@@ -107,29 +107,114 @@ async def monitor_hot_leads() -> None:
                 "transferred_at": "now()"
             }).eq("id", lead_id).execute()
 
-async def check_24h_followups() -> None:
+async def process_smart_followups() -> None:
     """
-    Sistema de Follow-up:
-    Lead sem resposta após 24 horas entra no fluxo automaticamente.
+    Sistema Inteligente de Follow-up (Tipos 1, 2 e 3)
+    Executado a cada 5 minutos.
     """
-    print("🔍 Buscando leads para Follow-up de 24h...")
-    leads_to_follow = db.find_leads_for_followup(hours=24)
+    from datetime import datetime, timezone
+    tz = pytz.timezone('America/Sao_Paulo')
+    now = datetime.now(tz)
     
-    for lead in leads_to_follow:
+    print(f"[{now.strftime('%H:%M:%S')}] 🧠 Processando Smart Follow-ups...")
+    
+    # ---------------------------------------------------------
+    # TYPE 3: Agendamentos Exatos (status = 'scheduled')
+    # ---------------------------------------------------------
+    scheduled_resp = db.supabase.table("leads").select("*").eq("status", "scheduled").lte("next_follow_up_at", now.isoformat()).execute()
+    scheduled_leads = scheduled_resp.data if scheduled_resp.data else []
+    
+    for lead in scheduled_leads:
         lead_name: str = str(lead.get('name', 'Cliente'))
         lead_phone: str = str(lead.get('phone', ''))
+        user_id: str = str(lead.get('user_id', ''))
         
-        print(f"📢 Iniciando Follow-up automático de 24h para {lead_name}")
+        print(f"⏰ Executando Follow-up Agendado (Type 3) para {lead_name}")
+        msg = f"Olá {lead_name}! Conforme combinamos, estou retornando o contato. Como posso te ajudar agora?"
         
-        # O follow-up usa a inteligência da Raquel para retomar naturalmente
-        await raquel.process_message(
-            lead_phone, 
-            "Oi! Passando para ver se você conseguiu ver as informações que te mandei ontem. Como posso te ajudar a avançar?", 
-            lead_name
-        )
+        success = raquel.send_to_zapi(lead_phone, msg)
+        if success:
+            db.save_message(str(lead.get('id')), user_id, "assistant", msg)
+            db.update_lead_status(lead_phone, "active") # Reseta follow_up_count para 0
+
+    # ---------------------------------------------------------
+    # TYPE 1 & 2: Leads Ativos sem resposta (status = 'active')
+    # ---------------------------------------------------------
+    # Busca leads ativos há pelo menos 3 horas (limite mínimo para o Type 2)
+    threshold_3h = (now - datetime.timedelta(hours=3)).isoformat()
+    active_resp = db.supabase.table("leads").select("*").eq("status", "active").lt("updated_at", threshold_3h).execute()
+    active_leads = active_resp.data if active_resp.data else []
+    
+    for lead in active_leads:
+        lead_id: str = str(lead.get('id', ''))
+        lead_name: str = str(lead.get('name', 'Cliente'))
+        lead_phone: str = str(lead.get('phone', ''))
+        user_id: str = str(lead.get('user_id', ''))
+        follow_up_count: int = lead.get('follow_up_count') or 0
+        updated_at_str: str = lead.get('updated_at', '')
         
-        # Atualiza para que não receba outro follow-up imediatamente
-        db.update_lead_status(lead_phone, "active")
+        # Ignora se não houver updated_at
+        if not updated_at_str: continue
+            
+        updated_at = datetime.fromisoformat(updated_at_str.replace("Z", "+00:00")).astimezone(tz)
+        hours_passed = (now - updated_at).total_seconds() / 3600.0
+
+        # Verifica expediente do corretor
+        schedule = db.get_broker_schedule(user_id)
+        if schedule:
+            schedule_list = schedule if isinstance(schedule, list) else []
+            if not is_within_schedule(schedule_list, now):
+                continue # Fora do expediente, tenta na próxima varredura
+        else:
+            if now.hour < 8 or now.hour >= 19:
+                continue
+
+        # Acessa o histórico para descobrir se é Type 1 ou Type 2
+        history = db.get_chat_history(lead_id, limit=50)
+        user_replied_before = any(msg.get('role') == 'user' for msg in history)
+        
+        # TYPE 1: Cliente nunca respondeu (espera 24h por tentativa, máximo 2)
+        if not user_replied_before:
+            if hours_passed >= 24:
+                if follow_up_count == 0:
+                    print(f"📢 Follow-up D1 (Type 1) para {lead_name}")
+                    msg = "Oi! Verificou as informações que te mandei? Posso te ajudar com alguma dúvida?"
+                    if raquel.send_to_zapi(lead_phone, msg):
+                        db.save_message(lead_id, user_id, "assistant", msg)
+                        db.supabase.table("leads").update({"follow_up_count": 1, "updated_at": "now()"}).eq("id", lead_id).execute()
+                elif follow_up_count == 1:
+                    print(f"📢 Follow-up D2 (Type 1) para {lead_name}")
+                    msg = "Olá! Como não tive retorno, imagino que esteja ocupado. Qualquer coisa estou à disposição por aqui. Um abraço!"
+                    if raquel.send_to_zapi(lead_phone, msg):
+                        db.save_message(lead_id, user_id, "assistant", msg)
+                        db.supabase.table("leads").update({"follow_up_count": 2, "updated_at": "now()"}).eq("id", lead_id).execute()
+                elif follow_up_count >= 2:
+                    print(f"🗑️ Lead {lead_name} abandonado por falta de resposta (Type 1).")
+                    db.supabase.table("leads").update({"status": "abandoned_no_reply"}).eq("id", lead_id).execute()
+                    
+        # TYPE 2: Cliente parou no meio da conversa (espera 3h, depois 24h, máximo 2)
+        else:
+            if follow_up_count == 0 and hours_passed >= 3:
+                # Regra: se passar das 22h, joga para o próximo dia (isso já é garantido pelo is_within_schedule e now.hour < 22)
+                if now.hour >= 22:
+                    continue # Espera até amanhã de manhã
+                    
+                print(f"📢 Follow-up 3h (Type 2) para {lead_name}")
+                msg = f"{lead_name}, ainda está por aí? Se preferir, podemos continuar mais tarde."
+                if raquel.send_to_zapi(lead_phone, msg):
+                    db.save_message(lead_id, user_id, "assistant", msg)
+                    db.supabase.table("leads").update({"follow_up_count": 1, "updated_at": "now()"}).eq("id", lead_id).execute()
+                    
+            elif follow_up_count == 1 and hours_passed >= 24:
+                print(f"📢 Follow-up D1 (Type 2) para {lead_name}")
+                msg = "Oi! Acabamos nos desencontrando ontem. Tem um minutinho para continuarmos?"
+                if raquel.send_to_zapi(lead_phone, msg):
+                    db.save_message(lead_id, user_id, "assistant", msg)
+                    db.supabase.table("leads").update({"follow_up_count": 2, "updated_at": "now()"}).eq("id", lead_id).execute()
+                    
+            elif follow_up_count >= 2 and hours_passed >= 24:
+                print(f"🗑️ Lead {lead_name} abandonado após pausa na conversa (Type 2).")
+                db.supabase.table("leads").update({"status": "abandoned_dropout"}).eq("id", lead_id).execute()
 
 async def check_leads_and_followups() -> None:
     """
@@ -297,14 +382,14 @@ async def daily_end_of_shift_cleanup() -> None:
 def start_scheduler() -> None:
     scheduler = AsyncIOScheduler()
     
-    # 1. Varredura Broker-First (Novos Leads, Reagendamento OOH e Follow-ups)
+    # 1. Varredura Broker-First (Novos Leads, Reagendamento OOH e Follow-ups Básicos)
     scheduler.add_job(check_leads_and_followups, 'interval', minutes=5)
     
     # 2. Monitoramento de Leads Quentes (Alertas ao Corretor)
     scheduler.add_job(monitor_hot_leads, 'interval', minutes=2)
     
-    # 3. Follow-up de Longo Prazo (24h)
-    scheduler.add_job(check_24h_followups, 'interval', hours=1)
+    # 3. Follow-up Inteligente (Tipos 1, 2 e 3)
+    scheduler.add_job(process_smart_followups, 'interval', minutes=5)
     
     # 4. Limpeza de Turno
     scheduler.add_job(daily_end_of_shift_cleanup, 'interval', minutes=5)
@@ -318,7 +403,9 @@ def start_scheduler() -> None:
         loop = asyncio.get_event_loop()
         if loop.is_running():
             asyncio.create_task(check_leads_and_followups())
+            asyncio.create_task(process_smart_followups())
         else:
             loop.run_until_complete(check_leads_and_followups())
+            loop.run_until_complete(process_smart_followups())
     except Exception as e:
         print(f"❌ [SCHEDULER] Erro na varredura inicial: {e}")
