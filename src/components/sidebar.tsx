@@ -16,6 +16,7 @@ import {
     Rocket,
     Bell,
     Kanban,
+    BarChart3,
 } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { LeadImobLogo } from "@/components/LeadImobLogo";
@@ -26,6 +27,7 @@ const navigation = [
     { name: "Visão Geral", href: "/dashboard", icon: LayoutDashboard },
     { name: "Painel Diário (Fila)", href: "/leads", icon: Users },
     { name: "CRM de Vendas", href: "/crm", icon: Kanban },
+    { name: "Relatórios", href: "/relatorios", icon: BarChart3 },
     { name: "Lançamentos", href: "/lancamentos", icon: Rocket },
     { name: "Campanhas", href: "/campanhas", icon: Megaphone },
     { name: "Calendário", href: "/agenda", icon: Clock },
