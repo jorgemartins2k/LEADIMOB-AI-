@@ -15,7 +15,8 @@ import {
     Flame,
     MessageSquare,
     MapPin,
-    Briefcase
+    Briefcase,
+    Home
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -279,6 +280,48 @@ export function ReportsView() {
                                     </div>
                                     <span className="text-xs font-black text-success bg-success/10 px-3 py-1 rounded-full border border-success/20">
                                         {p.count} fechamentos
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Imóveis Mais Procurados */}
+                    <div className="bg-card/30 border border-border/50 p-6 rounded-[24px]">
+                        <div className="flex items-center gap-3 mb-6">
+                            <Home className="w-5 h-5 text-blue-500" />
+                            <h3 className="font-black uppercase tracking-widest text-xs text-muted-foreground">Imóveis Mais Procurados</h3>
+                        </div>
+                        <div className="space-y-4">
+                            {!isLoading && data?.insights?.topImoveis.map((b: any, i: number) => (
+                                <div key={i} className="flex items-center justify-between group">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[10px] font-black text-muted-foreground bg-muted w-6 h-6 rounded-md flex items-center justify-center">{i + 1}</span>
+                                        <span className="font-bold text-sm group-hover:text-blue-500 transition-colors capitalize">{b.name}</span>
+                                    </div>
+                                    <span className="text-xs font-black text-foreground bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
+                                        {b.count} menções
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Composição Familiar */}
+                    <div className="bg-card/30 border border-border/50 p-6 rounded-[24px]">
+                        <div className="flex items-center gap-3 mb-6">
+                            <Users className="w-5 h-5 text-purple-500" />
+                            <h3 className="font-black uppercase tracking-widest text-xs text-muted-foreground">Estrutura Familiar</h3>
+                        </div>
+                        <div className="space-y-4">
+                            {!isLoading && data?.insights?.topFamilias.map((p: any, i: number) => (
+                                <div key={i} className="flex items-center justify-between group">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[10px] font-black text-muted-foreground bg-muted w-6 h-6 rounded-md flex items-center justify-center">{i + 1}</span>
+                                        <span className="font-bold text-sm group-hover:text-purple-500 transition-colors truncate max-w-[180px]" title={p.name} style={{ textTransform: 'capitalize' }}>{p.name}</span>
+                                    </div>
+                                    <span className="text-xs font-black text-foreground bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/20">
+                                        {p.count} menções
                                     </span>
                                 </div>
                             ))}
