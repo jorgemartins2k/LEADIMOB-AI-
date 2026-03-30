@@ -112,7 +112,7 @@ async def process_smart_followups() -> None:
     Sistema Inteligente de Follow-up (Tipos 1, 2 e 3)
     Executado a cada 5 minutos.
     """
-    from datetime import datetime, timezone
+    from datetime import datetime, timezone, timedelta
     tz = pytz.timezone('America/Sao_Paulo')
     now = datetime.now(tz)
     
@@ -141,7 +141,7 @@ async def process_smart_followups() -> None:
     # TYPE 1 & 2: Leads Ativos sem resposta (status = 'active')
     # ---------------------------------------------------------
     # Busca leads ativos há pelo menos 3 horas (limite mínimo para o Type 2)
-    threshold_3h = (now - datetime.timedelta(hours=3)).isoformat()
+    threshold_3h = (now - timedelta(hours=3)).isoformat()
     active_resp = db.supabase.table("leads").select("*").eq("status", "active").lt("updated_at", threshold_3h).execute()
     active_leads = active_resp.data if active_resp.data else []
     
