@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import {
     Kanban,
     Printer,
@@ -191,14 +192,15 @@ export function CrmView() {
                     </h1>
                     <p className="text-body font-medium">Pipeline completo dos seus clientes em negociação e convertidos.</p>
                 </div>
-                <Button
-                    variant="outline"
-                    onClick={handlePrint}
-                    className="h-12 border-border/50 rounded-2xl gap-2 font-black uppercase text-[10px] tracking-widest shrink-0 print:hidden btn-interactive"
-                >
-                    <Printer className="w-4 h-4" />
-                    Exportar Relatório / Imprimir
-                </Button>
+                <Link href="/relatorios">
+                    <Button
+                        variant="default"
+                        className="h-12 bg-accent hover:bg-accent/90 text-white rounded-2xl gap-2 font-black uppercase text-[10px] tracking-widest shrink-0 print:hidden btn-interactive shadow-lg shadow-accent/20"
+                    >
+                        <BarChart3 className="w-4 h-4" />
+                        Relatório Avançado
+                    </Button>
+                </Link>
             </div>
 
             {/* Dashboard Analítico Visual */}
