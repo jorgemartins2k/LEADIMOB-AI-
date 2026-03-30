@@ -139,7 +139,7 @@ async def check_leads_and_followups() -> None:
     tz: datetime.tzinfo = pytz.timezone('America/Sao_Paulo')
     now: datetime.datetime = datetime.datetime.now(tz)
     
-    print(f"[{now}] 🔍 [HEARTBEAT] Iniciando Varredura Multi-Corretor...")
+    print(f"[{now}] 🔍 [HEARTBEAT] Iniciando Varredura Multi-Corretor...", flush=True)
     
     try:
         brokers = db.get_all_brokers()
@@ -312,8 +312,8 @@ def start_scheduler() -> None:
     scheduler.start()
     
     # Executa uma varredura imediata em background para depuração
-    print("🚀 [SCHEDULER] Sistema de Agendamento Raquel Super-IA Ativo!")
-    print("📢 [SCHEDULER] Iniciando varredura imediata de teste...")
+    print("🚀 [SCHEDULER] Sistema de Agendamento Raquel Super-IA Ativo!", flush=True)
+    print("📢 [SCHEDULER] Iniciando varredura imediata de teste...", flush=True)
     try:
         loop = asyncio.get_event_loop()
         if loop.is_running():
