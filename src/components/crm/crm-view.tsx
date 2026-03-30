@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
     Kanban,
     Printer,
@@ -10,11 +10,13 @@ import {
     CheckCircle2,
     XCircle,
     User,
+    Users,
     Flame,
     Clock,
     AlertCircle,
     BarChart3,
-    ArrowRight
+    ArrowRight,
+    Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,13 +29,29 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { updateLeadStatus } from '@/lib/actions/crm';
+import { updateLeadStatus, getCrmLeads } from '@/lib/actions/crm';
 
 type Lead = any; // Tipagem genérica do Drizzle
 
-export function CrmView({ initialLeads }: { initialLeads: Lead[] }) {
-    const [leads, setLeads] = useState<Lead[]>(initialLeads);
+export function CrmView() {
+    const [leads, setLeads] = useState<Lead[]>([]);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchLeads = async () => {
+            try {
+                const data = await getCrmLeads();
+                setLeads(data);
+            } catch (error) {
+                console.error("Erro ao carregar CRM:", error);
+                toast.error("Erro ao carregar leads do funil.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchLeads();
+    }, []);
 
     // Agrupamento lógico
     const columns = useMemo(() => {
