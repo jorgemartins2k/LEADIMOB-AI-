@@ -569,12 +569,12 @@ class RaquelAgent:
 
         self.send_to_zapi(broker_whatsapp, final_alert)
 
-    def send_to_zapi(self, phone: str, content: str) -> None:
+    def send_to_zapi(self, phone: str, content: str) -> bool:
         instance_id: Optional[str] = os.getenv("ZAPI_INSTANCE_ID") or os.getenv("ID_INSTÂNCIA_ZAPI") or os.getenv("ID_INSTANCIA_ZAPI")
         token: Optional[str] = os.getenv("ZAPI_TOKEN") or os.getenv("ZAPI_TÔKEN")
         if not instance_id or not token:
             print("⚠️ ERRO: ZAPI_INSTANCE_ID ou ZAPI_TOKEN ausentes no ambiente.")
-            return
+            return False
 
         client_token: str = os.getenv("ZAPI_CLIENT_TOKEN", "Fda343e96334040afb68f54effe118108S")
         
@@ -590,8 +590,10 @@ class RaquelAgent:
             response: requests.Response = requests.post(url, json=payload, headers=headers)
             print(f"✅ [Z-API] Resposta para {phone}: {response.status_code} - {response.text}")
             response.raise_for_status()
+            return True
         except Exception as e:
             print(f"❌ [Z-API ERROR] Falha ao enviar para {phone}: {e}")
+            return False
 
     def send_image_to_zapi(self, phone: str, image_url: str) -> None:
         instance_id: Optional[str] = os.getenv("ZAPI_INSTANCE_ID") or os.getenv("ID_INSTÂNCIA_ZAPI") or os.getenv("ID_INSTANCIA_ZAPI")
