@@ -46,20 +46,46 @@ export function CrmView() {
                 setLeads(data);
             } catch (error) {
                 console.error("Erro ao carregar CRM:", error);
-                toast.error("Erro ao carregar leads do funil.");
             } finally {
                 setIsLoading(false);
             }
         };
+
         fetchLeads();
+
+        // 🕒 Polling Automático (A cada 20 segundos)
+        // Isso garante que o painel atualize sozinho conforme a IA conversa
+        const interval = setInterval(fetchLeads, 20000);
+
+        return () => clearInterval(interval);
     }, []);
 
     // Agrupamento lógico
     const columns = useMemo(() => {
+        // Fila de Entrada: Novos ou reagendados sem contato recente
         const fila = leads.filter(l => l.status === 'waiting' || l.status === 'ooh_rescheduled' || l.status === 'follow_up_pending');
-        const atendimento = leads.filter(l => ((l.status === 'active' || l.status === 'Ativo') && (l.followUpCount || 0) === 0) || l.status.includes('hot_alert') || l.status === 'ooh_hot_alert_pending');
-        const followup = leads.filter(l => l.status === 'scheduled' || l.status === 'scheduled_follow_up' || ((l.status === 'active' || l.status === 'Ativo') && (l.followUpCount || 0) > 0));
-        const finalizados = leads.filter(l => l.status === 'won' || l.status === 'completed' || l.status?.startsWith('abandoned'));
+
+        // Em Atendimento: Em conversa ativa ou alerta quente recém-disparado
+        const atendimento = leads.filter(l =>
+            ((l.status === 'active' || l.status === 'Ativo') && (l.followUpCount || 0) === 0) ||
+            l.status === 'hot_alert_sent' ||
+            l.status === 'ooh_hot_alert_pending'
+        );
+
+        // Follow-Up: Agendado explicitamente ou em sequência de nutrição
+        const followup = leads.filter(l =>
+            l.status === 'scheduled' ||
+            l.status === 'scheduled_follow_up' ||
+            ((l.status === 'active' || l.status === 'Ativo') && (l.followUpCount || 0) > 0)
+        );
+
+        // Finalizados: Qualificados pela IA (completed), Ganhas ou Perdidas
+        const finalizados = leads.filter(l =>
+            l.status === 'won' ||
+            l.status === 'completed' ||
+            l.status === 'converted' ||
+            l.status?.startsWith('abandoned')
+        );
 
         return { fila, atendimento, followup, finalizados };
     }, [leads]);

@@ -337,14 +337,14 @@ class RaquelAgent:
                 next_day, next_time = self.get_next_working_slot(schedule)
                 pass_baton_msg = f"\n\n*Observação:* O nosso escritório no momento está fechado. O corretor {broker_name} estará em atendimento {next_day} a partir das {next_time} e entrará em contato com você assim que possível!"
                 reply_content += pass_baton_msg
-                self.db.update_lead_status(phone, "ooh_hot_alert_pending")
+                self.db.update_lead_status(phone, "completed") # Move para Finalizados/Qualificados
             else:
                 # Disparamos o alerta em background para não travar a resposta ao cliente
                 print(f"📡 Disparando alerta para o corretor em background...")
                 loop = asyncio.get_event_loop()
                 loop.run_in_executor(None, self.alert_broker, context, message)
                 
-                self.db.update_lead_status(phone, "hot_alert_sent")
+                self.db.update_lead_status(phone, "completed") # Move para Finalizados/Qualificados
                 self.db.set_lead_transfer_time(phone)
 
         # Atualiza status normal se não for lead quente nem agendamento
