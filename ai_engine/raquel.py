@@ -338,6 +338,7 @@ class RaquelAgent:
                 pass_baton_msg = f"\n\n*Observação:* O nosso escritório no momento está fechado. O corretor {broker_name} estará em atendimento {next_day} a partir das {next_time} e entrará em contato com você assim que possível!"
                 reply_content += pass_baton_msg
                 self.db.update_lead_status(phone, "completed") # Move para Finalizados/Qualificados
+                self.db.update_lead_temperature(phone, "quente") # Altera para Quente automaticamente
             else:
                 # Disparamos o alerta em background para não travar a resposta ao cliente
                 print(f"📡 Disparando alerta para o corretor em background...")
@@ -345,6 +346,7 @@ class RaquelAgent:
                 loop.run_in_executor(None, self.alert_broker, context, message)
                 
                 self.db.update_lead_status(phone, "completed") # Move para Finalizados/Qualificados
+                self.db.update_lead_temperature(phone, "quente") # Altera para Quente automaticamente
                 self.db.set_lead_transfer_time(phone)
 
         # Atualiza status normal se não for lead quente nem agendamento
@@ -398,7 +400,8 @@ class RaquelAgent:
             RESPONDA APENAS EM JSON:
             {{
                 "summary": "Breve perfil do lead e o que ele busca (ex: Medico, busca casa em condominio para moradia)",
-                "highlights": "Por que esse atendimento foi bom? (ex: Raquel identificou a necessidade de proximidade com o hospital e sugeriu o bairro X)"
+                "highlights": "Por que esse atendimento foi bom? (ex: Raquel identificou a necessidade de proximidade com o hospital e sugeriu o bairro X)",
+                "temperature": "frio", "morno", "quente" ou "very_hot" (Baseado no interesse e prontidão do lead)
             }}
             """
 
@@ -418,6 +421,12 @@ class RaquelAgent:
                 summary=data.get("summary", ""),
                 highlights=data.get("highlights", "")
             )
+            
+            # Atualiza a temperatura do lead na tabela principal para o CRM
+            if "temperature" in data:
+                print(f"🌡️ IA definiu temperatura de {name} como: {data['temperature']}")
+                self.db.update_lead_temperature(phone, data['temperature'])
+                
             print(f"✅ Lead {name} adicionado ao ranking de melhoria contínua.")
         except Exception as e:
             print(f"Erro ao avaliar lead para ranking: {e}")

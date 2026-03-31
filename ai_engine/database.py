@@ -152,6 +152,15 @@ class Database:
 
         self.supabase.table("leads").update(data).eq("phone", phone).execute()
 
+    def update_lead_temperature(self, phone: str, temperature: str) -> None:
+        """
+        Atualiza a temperatura do lead (frio, morno, quente, very_hot)
+        """
+        self.supabase.table("leads").update({
+            "temperature": temperature,
+            "updated_at": "now()"
+        }).eq("phone", phone).execute()
+
     def schedule_follow_up(self, phone: str, schedule_str: str) -> None:
         """
         Agenda o follow-up explícito configurado pela IA (tag [SCHEDULE: ...])
