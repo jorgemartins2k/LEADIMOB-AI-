@@ -249,7 +249,7 @@ async def process_smart_followups() -> None:
             if hours_passed >= 24:
                 if follow_up_count == 0:
                     print(f"📢 Follow-up D1 (Type 1) para {lead_name}")
-                    msg = "Oi! Verificou as informações que te mandei? Posso te ajudar com alguma dúvida?"
+                    msg = f"Oi {lead_name}, tudo bem? Passo por aqui apenas para reforçar meu contato. Quando tiver um tempinho, me avise se podemos conversar!"
                     if raquel.send_to_zapi(lead_phone, msg):
                         db.save_message(lead_id, user_id, "assistant", msg)
                         db.supabase.table("leads").update({"follow_up_count": 1, "updated_at": now.isoformat()}).eq("id", lead_id).execute()
