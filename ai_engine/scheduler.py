@@ -107,6 +107,49 @@ async def monitor_hot_leads() -> None:
                 "transferred_at": "now()"
             }).eq("id", lead_id).execute()
 
+def parse_iso_robust(date_str: str, tz: datetime.tzinfo) -> Optional[datetime.datetime]:
+    """
+    Parses ISO 8601 strings robustly, handling microsecond variations 
+    (like .0 or .05) that can fail in some Python versions of fromisoformat.
+    """
+    if not date_str:
+        return None
+    
+    # Normalize Z to +00:00
+    date_str = date_str.replace("Z", "+00:00")
+    
+    try:
+        # Try direct parsing first
+        return datetime.datetime.fromisoformat(date_str).astimezone(tz)
+    except ValueError:
+        try:
+            # Handle cases with non-standard microsecond lengths (fromisoformat expects 0, 3, or 6 digits)
+            if "." in date_str:
+                if "+" in date_str:
+                    base, offset = date_str.split("+", 1)
+                    offset = "+" + offset
+                elif "-" in date_str.split("T")[1]:
+                    # Find the last minus sign (presumed to be the timezone offset)
+                    parts = date_str.rsplit("-", 1)
+                    base, offset = parts[0], "-" + parts[1]
+                else:
+                    base, offset = date_str, ""
+
+                if "." in base:
+                    main, fraction = base.split(".", 1)
+                    # Pad fraction to 6 digits for consistency
+                    fraction = (fraction + "000000")[:6]
+                    date_str = f"{main}.{fraction}{offset}"
+            
+            return datetime.datetime.fromisoformat(date_str).astimezone(tz)
+        except Exception:
+            # Final fallback: strip micro and offset for basic parsing
+            try:
+                clean_date = date_str.split(".")[0].split("+")[0].split("-")[0] if "T" in date_str else date_str
+                return datetime.datetime.strptime(clean_date[:19], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=pytz.UTC).astimezone(tz)
+            except Exception:
+                return None
+
 async def process_smart_followups() -> None:
     """
     Sistema Inteligente de Follow-up (Tipos 1, 2 e 3)
@@ -156,7 +199,8 @@ async def process_smart_followups() -> None:
         # Ignora se não houver updated_at
         if not updated_at_str: continue
             
-        updated_at = datetime.fromisoformat(updated_at_str.replace("Z", "+00:00")).astimezone(tz)
+        updated_at = parse_iso_robust(updated_at_str, tz)
+        if not updated_at: continue
         hours_passed = (now - updated_at).total_seconds() / 3600.0
 
         # Verifica expediente do corretor
