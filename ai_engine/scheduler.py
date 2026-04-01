@@ -193,6 +193,9 @@ async def process_smart_followups() -> None:
         if success:
             db.save_message(lead_id, user_id, "assistant", msg)
             db.update_lead_status(lead_phone, "active") # Reseta follow_up_count para 0
+            
+            print(f"⏳ Aguardando 90 segundos antes do próximo follow-up (Type 3)...")
+            await asyncio.sleep(90)
 
     # ---------------------------------------------------------
     # TYPE 1 & 2: Leads Ativos sem resposta (status = 'active')
@@ -253,12 +256,16 @@ async def process_smart_followups() -> None:
                     if raquel.send_to_zapi(lead_phone, msg):
                         db.save_message(lead_id, user_id, "assistant", msg)
                         db.supabase.table("leads").update({"follow_up_count": 1, "updated_at": now.isoformat()}).eq("id", lead_id).execute()
+                        print(f"⏳ Aguardando 90 segundos antes do próximo follow-up (Type 1 D1)...")
+                        await asyncio.sleep(90)
                 elif follow_up_count == 1:
                     print(f"📢 Follow-up D2 (Type 1) para {lead_name}")
                     msg = "Olá! Como não tive retorno, imagino que esteja ocupado. Qualquer coisa estou à disposição por aqui. Um abraço!"
                     if raquel.send_to_zapi(lead_phone, msg):
                         db.save_message(lead_id, user_id, "assistant", msg)
                         db.supabase.table("leads").update({"follow_up_count": 2, "updated_at": now.isoformat()}).eq("id", lead_id).execute()
+                        print(f"⏳ Aguardando 90 segundos antes do próximo follow-up (Type 1 D2)...")
+                        await asyncio.sleep(90)
                 elif follow_up_count >= 2:
                     print(f"🗑️ Lead {lead_name} abandonado por falta de resposta (Type 1).")
                     db.supabase.table("leads").update({"status": "abandoned_no_reply"}).eq("id", lead_id).execute()
@@ -275,6 +282,8 @@ async def process_smart_followups() -> None:
                 if raquel.send_to_zapi(lead_phone, msg):
                     db.save_message(lead_id, user_id, "assistant", msg)
                     db.supabase.table("leads").update({"follow_up_count": 1, "updated_at": now.isoformat()}).eq("id", lead_id).execute()
+                    print(f"⏳ Aguardando 90 segundos antes do próximo follow-up (Type 2 3h)...")
+                    await asyncio.sleep(90)
                     
             elif follow_up_count == 1 and hours_passed >= 24:
                 print(f"📢 Follow-up D1 (Type 2) para {lead_name}")
@@ -282,6 +291,8 @@ async def process_smart_followups() -> None:
                 if raquel.send_to_zapi(lead_phone, msg):
                     db.save_message(lead_id, user_id, "assistant", msg)
                     db.supabase.table("leads").update({"follow_up_count": 2, "updated_at": now.isoformat()}).eq("id", lead_id).execute()
+                    print(f"⏳ Aguardando 90 segundos antes do próximo follow-up (Type 2 D1)...")
+                    await asyncio.sleep(90)
                     
             elif follow_up_count >= 2 and hours_passed >= 24:
                 print(f"🗑️ Lead {lead_name} abandonado após pausa na conversa (Type 2).")
@@ -375,6 +386,14 @@ async def check_leads_and_followups() -> None:
                             lead_id: str = str(lead.get('id', ''))
                             lead_phone: str = str(lead.get('phone', ''))
                             lead_status: str = str(lead.get('status', 'waiting'))
+                            
+                            # 🛡️ GUARDRAIL: Re-verifica o status no banco antes de disparar
+                            fresh_lead = db.supabase.table("leads").select("status").eq("id", lead_id).execute()
+                            current_status = fresh_lead.data[0].get('status') if fresh_lead.data else lead_status
+                            
+                            if current_status not in ["waiting", "ooh_rescheduled", "follow_up_pending"]:
+                                print(f"🛡️ Lead {lead_name} já foi contatato ou processado por outra instância (Status: {current_status}). Pulando...")
+                                continue
                             
                             print(f"📢 Contatando lead {lead_name} ({lead_phone}) para o corretor {broker_name}")
                             
@@ -490,14 +509,14 @@ def start_scheduler() -> None:
     
     # Executa uma varredura imediata em background para depuração
     print("🚀 [SCHEDULER] Sistema de Agendamento Raquel Super-IA Ativo!", flush=True)
-    print("📢 [SCHEDULER] Iniciando varredura imediata de teste...", flush=True)
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            asyncio.create_task(check_leads_and_followups())
-            asyncio.create_task(process_smart_followups())
-        else:
-            loop.run_until_complete(check_leads_and_followups())
-            loop.run_until_complete(process_smart_followups())
-    except Exception as e:
-        print(f"❌ [SCHEDULER] Erro na varredura inicial: {e}")
+    # print("📢 [SCHEDULER] Iniciando varredura imediata de teste...", flush=True)
+    # try:
+    #     loop = asyncio.get_event_loop()
+    #     if loop.is_running():
+    #         asyncio.create_task(check_leads_and_followups())
+    #         asyncio.create_task(process_smart_followups())
+    #     else:
+    #         loop.run_until_complete(check_leads_and_followups())
+    #         loop.run_until_complete(process_smart_followups())
+    # except Exception as e:
+    #     print(f"❌ [SCHEDULER] Erro na varredura inicial: {e}")
