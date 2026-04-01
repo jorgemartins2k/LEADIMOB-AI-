@@ -161,6 +161,9 @@ async def process_smart_followups() -> None:
     
     print(f"[{now.strftime('%H:%M:%S')}] 🧠 Processando Smart Follow-ups...")
     
+    # Cache para evitar N+1 queries de expediente
+    broker_schedules_cache: Dict[str, Any] = {}
+
     # ---------------------------------------------------------
     # TYPE 3: Agendamentos Exatos (status = 'scheduled')
     # ---------------------------------------------------------
@@ -203,8 +206,11 @@ async def process_smart_followups() -> None:
         if not updated_at: continue
         hours_passed = (now - updated_at).total_seconds() / 3600.0
 
-        # Verifica expediente do corretor
-        schedule = db.get_broker_schedule(user_id)
+        # Verifica expediente do corretor (USANDO CACHE)
+        if user_id not in broker_schedules_cache:
+            broker_schedules_cache[user_id] = db.get_broker_schedule(user_id)
+        
+        schedule = broker_schedules_cache[user_id]
         if schedule:
             schedule_list = schedule if isinstance(schedule, list) else []
             if not is_within_schedule(schedule_list, now):
@@ -270,6 +276,10 @@ async def check_leads_and_followups() -> None:
     
     print(f"[{now}] 🔍 [HEARTBEAT] Iniciando Varredura Multi-Corretor...", flush=True)
     
+    # Caches locais para evitar N+1
+    broker_schedules_cache: Dict[str, Any] = {}
+    broker_data_cache: Dict[str, Any] = {}
+
     try:
         brokers = db.get_all_brokers()
         print(f"🕵️ [SCHEDULER] Verificando {len(brokers)} corretores...")
@@ -279,7 +289,10 @@ async def check_leads_and_followups() -> None:
                 user_id: str = str(broker.get('id', ''))
                 broker_name: str = str(broker.get('name', 'Corretor'))
                 
-                schedule = db.get_broker_schedule(user_id)
+                if user_id not in broker_schedules_cache:
+                    broker_schedules_cache[user_id] = db.get_broker_schedule(user_id)
+                
+                schedule = broker_schedules_cache[user_id]
                 if not schedule:
                     # Default: 08:00 - 19:00 if no schedule set
                     if now.hour < 8 or now.hour >= 19: 
@@ -298,15 +311,21 @@ async def check_leads_and_followups() -> None:
                 for lead in ooh_hot_leads:
                     try:
                         lead_phone = str(lead.get('phone', ''))
-                        context = db.get_broker_data(user_id)
+                        
+                        if user_id not in broker_data_cache:
+                            broker_data_cache[user_id] = db.get_broker_data(user_id)
+                        
+                        context = broker_data_cache[user_id]
                         if context:
-                            context['lead_name'] = str(lead.get('name', 'Cliente'))
+                            # Fazemos uma cópia para não poluir o cache com dados de um lead específico
+                            lead_context = context.copy()
+                            lead_context['lead_name'] = str(lead.get('name', 'Cliente'))
                             history = db.get_chat_history(lead_phone, limit=1)
                             last_msg = str(history[0].get('content', '')) if history else "Novo interesse gerado fora de horário."
                             last_msg = last_msg.replace("[ALERT_BROKER]", "").strip()
                             
                             print(f"⏰ Disparando alerta OOH pendente para o corretor {broker_name}")
-                            raquel.alert_broker(context, last_msg)
+                            raquel.alert_broker(lead_context, last_msg)
                             db.update_lead_status(lead_phone, "hot_alert_sent")
                             db.set_lead_transfer_time(lead_phone)
                             await asyncio.sleep(2)
@@ -333,8 +352,11 @@ async def check_leads_and_followups() -> None:
                             
                             print(f"📢 Contatando lead {lead_name} ({lead_phone}) para o corretor {broker_name}")
                             
-                            # Recupera dados do corretor para a mensagem
-                            broker_data = db.get_broker_data(user_id)
+                            # Recupera dados do corretor para a mensagem (USANDO CACHE)
+                            if user_id not in broker_data_cache:
+                                broker_data_cache[user_id] = db.get_broker_data(user_id)
+                            
+                            broker_data = broker_data_cache[user_id]
                             broker_agency = broker_data.get('broker_agency', 'Imobiliária') if broker_data else 'Imobiliária'
                             broker_city = broker_data.get('broker_city', '') if broker_data else ''
                             broker_metro = broker_data.get('broker_metropolitan_regions', '') if broker_data else ''
