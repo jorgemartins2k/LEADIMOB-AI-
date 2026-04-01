@@ -10,8 +10,7 @@ import datetime
 from scheduler import start_scheduler # pyre-ignore
 from raquel import RaquelAgent # pyre-ignore
 
-# Buffer para agrupar mensagens (debouncing de 25-30s)
-message_buffers: Dict[str, Dict[str, Any]] = {}
+from buffer_manager import MessageBufferManager # pyre-ignore
 
 load_dotenv()
 
@@ -28,6 +27,8 @@ app: FastAPI = FastAPI(
 raquel: Optional[RaquelAgent] = None
 try:
     raquel = RaquelAgent()
+    # Inicializa o gerenciador de buffers passando a função de processamento da Raquel
+    buffer_manager = MessageBufferManager(raquel.process_message)
 except Exception as e:
     print(f"⚠️ ERRO CRÍTICO ao inicializar RaquelAgent: {e}")
     import traceback
@@ -37,28 +38,7 @@ except Exception as e:
 def home() -> Dict[str, str]:
     return {"status": "online", "agent": "Raquel", "scheduler": "active", "debouncing": "25s"}
 
-async def process_delayed_messages(phone_str: str):
-    """
-    Aguarda o tempo estipulado e processa todas as mensagens acumuladas do lead.
-    """
-    await asyncio.sleep(25)  # Janela de espera de 25 segundos
-    
-    buffer = message_buffers.pop(phone_str, None)
-    if buffer:
-        try:
-            print(f"🕒 Janela de debouncing fechada para {phone_str}. Processando {len(buffer['content'])} chars + audio={buffer['is_audio']}")
-            # Chamamos o processamento real da Raquel (agora assíncrono)
-            await raquel.process_message(
-                phone_str, 
-                buffer['content'], 
-                buffer['sender_name'], 
-                is_audio=buffer['is_audio'], 
-                audio_urls=buffer.get('audio_urls', [])
-            )
-        except Exception as e:
-            print(f"❌ Erro fatal ao processar mensagem para {phone_str}:")
-            import traceback
-            traceback.print_exc()
+# Antiga função process_delayed_messages removida em favor do MessageBufferManager
 
 @app.get("/ping")
 def ping() -> Dict[str, str]:
@@ -154,38 +134,18 @@ async def handle_zapi_webhook(request: Request, background_tasks: BackgroundTask
             # BLOQUEIO: Se é corretor, NUNCA segue para o processamento de Raquel como lead
             return {"status": "broker_acknowledged"}
 
-        # 2. Processamento de Mensagem com Debouncing
+        # 2. Processamento de Mensagem com o novo MessageBufferManager
         if incoming_text or is_audio:
-            print(f"📩 Mensagem recebida de {sender_name} ({phone_str}). Adicionando ao buffer...")
+            # Encaminha para o gerenciador que cuida do agrupamento (25s) e múltiplos ciclos
+            await buffer_manager.handle_incoming_message(
+                phone_str, 
+                incoming_text, 
+                sender_name, 
+                is_audio=is_audio, 
+                audio_url=audio_url
+            )
             
-            # Se já houver uma tarefa de espera para este telefone, cancelamos para reiniciar o cronômetro
-            if phone_str in message_buffers:
-                old_buffer = message_buffers[phone_str]
-                if old_buffer.get('task'):
-                    old_buffer['task'].cancel()
-                
-                # Acumula o conteúdo
-                new_content = old_buffer['content'] + "\n" + incoming_text if incoming_text else old_buffer['content']
-                message_buffers[phone_str]['content'] = new_content.strip()
-                
-                if is_audio and audio_url:
-                    message_buffers[phone_str]['is_audio'] = True
-                    message_buffers[phone_str].setdefault('audio_urls', []).append(audio_url)
-            else:
-                # Cria novo buffer
-                message_buffers[phone_str] = {
-                    "content": incoming_text,
-                    "sender_name": sender_name,
-                    "is_audio": is_audio,
-                    "audio_urls": [audio_url] if is_audio and audio_url else [],
-                    "task": None
-                }
-
-            # Inicia/Reinicia a tarefa de processamento atrasado
-            task = asyncio.create_task(process_delayed_messages(phone_str))
-            message_buffers[phone_str]['task'] = task
-            
-            return {"status": "buffering", "wait": "25s"}
+            return {"status": "buffering", "wait": "25-30s", "info": "Sua mensagem foi agrupada para processamento consultivo."}
         
         print(f"ℹ️ Webhook recebido mas ignorado (tipo: {raw_type}) de {phone}")
         return {"status": "ignored"}
