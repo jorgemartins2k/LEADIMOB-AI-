@@ -142,9 +142,10 @@ class Database:
         """
         Atualiza o status de um lead pelo telefone
         """
+        now_iso = datetime.datetime.now(pytz.UTC).isoformat()
         data = {
             "status": status,
-            "updated_at": "now()"
+            "updated_at": now_iso
         }
         if status == "active":
             data["follow_up_count"] = 0
@@ -156,9 +157,10 @@ class Database:
         """
         Atualiza a temperatura do lead (frio, morno, quente, very_hot)
         """
+        now_iso = datetime.datetime.now(pytz.UTC).isoformat()
         self.supabase.table("leads").update({
             "temperature": temperature,
-            "updated_at": "now()"
+            "updated_at": now_iso
         }).eq("phone", phone).execute()
 
     def schedule_follow_up(self, phone: str, schedule_str: str) -> None:
@@ -185,8 +187,9 @@ class Database:
         """
         Marca o momento em que o lead foi transferido (alerta enviado)
         """
+        now_iso = datetime.datetime.now(pytz.UTC).isoformat()
         self.supabase.table("leads").update({
-            "transferred_at": "now()"
+            "transferred_at": now_iso
         }).eq("phone", phone).execute()
 
     def add_broker_notification(self, user_id: str, lead_id: str, message: str) -> None:
@@ -282,7 +285,8 @@ class Database:
         }).execute()
         
         # Atualiza o lead para que o follow-up saibam que houve interação
-        self.supabase.table("leads").update({"updated_at": "now()"}).eq("id", lead_id).execute()
+        now_iso = datetime.datetime.now(pytz.UTC).isoformat()
+        self.supabase.table("leads").update({"updated_at": now_iso}).eq("id", lead_id).execute()
 
     def is_registered_broker(self, phone: str) -> bool:
         """

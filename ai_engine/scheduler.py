@@ -104,7 +104,7 @@ async def monitor_hot_leads() -> None:
             # Atualiza o timestamp de transferência para contar mais 5 minutos até a próxima repetição
             db.supabase.table("leads").update({
                 "status": "hot_alert_retry",
-                "transferred_at": "now()"
+                "transferred_at": now.isoformat()
             }).eq("id", lead_id).execute()
 
 def parse_iso_robust(date_str: str, tz: datetime.tzinfo) -> Optional[datetime.datetime]:
@@ -252,13 +252,13 @@ async def process_smart_followups() -> None:
                     msg = "Oi! Verificou as informações que te mandei? Posso te ajudar com alguma dúvida?"
                     if raquel.send_to_zapi(lead_phone, msg):
                         db.save_message(lead_id, user_id, "assistant", msg)
-                        db.supabase.table("leads").update({"follow_up_count": 1, "updated_at": "now()"}).eq("id", lead_id).execute()
+                        db.supabase.table("leads").update({"follow_up_count": 1, "updated_at": now.isoformat()}).eq("id", lead_id).execute()
                 elif follow_up_count == 1:
                     print(f"📢 Follow-up D2 (Type 1) para {lead_name}")
                     msg = "Olá! Como não tive retorno, imagino que esteja ocupado. Qualquer coisa estou à disposição por aqui. Um abraço!"
                     if raquel.send_to_zapi(lead_phone, msg):
                         db.save_message(lead_id, user_id, "assistant", msg)
-                        db.supabase.table("leads").update({"follow_up_count": 2, "updated_at": "now()"}).eq("id", lead_id).execute()
+                        db.supabase.table("leads").update({"follow_up_count": 2, "updated_at": now.isoformat()}).eq("id", lead_id).execute()
                 elif follow_up_count >= 2:
                     print(f"🗑️ Lead {lead_name} abandonado por falta de resposta (Type 1).")
                     db.supabase.table("leads").update({"status": "abandoned_no_reply"}).eq("id", lead_id).execute()
@@ -274,14 +274,14 @@ async def process_smart_followups() -> None:
                 msg = f"{lead_name}, ainda está por aí? Se preferir, podemos continuar mais tarde."
                 if raquel.send_to_zapi(lead_phone, msg):
                     db.save_message(lead_id, user_id, "assistant", msg)
-                    db.supabase.table("leads").update({"follow_up_count": 1, "updated_at": "now()"}).eq("id", lead_id).execute()
+                    db.supabase.table("leads").update({"follow_up_count": 1, "updated_at": now.isoformat()}).eq("id", lead_id).execute()
                     
             elif follow_up_count == 1 and hours_passed >= 24:
                 print(f"📢 Follow-up D1 (Type 2) para {lead_name}")
                 msg = "Oi! Acabamos nos desencontrando ontem. Tem um minutinho para continuarmos?"
                 if raquel.send_to_zapi(lead_phone, msg):
                     db.save_message(lead_id, user_id, "assistant", msg)
-                    db.supabase.table("leads").update({"follow_up_count": 2, "updated_at": "now()"}).eq("id", lead_id).execute()
+                    db.supabase.table("leads").update({"follow_up_count": 2, "updated_at": now.isoformat()}).eq("id", lead_id).execute()
                     
             elif follow_up_count >= 2 and hours_passed >= 24:
                 print(f"🗑️ Lead {lead_name} abandonado após pausa na conversa (Type 2).")
