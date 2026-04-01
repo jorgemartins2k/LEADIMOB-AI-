@@ -223,8 +223,8 @@ class Database:
             if not pending.data:
                 return False
 
-            # 3. Confirma os leads pendentes
-            self.supabase.table("leads").update({"status": "active"})\
+            # 3. Confirma os leads pendentes (Muda para 'transferred' para tirar do fluxo da Raquel)
+            self.supabase.table("leads").update({"status": "transferred"})\
                 .eq("user_id", user_id)\
                 .in_("status", ["hot_alert_sent", "hot_alert_retry", "hot_alert_final"])\
                 .execute()

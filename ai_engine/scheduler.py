@@ -171,16 +171,27 @@ async def process_smart_followups() -> None:
     scheduled_leads = scheduled_resp.data if scheduled_resp.data else []
     
     for lead in scheduled_leads:
+        lead_id: str = str(lead.get('id', ''))
         lead_name: str = str(lead.get('name', 'Cliente'))
         lead_phone: str = str(lead.get('phone', ''))
         user_id: str = str(lead.get('user_id', ''))
         
+        # 🛡️ PONTO DE VERIFICAÇÃO OBRIGATÓRIO (GUARDRAIL)
+        # Consultamos o status MAIS ATUALIZADO antes de disparar
+        fresh_lead = db.supabase.table("leads").select("status").eq("id", lead_id).execute()
+        current_status = fresh_lead.data[0].get('status') if fresh_lead.data else 'scheduled'
+        
+        blocked_statuses = ["completed", "transferred", "opt_out", "finalizado", "sem_interesse"]
+        if current_status in blocked_statuses:
+            print(f"🛡️ Follow-up Type 3 cancelado para {lead_name}: Status atual é '{current_status}'.")
+            continue
+
         print(f"⏰ Executando Follow-up Agendado (Type 3) para {lead_name}")
         msg = f"Olá {lead_name}! Conforme combinamos, estou retornando o contato. Como posso te ajudar agora?"
         
         success = raquel.send_to_zapi(lead_phone, msg)
         if success:
-            db.save_message(str(lead.get('id')), user_id, "assistant", msg)
+            db.save_message(lead_id, user_id, "assistant", msg)
             db.update_lead_status(lead_phone, "active") # Reseta follow_up_count para 0
 
     # ---------------------------------------------------------
@@ -196,6 +207,16 @@ async def process_smart_followups() -> None:
         lead_name: str = str(lead.get('name', 'Cliente'))
         lead_phone: str = str(lead.get('phone', ''))
         user_id: str = str(lead.get('user_id', ''))
+        
+        # 🛡️ PONTO DE VERIFICAÇÃO OBRIGATÓRIO (GUARDRAIL)
+        fresh_lead = db.supabase.table("leads").select("status").eq("id", lead_id).execute()
+        current_status = fresh_lead.data[0].get('status') if fresh_lead.data else 'active'
+        blocked_statuses = ["completed", "transferred", "opt_out", "finalizado", "sem_interesse"]
+        
+        if current_status in blocked_statuses:
+            print(f"🛡️ Follow-up Auto cancelado para {lead_name}: Status atual é '{current_status}'.")
+            continue
+
         follow_up_count: int = lead.get('follow_up_count') or 0
         updated_at_str: str = lead.get('updated_at', '')
         
@@ -311,6 +332,7 @@ async def check_leads_and_followups() -> None:
                 for lead in ooh_hot_leads:
                     try:
                         lead_phone = str(lead.get('phone', ''))
+                        lead_id = str(lead.get('id', ''))
                         
                         if user_id not in broker_data_cache:
                             broker_data_cache[user_id] = db.get_broker_data(user_id)
@@ -320,12 +342,16 @@ async def check_leads_and_followups() -> None:
                             # Fazemos uma cópia para não poluir o cache com dados de um lead específico
                             lead_context = context.copy()
                             lead_context['lead_name'] = str(lead.get('name', 'Cliente'))
-                            history = db.get_chat_history(lead_phone, limit=1)
+                            lead_context['lead_id'] = lead_id # Essencial para o briefing
+                            lead_context['lead_phone'] = lead_phone
+                            
+                            history = db.get_chat_history(lead_id, limit=1)
                             last_msg = str(history[0].get('content', '')) if history else "Novo interesse gerado fora de horário."
                             last_msg = last_msg.replace("[ALERT_BROKER]", "").strip()
                             
-                            print(f"⏰ Disparando alerta OOH pendente para o corretor {broker_name}")
+                            print(f"⏰ Disparando alerta OOH pendente para o corretor {broker_name} (Lead ID: {lead_id})")
                             raquel.alert_broker(lead_context, last_msg)
+                            
                             db.update_lead_status(lead_phone, "hot_alert_sent")
                             db.set_lead_transfer_time(lead_phone)
                             await asyncio.sleep(2)

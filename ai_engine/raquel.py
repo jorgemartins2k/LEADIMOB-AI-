@@ -155,12 +155,13 @@ class RaquelAgent:
         2. Se ele já informou hora e dia (mesmo que seja às 6h da manhã de sábado, fora do horário normal), inclua a tag [SCHEDULE: YYYY-MM-DD HH:MM] no final da sua resposta, preenchendo a data correta baseando-se em hoje.
         Exemplo: "Combinado, {lead_name}! Te chamo amanhã às 14h então. Um abraço! [SCHEDULE: 2026-04-01 14:00]"
 
-        ===== GATILHOS DE TRANSFERÊNCIA =====
-        Você deve passar a bola para o {broker_name} usando o comando [ALERT_BROKER] nas seguintes situações:
-        1. **PEDIDO DE LIGAÇÃO**: Se o cliente pedir para falar por telefone, ligação ou áudio ao vivo, use [ALERT_BROKER] e informe que o {broker_name} entrará em contato por voz em breve.
-        2. **QUALIFICAÇÃO CONCLUÍDA**: Após passar pelas 7 etapas do fluxo acima.
-        
         Exemplo de transferência por qualificação: "Perfeito, {lead_name}. Com base no que conversamos, vou transferir seu atendimento agora para o {broker_name}. Ele é o especialista que vai te apresentar as melhores oportunidades em {area_atuacao} que se encaixam exatamente no que você busca. [ALERT_BROKER]"
+
+        ===== DESINTERESSE E OPT-OUT (CRUCIAL) =====
+        Se em qualquer momento o cliente demonstrar desinteresse explícito ou pedir para parar o contato (ex: "não quero", "não tenho interesse", "pode parar", "não, obrigado"):
+        1. **RESPOSTA**: Responda de forma educada, curta e finalizadora. Ex: "Perfeito, {lead_name}. Obrigado pelo retorno e fico à disposição caso precise de algo no futuro. Um abraço!"
+        2. **COMANDO**: Adicione obrigatoriamente a tag [OPT_OUT] no final da sua resposta.
+        3. **PROIBIDO**: Não faça novas perguntas, não tente convencer o cliente e não continue o fluxo de qualificação.
         """
 
     def is_within_schedule(self, schedule: Any) -> bool:
@@ -357,16 +358,34 @@ class RaquelAgent:
         import re
         images_to_send = re.findall(r'\[SEND_IMAGE:\s*(.*?)\]', reply_content)
         schedule_match = re.search(r'\[SCHEDULE:\s*(.*?)\]', reply_content)
+        opt_out_match = "[OPT_OUT]" in reply_content
+
+        # Keyword Fallback (Robustez Extra)
+        opt_out_keywords = ["pode parar", "não quero", "não tenho interesse", "parar de mandar"]
+        user_opt_out = any(k in message.lower() for k in opt_out_keywords)
         
         reply_content = re.sub(r'\[SEND_IMAGE:\s*.*?\]', '', reply_content).strip()
+        reply_content = reply_content.replace("[OPT_OUT]", "").strip()
         
         is_scheduled = False
-        if schedule_match:
+        if schedule_match and not (opt_out_match or user_opt_out):
             schedule_str = schedule_match.group(1).strip()
             reply_content = re.sub(r'\[SCHEDULE:\s*.*?\]', '', reply_content).strip()
             print(f"🗓️ Cliente pediu para agendar: {schedule_str}. Atualizando DB...")
             self.db.schedule_follow_up(phone, schedule_str)
             is_scheduled = True
+
+        # 7.5 PROCESSA OPT-OUT (REMOÇÃO DO FLUXO)
+        if opt_out_match or user_opt_out:
+            print(f"🚫 LEAD CANCELOU (OPT-OUT): {lead_real_name}")
+            self.db.update_lead_status(phone, "opt_out")
+            # Forçamos a limpeza de agendamentos e alertas se houver
+            clean_reply = reply_content if opt_out_match else "Perfeito. Respeito sua decisão e não entraremos mais em contato pelo sistema. Fico à disposição para o futuro!"
+            
+            # 9. ENVIA RESPOSTA AO CLIENTE (FINALIZADORA)
+            await asyncio.sleep(random.uniform(1.0, 2.0))
+            self.send_to_zapi(phone, clean_reply)
+            return clean_reply
 
         # 8. PROCESSA ALERTA DE LEAD QUENTE
         is_hot = "[ALERT_BROKER]" in reply_content
@@ -375,26 +394,35 @@ class RaquelAgent:
             reply_content = reply_content.replace("[ALERT_BROKER]", "").strip()
             
             is_ooh = not self.is_within_schedule(schedule)
+            # Se já estiver fora de horário, mudamos para pendente
+            is_ooh = not self.is_within_schedule(context.get('schedule', []))
+            
             if is_ooh:
-                next_day, next_time = self.get_next_working_slot(schedule)
-                pass_baton_msg = f"\n\n*Observação:* O nosso escritório no momento está fechado. O corretor {broker_name} estará em atendimento {next_day} a partir das {next_time} e entrará em contato com você assim que possível!"
-                reply_content += pass_baton_msg
-                self.db.update_lead_status(phone, "completed") # Move para Finalizados/Qualificados
-                self.db.update_lead_temperature(phone, "quente") # Altera para Quente automaticamente
+                print(f"🌙 Fora de horário. Marcando como pendente OOH...")
+                self.db.update_lead_status(phone, "ooh_hot_alert_pending") # Pendente para o scheduler enviar depois
             else:
-                # Disparamos o alerta em background para não travar a resposta ao cliente
-                print(f"📡 Disparando alerta para o corretor em background...")
-                loop = asyncio.get_event_loop()
-                loop.run_in_executor(None, self.alert_broker, context, message)
-                
                 self.db.update_lead_status(phone, "completed") # Move para Finalizados/Qualificados
                 self.db.update_lead_temperature(phone, "quente") # Altera para Quente automaticamente
                 self.db.set_lead_transfer_time(phone)
+                
+                # Envia briefing para o corretor IMEDIATAMENTE (Opcional, mas recomendado para real-time)
+                self.db.add_broker_notification(context.get('user_id', ''), str(lead_id), reply_content)
+                self.alert_broker(context, reply_content)
 
-        # Atualiza status normal se não for lead quente nem agendamento
+        # 9. ATUALIZA STATUS (PROTEÇÃO DE FOLLOW-UP)
+        # Se não for lead quente nem agendamento, verificamos se o lead deve voltar para 'active'
         if not is_hot and not is_scheduled:
-            # Reseta o contador para o follow-up types 1 e 2
-            self.db.update_lead_status(phone, "active")
+            current_lead = self.db.get_lead_by_phone(phone)
+            current_status = current_lead.get('status') if current_lead else 'waiting'
+            
+            # Bloqueio de retorno para 'active' se o lead já estiver em status terminal
+            blocked_statuses = ["completed", "transferred", "opt_out", "finalizado", "sem_interesse"]
+            
+            if current_status not in blocked_statuses:
+                # Reseta o contador para o follow-up types 1 e 2
+                self.db.update_lead_status(phone, "active")
+            else:
+                print(f"🛡️ Lead {lead_real_name} está com status '{current_status}'. Ignorando reset para 'active'.")
 
         clean_reply = reply_content
 
