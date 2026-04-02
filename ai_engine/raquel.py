@@ -1,22 +1,24 @@
 """
-raquel.py — Agente de IA Raquel
-Correções aplicadas:
-1. BUG CRÍTICO: send_to_zapi agora é awaited corretamente (mensagens não eram perdidas silenciosamente)
-2. BUG CRÍTICO: lógica OOH corrigida (is_ooh era sempre True por usar chave 'schedule' inexistente no contexto)
-3. asyncio.get_event_loop() substituído por asyncio.get_running_loop() (API moderna e segura)
-4. is_within_schedule movido para utils.py (sem duplicação)
-5. temperature=0.7 adicionado às chamadas OpenAI para respostas mais consistentes
-6. Tratamento de erros mais robusto em todas as chamadas externas
+raquel.py — Agente Raquel — versão final
+Correções desta versão:
+1. Problema #1: Proibição de "consultora" reforçada com exemplos negativos explícitos
+2. Problema #7: Lista de opt-out expandida e normalizada (remove acentos na comparação)
+3. Melhoria: Abertura emocional com rapport antes do fluxo
+4. Melhoria: Técnica SPIN integrada ao fluxo de qualificação
+5. Melhoria: Detecção de temperatura em tempo real (palavras-gatilho de urgência)
+6. Melhoria: Gatilho de autoridade e prova social
+7. Melhoria: Técnica CVB para contorno de objeção de preço
+8. Melhoria: Confirmação do perfil antes de transferir (reduz briefings incompletos)
+9. Melhoria: Delay adaptativo pelo tamanho da resposta
 """
 import os
 import requests
 import datetime
 import pytz
-import time
-import random
 import asyncio
 import json
 import re
+import unicodedata
 from typing import List, Dict, Any, Optional
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -26,122 +28,169 @@ from utils import is_within_schedule
 load_dotenv()
 
 
-class RaquelAgent:
-    client: OpenAI
-    db: Database
-    tz: datetime.tzinfo
+def _normalize(text: str) -> str:
+    """Remove acentos e converte para minúsculas para comparações robustas."""
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', text.lower())
+        if unicodedata.category(c) != 'Mn'
+    )
 
+
+def _adaptive_delay(message: str) -> float:
+    """Delay proporcional ao tamanho da mensagem. Min 1.5s, max 8s."""
+    return min(max(len(message) * 0.05, 1.5), 8.0)
+
+
+class RaquelAgent:
     def __init__(self) -> None:
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
-            raise ValueError("OPENAI_API_KEY não encontrada no ambiente.")
-
+            raise ValueError("OPENAI_API_KEY não encontrada.")
         self.client = OpenAI(api_key=api_key)
         self.db = Database()
         self.tz = pytz.timezone('America/Sao_Paulo')
 
-    # ------------------------------------------------------------------
-    # PROMPT DO SISTEMA
-    # ------------------------------------------------------------------
     def get_system_prompt(self, context: Dict[str, Any]) -> str:
-        broker_name: str = context.get('broker_name', 'Corretor')
-        broker_agency: str = context.get('broker_agency', 'Imobiliária')
-        broker_city: str = context.get('broker_city', 'sua região')
-        broker_metro: str = context.get('broker_metropolitan_regions', '')
-        lead_name: str = context.get('lead_name', 'Cliente')
-        presentation: str = context.get('broker_presentation', '')
-        daily_focus: Optional[str] = context.get('daily_focus')
+        broker_name = context.get('broker_name', 'Corretor')
+        broker_agency = context.get('broker_agency', 'Imobiliária')
+        broker_city = context.get('broker_city', 'sua região')
+        broker_metro = context.get('broker_metropolitan_regions', '')
+        lead_name = context.get('lead_name', 'Cliente')
+        presentation = context.get('broker_presentation', '')
+        daily_focus = context.get('daily_focus')
 
         focus_instructions = f"===== FOCO DO DIA: {daily_focus} =====" if daily_focus else ""
-
         ranking_examples = self.db.get_top_ranking_cases(context.get('user_id', ''), limit=3)
         recent_lessons = self.db.get_recent_lessons(context.get('user_id', ''), limit=5)
 
-        area_atuacao = broker_city
-        intro_area = f"da cidade de {broker_city}"
-        if broker_metro:
-            area_atuacao += " e região"
-            intro_area += " e região"
-
+        area_atuacao = broker_city + (" e região" if broker_metro else "")
+        intro_area = f"da cidade de {broker_city}" + (" e região" if broker_metro else "")
         now_str = datetime.datetime.now(self.tz).strftime('%d/%m/%Y %H:%M')
 
         return f"""
-        Você é a Raquel, assistente pessoal de alto nível do corretor imobiliário {broker_name}, da empresa {broker_agency}, com foco em {area_atuacao}.
-        Sua missão é realizar uma qualificação profunda, consultiva e empática.
+Você é a Raquel, assistente pessoal do corretor imobiliário {broker_name}, da empresa {broker_agency}, com foco em {area_atuacao}.
+Sua missão é realizar uma qualificação profunda, consultiva e empática que converta leads em visitas agendadas.
 
-        ===== LIÇÕES APRENDIDAS (NÃO REPITA ESTES ERROS) =====
-        {recent_lessons}
+===== LIÇÕES APRENDIDAS (NÃO REPITA ESTES ERROS) =====
+{recent_lessons}
 
-        ===== EXEMPLOS DE ATENDIMENTO NOTA 10 (MODELOS) =====
-        {ranking_examples}
+===== EXEMPLOS DE ATENDIMENTO NOTA 10 =====
+{ranking_examples}
 
-        ===== IDENTIDADE E ABORDAGEM (CRUCIAL) =====
-        1. **APRESENTAÇÃO INICIAL**: Na primeira interação, apresente-se exatamente como: "assistente do corretor imobiliário {broker_name} da empresa {broker_agency}, {intro_area}." Nunca use "consultora".
-        2. **CONTEXTO GEOGRÁFICO E AMBIGUIDADE**: Você atua em {area_atuacao}.
-           - **REGRA DE OURO**: Se o cliente citar um bairro que possa existir em mais de uma cidade da sua região, você DEVE perguntar de qual cidade ele está falando.
-           - Nunca assuma a cidade se houver dúvida.
+===== IDENTIDADE — REGRAS ABSOLUTAS =====
+1. APRESENTAÇÃO: Apresente-se SEMPRE como "assistente do corretor imobiliário {broker_name} da empresa {broker_agency}, {intro_area}."
+   - PROIBIDO: "consultora", "assistente virtual", "sistema", "IA", "robô", "inteligência artificial"
+   - CORRETO: "assistente do {broker_name}"
+   - EXEMPLO ERRADO: "Olá! Sou a Raquel, consultora imobiliária..."
+   - EXEMPLO CERTO: "Olá! Sou a Raquel, assistente do corretor {broker_name}..."
 
-        ===== DIRETRIZES DE OURO (NÃO NEGOCIÁVEIS) =====
-        1. **SEM EMOJIS**: É terminantemente PROIBIDO o uso de emojis em qualquer circunstância.
-        2. **ESTILO DE COMUNICAÇÃO**: Respostas curtas e conversacionais (1 a 3 frases). Seja ágil, empático e elegante.
-        3. **ASSERTIVIDADE NA TRANSFERÊNCIA**: Não peça permissão. Afirme: "Agora vou transferir sua consulta para o {broker_name}...".
-        4. **REGRA DOS LANÇAMENTOS VS PRAZO**:
-           - Prazo de mudança menor que 6 meses → NUNCA fale de Lançamentos. Foque em imóveis Prontos.
-           - Prazo maior que 12 meses → pode incluir Lançamentos.
-        5. **FORMATO DE ENVIO DE LANÇAMENTO**: Envie APENAS Nome + Link. Nada mais.
-        6. **NÃO PROMETA "ENVIAR OPÇÕES" DEPOIS**: O {broker_name} fará isso após a transferência.
-        7. **NÃO É ROBÔ**: Nunca use "virtual", "sistema" ou "IA". Você é a assistente real.
-        8. **MEMÓRIA (CRUCIAL)**: PROIBIDO perguntar o que o cliente já respondeu. Revise o histórico antes de perguntar.
-        9. **UMA PERGUNTA POR VEZ**: Responda, depois faça a próxima pergunta pendente.
-        10. **AGRUPAMENTO**: Você já recebe as mensagens consolidadas. Gere sempre UMA resposta coesa.
+2. SEM EMOJIS: Proibido em qualquer circunstância.
 
-        {focus_instructions}
+3. ESTILO: Respostas curtas e naturais de WhatsApp (1 a 3 frases). Empático e direto.
 
-        [INSTRUÇÕES ESPECÍFICAS DO CORRETOR]:
-        {presentation if presentation else "Tom polido e focado em alta qualidade de atendimento."}
+4. MEMÓRIA OBRIGATÓRIA: Antes de qualquer pergunta, verifique se o cliente já respondeu. PROIBIDO repetir perguntas.
 
-        ===== FLUXO DE QUALIFICAÇÃO (DINÂMICO E SEM REPETIÇÃO) =====
-        Preencha nesta ordem. Se o cliente já informou algo, PULE para o próximo pendente.
+5. UMA PERGUNTA POR VEZ.
 
-        Antes de cada pergunta, inclua frase curta com contexto, validação ou domínio de mercado.
+6. CONTEXTO GEOGRÁFICO: Se o cliente citar um bairro ambíguo, pergunte de qual cidade.
 
-        1. OBJETIVO: Moradia ou investimento?
-        2. TIPO: Casa ou apartamento?
-        3. LOCALIZAÇÃO: Quais bairros ou regiões em {area_atuacao}?
-        4. PERFIL: Quem vai morar?
-        5. TÉCNICO: Quantidade de quartos e vagas de garagem.
-        6. DIFERENCIAIS: Preferências por áreas de lazer ou características específicas (adapte ao tipo de imóvel, cite 1-2 exemplos no máximo).
-        7. MOMENTO: Quando pretende se mudar?
-        8. INVESTIMENTO: Faixa de valor (pergunte por último).
-        9. FORMA DE PAGAMENTO: Financiamento, à vista ou avaliando opções?
+===== ABERTURA EMOCIONAL (PRIMEIRA MENSAGEM) =====
+Nunca comece direto com perguntas de qualificação. A primeira mensagem deve:
+- Criar conexão humana imediata
+- Demonstrar conhecimento do mercado local
+- Só então fazer a primeira pergunta de forma leve
 
-        ===== REGRA DE OURO DA MEMÓRIA =====
-        Antes de digitar, pergunte-se: "Eu já sei a resposta para o que vou perguntar?". Se sim, AVANCE.
+EXEMPLO DE ABERTURA CORRETA:
+"Olá {lead_name}! Sou a Raquel, assistente do corretor {broker_name} aqui em {broker_city}. Que ótimo que você entrou em contato — o mercado aqui está com ótimas oportunidades. Me conta, você está buscando para morar ou para investir?"
 
-        ===== AGENDAMENTO DE RETORNO =====
-        Hoje é {now_str} (Fuso de Brasília).
-        Se o cliente pedir para retornar depois:
-        1. Se não der dia/hora exatos, pergunte gentilmente.
-        2. Se já informou, inclua [SCHEDULE: YYYY-MM-DD HH:MM] no final da resposta.
-        Exemplo: "Combinado, {lead_name}! Te chamo amanhã às 14h. [SCHEDULE: 2026-04-02 14:00]"
+===== AUTORIDADE E PROVA SOCIAL =====
+Durante a conversa, use sutilmente a autoridade do corretor para gerar confiança:
+- "O {broker_name} atua há anos nessa região e conhece cada detalhe dos melhores bairros."
+- "Muitos clientes com esse mesmo perfil encontraram exatamente o que buscavam com ele."
+Use apenas quando natural na conversa. Não force.
 
-        Exemplo de transferência: "Perfeito, {lead_name}. Vou transferir seu atendimento agora para o {broker_name}. Ele é o especialista que vai te apresentar as melhores oportunidades em {area_atuacao}. [ALERT_BROKER]"
+===== DETECÇÃO DE URGÊNCIA (TEMPERATURA EM TEMPO REAL) =====
+Se o cliente mencionar qualquer um desses sinais, considere-o QUENTE e acelere para a transferência:
+- Prazo curto: "preciso sair logo", "tenho que mudar em X meses", "estou de aluguel vencendo"
+- Motivação emocional forte: "vou me casar", "estamos grávidos", "meus filhos precisam de escola"
+- Prontidão financeira: "tenho o FGTS disponível", "já tenho entrada", "consigo financiar"
+- Pesquisa ativa: "já visitei outros imóveis", "já fui em outros corretores"
+Ao detectar esses sinais, conclua a qualificação rapidamente e transfira.
 
-        ===== DESINTERESSE E OPT-OUT =====
-        Se o cliente demonstrar desinteresse explícito ou pedir para parar:
-        1. Responda de forma educada e finalizadora. Ex: "Perfeito, {lead_name}. Obrigado pelo retorno e fico à disposição para o futuro. Um abraço!"
-        2. Adicione obrigatoriamente [OPT_OUT] no final.
-        3. PROIBIDO: novas perguntas ou tentativas de convencer.
-        """
+===== FLUXO DE QUALIFICAÇÃO SPIN =====
+Siga esta ordem. Pule o que já foi respondido. Use frases de contexto antes de cada pergunta.
 
-    # ------------------------------------------------------------------
-    # VERIFICAÇÃO DE EXPEDIENTE
-    # ------------------------------------------------------------------
+1. OBJETIVO: "Você está buscando para morar ou investir?"
+   Se já souber, pule.
+
+2. DOR/MOTIVAÇÃO (SPIN — pergunta de implicação):
+   Não pergunte diretamente. Introduza naturalmente:
+   "O que está te fazendo pensar em mudar agora? Tem algo no lugar atual que incomoda?"
+   Isso revela urgência real e humaniza a conversa.
+
+3. TIPO: Casa ou apartamento?
+
+4. LOCALIZAÇÃO: Quais bairros ou regiões em {area_atuacao}?
+
+5. PERFIL: Quem vai morar? (família, filhos, sozinho)
+
+6. TÉCNICO: Quartos e vagas de garagem.
+
+7. DIFERENCIAIS: Preferências específicas (adapte ao tipo — citar só 1 ou 2 exemplos).
+
+8. MOMENTO: Quando pretende se mudar?
+   - Menos de 6 meses → focar em prontos. NUNCA mencionar lançamentos.
+   - Mais de 12 meses → pode incluir lançamentos.
+
+9. INVESTIMENTO: Faixa de valor (perguntar por último, de forma natural).
+
+10. FORMA DE PAGAMENTO: Financiamento, à vista, FGTS?
+
+===== CONTORNO DE OBJEÇÃO DE PREÇO (TÉCNICA CVB) =====
+Se o cliente disser que o valor está alto, NÃO transfira imediatamente nem desista.
+Use Característica → Vantagem → Benefício:
+"Entendo. Esse valor considera [característica do imóvel/localização]. A vantagem é [o que isso oferece]. Para [perfil do cliente], isso costuma representar [benefício real na vida dele]."
+Exemplo: "Entendo. Esse valor já inclui a localização no [bairro], que fica pertinho de [referência que o cliente mencionou]. Para quem tem filhos em idade escolar como você mencionou, isso economiza muito tempo e preocupação no dia a dia."
+
+===== CONFIRMAÇÃO ANTES DE TRANSFERIR =====
+Antes do [ALERT_BROKER], faça um mini-resumo e confirme:
+"Deixa eu confirmar o que entendi: você busca [tipo] de [X] quartos em [região], para [objetivo], com orçamento em torno de R$ [Y] e pretende se mudar em [prazo]. Está correto?"
+Só transfira após confirmação do cliente (ou se ele não corrigir nada).
+
+===== REGRA DOS LANÇAMENTOS =====
+- Menos de 6 meses para mudar → NUNCA fale de lançamentos
+- Só lançamentos se prazo > 12 meses
+- Ao enviar lançamento: APENAS Nome + Link. Nada mais.
+
+===== FORMATO DE ENVIO =====
+- PROIBIDO prometer "enviar opções depois" — o {broker_name} faz isso após a transferência
+- NÃO use bullet points ou listas longas nas mensagens
+- Tom natural de WhatsApp
+
+{focus_instructions}
+
+[INSTRUÇÕES DO CORRETOR]:
+{presentation if presentation else "Tom polido e focado em alta qualidade de atendimento."}
+
+===== AGENDAMENTO DE RETORNO =====
+Hoje é {now_str} (Fuso de Brasília).
+Se o cliente pedir para retornar depois:
+1. Se não der dia/hora, pergunte gentilmente.
+2. Se informou, inclua [SCHEDULE: YYYY-MM-DD HH:MM] no final.
+Exemplo: "Combinado! Te chamo amanhã às 14h. [SCHEDULE: 2026-04-03 14:00]"
+
+Transferência: "Perfeito, {lead_name}. Vou transferir seu atendimento agora para o {broker_name}. Ele vai te apresentar as melhores opções em {area_atuacao} que combinam exatamente com o que você busca. [ALERT_BROKER]"
+
+===== OPT-OUT =====
+Se o cliente demonstrar desinteresse:
+1. Resposta educada e finalizadora: "Perfeito, {lead_name}. Obrigado pelo retorno e fico à disposição caso precise no futuro. Um abraço!"
+2. Adicione [OPT_OUT] obrigatoriamente.
+3. PROIBIDO continuar o fluxo ou tentar convencer.
+"""
+
     def check_within_schedule(self, schedule: Any) -> bool:
-        """Wrapper que usa a função centralizada de utils.py"""
         now = datetime.datetime.now(self.tz)
-        schedule_list = schedule if isinstance(schedule, list) else []
-        return is_within_schedule(schedule_list, now)
+        return is_within_schedule(schedule if isinstance(schedule, list) else [], now)
 
     def get_next_working_slot(self, schedule: Any) -> tuple:
         schedule_list = schedule if isinstance(schedule, list) else []
@@ -152,76 +201,51 @@ class RaquelAgent:
             3: "na quarta-feira", 4: "na quinta-feira", 5: "na sexta-feira", 6: "no sábado"
         }
 
-        def parse_start_time(cfg: Dict[str, Any]) -> str:
-            t_str = str(cfg.get('start_time', '08:00')).split(":")
-            return f"{t_str[0]}:{t_str[1]}" if len(t_str) >= 2 else "08:00"
-
         for offset in range(8):
             check_day = (current_db_day + offset) % 7
             for s in schedule_list:
                 if s.get('day_of_week') == check_day and s.get('is_active'):
-                    start_time_str = parse_start_time(s)
+                    t = str(s.get('start_time', '08:00')).split(":")
+                    start = f"{t[0]}:{t[1]}" if len(t) >= 2 else "08:00"
                     if offset == 0:
-                        s_hour = int(start_time_str.split(":")[0])
-                        s_min = int(start_time_str.split(":")[1])
-                        if now.hour < s_hour or (now.hour == s_hour and now.minute < s_min):
-                            return "ainda hoje", start_time_str
+                        sh, sm = int(start.split(":")[0]), int(start.split(":")[1])
+                        if now.hour < sh or (now.hour == sh and now.minute < sm):
+                            return "ainda hoje", start
                     elif offset == 1:
-                        return "amanhã", start_time_str
+                        return "amanhã", start
                     else:
-                        return days_map.get(check_day, "no próximo dia útil"), start_time_str
-
+                        return days_map.get(check_day, "no próximo dia útil"), start
         return "no próximo dia útil", "08:00"
 
-    # ------------------------------------------------------------------
-    # TRANSCRIÇÃO DE ÁUDIO
-    # ------------------------------------------------------------------
     async def transcribe_audio(self, audio_url: str) -> str:
         import tempfile
-
         suffix = ".ogg"
-        if ".mp3" in audio_url.lower():
-            suffix = ".mp3"
-        elif ".wav" in audio_url.lower():
-            suffix = ".wav"
+        if ".mp3" in audio_url.lower(): suffix = ".mp3"
+        elif ".wav" in audio_url.lower(): suffix = ".wav"
 
         def do_transcribe() -> str:
             with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
                 temp_path = tmp.name
-
             try:
-                print(f"🎙️ Iniciando download de áudio: {audio_url}")
-                audio_response = requests.get(audio_url, timeout=30, verify=False)
-                audio_response.raise_for_status()
-
+                r = requests.get(audio_url, timeout=30, verify=False)
+                r.raise_for_status()
                 with open(temp_path, "wb") as f:
-                    f.write(audio_response.content)
-
+                    f.write(r.content)
                 if os.path.getsize(temp_path) < 100:
                     return "[O áudio parece estar vazio]"
-
-                with open(temp_path, "rb") as audio_file:
-                    transcript = self.client.audio.transcriptions.create(
-                        model="whisper-1",
-                        file=audio_file
-                    )
-                return str(transcript.text).strip()
+                with open(temp_path, "rb") as af:
+                    t = self.client.audio.transcriptions.create(model="whisper-1", file=af)
+                return str(t.text).strip()
             except Exception as e:
-                print(f"❌ Erro na transcrição do áudio: {e}")
+                print(f"❌ Erro na transcrição: {e}")
                 return "[Erro ao transcrever áudio]"
             finally:
                 if os.path.exists(temp_path):
-                    try:
-                        os.remove(temp_path)
-                    except Exception:
-                        pass
+                    try: os.remove(temp_path)
+                    except: pass
 
-        loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, do_transcribe)
+        return await asyncio.get_running_loop().run_in_executor(None, do_transcribe)
 
-    # ------------------------------------------------------------------
-    # PROCESSAMENTO PRINCIPAL DE MENSAGEM
-    # ------------------------------------------------------------------
     async def process_message(
         self,
         phone: str,
@@ -230,42 +254,40 @@ class RaquelAgent:
         is_audio: bool = False,
         audio_urls: List[str] = []
     ) -> str:
-        print(f"📥 Processando mensagem de {sender_name} ({phone}). Áudios: {len(audio_urls)}")
+        print(f"📥 [{phone}] Processando mensagem de {sender_name}. Áudios: {len(audio_urls)}")
 
-        # 1. Busca contexto do corretor vinculado ao lead
-        context: Optional[Dict[str, Any]] = self.db.get_broker_by_lead_phone(phone)
+        context = self.db.get_broker_by_lead_phone(phone)
         if not context:
-            print(f"⚠️ Lead {phone} não encontrado ou sem corretor no banco.")
+            print(f"⚠️ Lead {phone} não encontrado no banco.")
             return ""
 
-        user_id: str = context.get('user_id', '')
-        lead_id: str = context.get('lead_id', '')
-        lead_real_name: str = context.get('lead_name', 'Cliente')
-        broker_name: str = context.get('broker_name', 'Corretor')
+        user_id = context.get('user_id', '')
+        lead_id = context.get('lead_id', '')
+        lead_real_name = context.get('lead_name', 'Cliente')
+        broker_name = context.get('broker_name', 'Corretor')
 
-        # 2. Transcreve áudios se houver
+        # Transcrição de áudios
         if is_audio and audio_urls:
             transcriptions = []
             for url in audio_urls:
                 t = await self.transcribe_audio(url)
-                if t and t not in ("[Erro ao transcrever áudio]", "[O áudio parece estar vazio]"):
+                if t not in ("[Erro ao transcrever áudio]", "[O áudio parece estar vazio]"):
                     transcriptions.append(t)
-
             if transcriptions:
                 audio_text = "\n".join(transcriptions)
                 message = (message + "\n" + audio_text).strip() if message else audio_text
             elif not message:
                 return "Desculpe, não consegui entender o áudio. Pode escrever por favor?"
 
-        # 3. Busca expediente, histórico e portfólio
+        # Busca dados para o contexto
         schedule = self.db.get_broker_schedule(user_id)
-        history: List[Dict[str, Any]] = self.db.get_chat_history(lead_id)
-        portfolio_text: str = self.db.get_portfolio(user_id)
+        history = self.db.get_chat_history(lead_id)
+        portfolio_text = self.db.get_portfolio(user_id)
 
         if len(portfolio_text) < 50:
-            print(f"⚠️ ALERTA: Portfólio do corretor {broker_name} parece vazio!")
+            print(f"⚠️ Portfólio do corretor {broker_name} parece vazio!")
 
-        # 4. Monta as mensagens para a OpenAI
+        # Monta mensagens para a OpenAI
         messages: List[Dict[str, Any]] = [
             {"role": "system", "content": self.get_system_prompt(context)},
             {"role": "system", "content": f"PORTFÓLIO DISPONÍVEL:\n{portfolio_text}"}
@@ -274,7 +296,7 @@ class RaquelAgent:
             messages.append({"role": str(h.get('role', 'user')), "content": str(h.get('content', ''))})
         messages.append({"role": "user", "content": message})
 
-        # 5. Gera resposta da IA
+        # Gera resposta
         try:
             loop = asyncio.get_running_loop()
             response = await loop.run_in_executor(
@@ -285,60 +307,66 @@ class RaquelAgent:
                     temperature=0.7
                 )
             )
-            reply_content: str = response.choices[0].message.content or "Desculpe, não consegui formular uma resposta."
+            reply_content = response.choices[0].message.content or "Desculpe, não consegui formular uma resposta."
         except Exception as e:
             print(f"❌ Erro na OpenAI: {e}")
             error_msg = "Desculpe, tive um problema técnico momentâneo."
             await self._send_message(phone, error_msg)
             return error_msg
 
-        # 6. Salva no banco
+        # Salva no banco
         if lead_id and user_id:
             self.db.save_message(lead_id, user_id, "user", message)
             self.db.save_message(lead_id, user_id, "assistant", reply_content)
 
-        # 7. Processa tags na resposta da IA
+        # Processa tags
         images_to_send = re.findall(r'\[SEND_IMAGE:\s*(.*?)\]', reply_content)
         schedule_match = re.search(r'\[SCHEDULE:\s*(.*?)\]', reply_content)
-        opt_out_match = "[OPT_OUT]" in reply_content
+        opt_out_tag = "[OPT_OUT]" in reply_content
 
-        # Keyword fallback para opt-out (caso a IA não coloque a tag)
-        opt_out_keywords = ["pode parar", "não quero", "não tenho interesse", "parar de mandar"]
-        user_opt_out = any(k in message.lower() for k in opt_out_keywords)
+        # Opt-out por keywords — versão expandida e normalizada (problema #7)
+        msg_norm = _normalize(message)
+        opt_out_keywords = [
+            "pode parar", "nao quero", "nao tenho interesse", "parar de mandar",
+            "nao me mande", "me tire da lista", "nao quero mais", "chega",
+            "para de me mandar", "nao preciso", "desistir", "nao vou comprar",
+            "cancela", "remove meu numero"
+        ]
+        user_opt_out = any(k in msg_norm for k in opt_out_keywords)
 
-        # Limpa tags do texto antes de enviar
+        # Limpa tags do texto
         reply_content = re.sub(r'\[SEND_IMAGE:\s*.*?\]', '', reply_content).strip()
         reply_content = reply_content.replace("[OPT_OUT]", "").strip()
 
         is_scheduled = False
-        if schedule_match and not (opt_out_match or user_opt_out):
+        if schedule_match and not (opt_out_tag or user_opt_out):
             schedule_str = schedule_match.group(1).strip()
             reply_content = re.sub(r'\[SCHEDULE:\s*.*?\]', '', reply_content).strip()
-            print(f"🗓️ Agendamento detectado: {schedule_str}")
+            print(f"🗓️ Agendamento: {schedule_str}")
             self.db.schedule_follow_up(phone, schedule_str)
             is_scheduled = True
 
-        # 8. Processa OPT-OUT
-        if opt_out_match or user_opt_out:
+        # Processa opt-out
+        if opt_out_tag or user_opt_out:
             print(f"🚫 OPT-OUT: {lead_real_name}")
             self.db.update_lead_status(phone, "opt_out")
-            clean_reply = reply_content if opt_out_match else \
-                "Perfeito. Respeito sua decisão e não entraremos mais em contato pelo sistema. Fico à disposição para o futuro!"
-            await asyncio.sleep(random.uniform(1.0, 2.0))
+            clean_reply = reply_content if opt_out_tag else \
+                "Perfeito. Respeito sua decisão e não entraremos mais em contato. Fico à disposição para o futuro!"
+            await asyncio.sleep(1.5)
             await self._send_message(phone, clean_reply)
             return clean_reply
 
-        # 9. Processa alerta de lead quente
+        # Processa lead quente
         is_hot = "[ALERT_BROKER]" in reply_content
         if is_hot:
             print(f"🔥 LEAD QUENTE: {lead_real_name}")
             reply_content = reply_content.replace("[ALERT_BROKER]", "").strip()
 
-            # CORREÇÃO DO BUG OOH: usa o schedule já carregado (não context.get('schedule'))
+            # Usa o schedule já carregado (correção do bug OOH)
             is_ooh = not self.check_within_schedule(schedule)
 
             if is_ooh:
-                print(f"🌙 Fora de horário. Marcando como pendente OOH...")
+                print(f"🌙 Fora de horário. Marcando como OOH pendente.")
                 self.db.update_lead_status(phone, "ooh_hot_alert_pending")
             else:
                 self.db.update_lead_status(phone, "completed")
@@ -347,18 +375,21 @@ class RaquelAgent:
                 self.db.add_broker_notification(user_id, str(lead_id), reply_content)
                 self.alert_broker(context, reply_content)
 
-        # 10. Atualiza status para 'active' se não for ação terminal
+        # Atualiza para active se não for ação terminal
         if not is_hot and not is_scheduled:
             current_lead = self.db.get_lead_by_phone(phone)
             current_status = current_lead.get('status') if current_lead else 'waiting'
-            blocked = ["completed", "transferred", "opt_out", "finalizado", "sem_interesse"]
+            blocked = ["completed", "transferred", "opt_out", "finalizado", "sem_interesse",
+                       "abandoned_no_reply", "abandoned_dropout"]
             if current_status not in blocked:
                 self.db.update_lead_status(phone, "active")
             else:
-                print(f"🛡️ Lead {lead_real_name} em status terminal '{current_status}'. Sem reset.")
+                print(f"🛡️ {lead_real_name} em status terminal '{current_status}'. Sem reset.")
 
-        # 11. Envia resposta ao cliente com delay humanizado
-        await asyncio.sleep(random.uniform(1.8, 3.2))
+        # Envia resposta com delay adaptativo
+        delay = _adaptive_delay(reply_content)
+        await asyncio.sleep(delay)
+
         if reply_content:
             print(f"📤 Enviando para {phone}: {reply_content[:80]}...")
             await self._send_message(phone, reply_content)
@@ -367,21 +398,12 @@ class RaquelAgent:
             await asyncio.sleep(1)
             self._send_image_to_zapi(phone, img_url)
 
-        # 12. Melhoria contínua em background (não bloqueia a resposta)
         asyncio.create_task(self.evaluate_and_rank_lead(phone, sender_name, context))
         asyncio.create_task(self.audit_and_log_mistakes(phone, sender_name, message, reply_content, context))
 
         return reply_content
 
-    # ------------------------------------------------------------------
-    # ENVIO DE MENSAGENS (CORRIGIDO: agora é async)
-    # ------------------------------------------------------------------
     async def _send_message(self, phone: str, content: str) -> bool:
-        """
-        Versão async do send_to_zapi — garante que a mensagem seja awaited.
-        CORREÇÃO DO BUG CRÍTICO: antes era chamado com run_in_executor sem await,
-        o que fazia mensagens serem perdidas silenciosamente ao reiniciar o servidor.
-        """
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self.send_to_zapi, phone, content)
 
@@ -395,23 +417,25 @@ class RaquelAgent:
         client_token = os.getenv("ZAPI_CLIENT_TOKEN")
 
         if not instance_id or not token:
-            print("⚠️ ERRO: ZAPI_INSTANCE_ID ou ZAPI_TOKEN ausentes.")
+            print("⚠️ ZAPI_INSTANCE_ID ou ZAPI_TOKEN ausentes.")
             return False
         if not client_token:
-            print("⚠️ ERRO: ZAPI_CLIENT_TOKEN ausente. Configure a variável de ambiente.")
+            print("⚠️ ZAPI_CLIENT_TOKEN ausente.")
             return False
 
         url = f"https://api.z-api.io/instances/{instance_id}/token/{token}/send-text"
-        payload = {"phone": phone, "message": content}
-        headers = {"Content-Type": "application/json", "Client-Token": client_token}
-
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=15)
-            print(f"✅ [Z-API] Resposta para {phone}: {response.status_code}")
-            response.raise_for_status()
+            r = requests.post(
+                url,
+                json={"phone": phone, "message": content},
+                headers={"Content-Type": "application/json", "Client-Token": client_token},
+                timeout=15
+            )
+            print(f"✅ [Z-API] {phone}: {r.status_code}")
+            r.raise_for_status()
             return True
         except Exception as e:
-            print(f"❌ [Z-API] Falha ao enviar para {phone}: {e}")
+            print(f"❌ [Z-API] Falha para {phone}: {e}")
             return False
 
     def _send_image_to_zapi(self, phone: str, image_url: str) -> None:
@@ -424,47 +448,28 @@ class RaquelAgent:
         client_token = os.getenv("ZAPI_CLIENT_TOKEN")
 
         if not instance_id or not token or not client_token:
-            print("⚠️ ERRO: Credenciais Z-API ausentes para envio de imagem.")
+            print("⚠️ Credenciais Z-API ausentes para imagem.")
             return
-
-        url = f"https://api.z-api.io/instances/{instance_id}/token/{token}/send-image"
-        payload = {"phone": phone, "image": image_url}
-        headers = {"Content-Type": "application/json", "Client-Token": client_token}
-
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=15)
-            response.raise_for_status()
+            r = requests.post(
+                f"https://api.z-api.io/instances/{instance_id}/token/{token}/send-image",
+                json={"phone": phone, "image": image_url},
+                headers={"Content-Type": "application/json", "Client-Token": client_token},
+                timeout=15
+            )
+            r.raise_for_status()
             print(f"✅ Imagem enviada para {phone}")
         except Exception as e:
             print(f"❌ Erro ao enviar imagem para {phone}: {e}")
 
-    # ------------------------------------------------------------------
-    # AVALIAÇÃO E MELHORIA CONTÍNUA
-    # ------------------------------------------------------------------
     async def evaluate_and_rank_lead(self, phone: str, name: str, context: Dict[str, Any]) -> None:
         try:
             lead_id = context.get('lead_id')
             user_id = context.get('user_id')
-            if not lead_id or not user_id:
-                return
+            if not lead_id or not user_id: return
 
             history = self.db.get_chat_history(lead_id, limit=20)
             chat_str = "\n".join([f"{h['role']}: {h['content']}" for h in history])
-
-            eval_prompt = f"""
-            Analise a conversa abaixo entre a Raquel (IA) e o cliente {name}.
-            Gere um resumo técnico para servir de exemplo de "Melhores Práticas".
-
-            CONVERSA:
-            {chat_str}
-
-            RESPONDA APENAS EM JSON:
-            {{
-                "summary": "Breve perfil do lead e o que ele busca",
-                "highlights": "Por que esse atendimento foi bom?",
-                "temperature": "frio, morno, quente ou very_hot"
-            }}
-            """
 
             loop = asyncio.get_running_loop()
             response = await loop.run_in_executor(
@@ -473,49 +478,27 @@ class RaquelAgent:
                     model="gpt-4o-mini",
                     messages=[
                         {"role": "system", "content": "Você é um auditor de qualidade de atendimento imobiliário."},
-                        {"role": "user", "content": eval_prompt}
+                        {"role": "user", "content": f"Analise a conversa e gere um resumo técnico.\n\nCONVERSA:\n{chat_str}\n\nRESPONDA APENAS EM JSON:\n{{\"summary\": \"perfil do lead\", \"highlights\": \"por que esse atendimento foi bom\", \"temperature\": \"frio/morno/quente/very_hot\"}}"}
                     ],
                     response_format={"type": "json_object"},
                     temperature=0.3
                 )
             )
-
             data = json.loads(response.choices[0].message.content)
-            self.db.add_to_ranking(
-                user_id=user_id,
-                lead_id=lead_id,
-                summary=data.get("summary", ""),
-                highlights=data.get("highlights", "")
-            )
+            self.db.add_to_ranking(user_id=user_id, lead_id=lead_id,
+                                   summary=data.get("summary", ""),
+                                   highlights=data.get("highlights", ""))
             if "temperature" in data:
-                print(f"🌡️ Temperatura de {name}: {data['temperature']}")
                 self.db.update_lead_temperature(phone, data['temperature'])
-
-            print(f"✅ Lead {name} adicionado ao ranking.")
+            print(f"✅ Ranking atualizado para {name}.")
         except Exception as e:
-            print(f"❌ Erro ao avaliar lead para ranking: {e}")
+            print(f"❌ Erro ao avaliar lead: {e}")
 
     async def audit_and_log_mistakes(self, phone: str, name: str, user_msg: str, ai_reply: str, context: Dict[str, Any]) -> None:
         try:
             lead_id = context.get('lead_id')
             user_id = context.get('user_id')
-            if not lead_id or not user_id:
-                return
-
-            audit_prompt = f"""
-            Analise o diálogo abaixo e identifique se a Raquel cometeu erro, alucinação ou se o cliente precisou corrigi-la.
-
-            MENSAGEM DO CLIENTE: "{user_msg}"
-            RESPOSTA DA RAQUEL: "{ai_reply}"
-
-            RESPONDA APENAS EM JSON:
-            {{
-                "has_error": true/false,
-                "error_context": "O que a IA disse de errado?",
-                "user_correction": "Como o usuário corrigiu?",
-                "lesson_learned": "O que a IA NUNCA deve repetir?"
-            }}
-            """
+            if not lead_id or not user_id: return
 
             loop = asyncio.get_running_loop()
             response = await loop.run_in_executor(
@@ -524,84 +507,67 @@ class RaquelAgent:
                     model="gpt-4o-mini",
                     messages=[
                         {"role": "system", "content": "Você é um auditor crítico de conversas de IA."},
-                        {"role": "user", "content": audit_prompt}
+                        {"role": "user", "content": f"MENSAGEM DO CLIENTE: \"{user_msg}\"\nRESPOSTA DA RAQUEL: \"{ai_reply}\"\n\nRESPONDA EM JSON:\n{{\"has_error\": true/false, \"error_context\": \"...\", \"user_correction\": \"...\", \"lesson_learned\": \"...\"}}"}
                     ],
                     response_format={"type": "json_object"},
                     temperature=0.2
                 )
             )
-
             data = json.loads(response.choices[0].message.content)
             if data.get("has_error"):
-                self.db.add_mistake_log(
-                    user_id=user_id,
-                    lead_id=lead_id,
-                    error_context=data.get("error_context", ""),
-                    user_correction=data.get("user_correction", ""),
-                    lesson=data.get("lesson_learned", "")
-                )
-                print(f"⚠️ Erro da IA registrado: {data.get('lesson_learned')}")
+                self.db.add_mistake_log(user_id=user_id, lead_id=lead_id,
+                                        error_context=data.get("error_context", ""),
+                                        user_correction=data.get("user_correction", ""),
+                                        lesson=data.get("lesson_learned", ""))
+                print(f"⚠️ Erro registrado: {data.get('lesson_learned')}")
         except Exception as e:
             print(f"❌ Erro na auditoria: {e}")
 
-    # ------------------------------------------------------------------
-    # BRIEFING E ALERTA AO CORRETOR
-    # ------------------------------------------------------------------
     def generate_lead_briefing(self, lead_id: str, context: Dict[str, Any]) -> str:
         try:
-            name: str = context.get('lead_name', 'Cliente')
+            name = context.get('lead_name', 'Cliente')
             history = self.db.get_chat_history(lead_id, limit=30)
             chat_text = "\n".join([f"{m['role']}: {m['content']}" for m in history]) if history else "Sem histórico."
-
-            prompt = f"""
-            Você é uma assistente de vendas de alto nível (Raquel).
-            O lead {name} acaba de ser qualificado como QUENTE.
-            Gere um BRIEFING EXECUTIVO DE ALTO IMPACTO para o corretor.
-
-            FOCO:
-            - Identificar a "Dor" ou o "Sonho" principal (emocional).
-            - Perfil da família (filhos, cônjuge, pets).
-            - Perfil Financeiro (Budget e origem do recurso se mencionado).
-            - Origem: Investimento ou Moradia.
-            - Interesses específicos (Bairros, Lançamentos, Atributos).
-
-            HISTÓRICO DA CONVERSA:
-            {chat_text}
-
-            DADOS TÉCNICOS:
-            {json.dumps(context, indent=2)}
-
-            RESPONDA APENAS O BRIEFING FORMATADO EM MARKDOWN:
-            👤 *Cliente*: {name}
-            📞 *WhatsApp*: {context.get('lead_phone', 'N/A')}
-
-            🎯 *PERFIL E MOTIVAÇÃO*:
-            - **Objetivo**: (Moradia / Investimento)
-            - **Motivação**: (O que o move?)
-            - **Perfil Familiar**: (Quem vai morar?)
-
-            📍 *PREFERÊNCIAS*:
-            - **Região**: (Bairros citados)
-            - **Tipo de Imóvel**: (Apartamento, Casa, etc.)
-            - **Configuração**: (Quartos, suítes, vagas)
-            - **Interesse Especial**: (O que mais valorizou?)
-
-            💰 *CAPACIDADE FINANCEIRA*:
-            - **Investimento Estimado**: (Se mencionado)
-            - **Forma de Pagamento**: (À vista, Financiamento, FGTS)
-
-            💬 *Resumo da Conversa*:
-            (Pontos mais importantes ditos pelo cliente)
-
-            💡 *DICA PARA FECHAMENTO*:
-            (Sugestão de abordagem baseada no tom da conversa)
-            """
 
             response = self.client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
-                    {"role": "system", "content": "Você é o braço direito do corretor de elite. Gere resumos afiados e consultivos."},
-                    {"role": "user", "content": prompt}
+                    {"role": "system", "content": "Você é o braço direito de um corretor de elite. Gere resumos afiados e consultivos."},
+                    {"role": "user", "content": f"""
+O lead {name} acaba de ser qualificado como QUENTE.
+Gere um BRIEFING EXECUTIVO para o corretor.
+
+HISTÓRICO:
+{chat_text}
+
+DADOS:
+{json.dumps(context, indent=2)}
+
+FORMATO EM MARKDOWN:
+👤 *Cliente*: {name}
+📞 *WhatsApp*: {context.get('lead_phone', 'N/A')}
+
+🎯 *PERFIL E MOTIVAÇÃO*:
+- **Objetivo**: (Moradia / Investimento)
+- **Motivação**: (o que o move emocionalmente?)
+- **Perfil Familiar**: (quem vai morar?)
+
+📍 *PREFERÊNCIAS*:
+- **Região**: (bairros citados)
+- **Tipo de Imóvel**: (apartamento, casa, etc.)
+- **Configuração**: (quartos, suítes, vagas)
+- **Interesse Especial**: (o que mais valorizou?)
+
+💰 *CAPACIDADE FINANCEIRA*:
+- **Investimento Estimado**: (se mencionado)
+- **Forma de Pagamento**: (à vista, financiamento, FGTS)
+
+💬 *Resumo da Conversa*:
+(pontos mais importantes)
+
+💡 *DICA PARA FECHAMENTO*:
+(sugestão de abordagem baseada no tom da conversa)
+"""}
                 ],
                 temperature=0.5
             )
@@ -611,27 +577,26 @@ class RaquelAgent:
             return f"Lead {context.get('lead_name', 'Cliente')} qualificado e aguardando."
 
     def alert_broker(self, context: Dict[str, Any], message_context: str) -> None:
-        broker_whatsapp: str = context.get('broker_whatsapp', '')
-        lead_name: str = context.get('lead_name', 'Cliente')
-        lead_id: str = context.get('lead_id', '')
-        user_id: str = context.get('user_id', '')
+        broker_whatsapp = context.get('broker_whatsapp', '')
+        lead_name = context.get('lead_name', 'Cliente')
+        lead_id = context.get('lead_id', '')
+        user_id = context.get('user_id', '')
 
         if not broker_whatsapp:
-            print("⚠️ Alerta ignorado: corretor sem WhatsApp cadastrado.")
+            print("⚠️ Corretor sem WhatsApp cadastrado.")
             return
 
         broker_whatsapp = re.sub(r'\D', '', str(broker_whatsapp))
         if broker_whatsapp and not broker_whatsapp.startswith("55") and len(broker_whatsapp) >= 10:
             broker_whatsapp = "55" + broker_whatsapp
 
-        print(f"🚀 Gerando briefing para lead {lead_name}...")
+        print(f"🚀 Gerando briefing para {lead_name}...")
         briefing = self.generate_lead_briefing(lead_id, context)
-
         self.db.add_broker_notification(user_id, lead_id, briefing)
 
         final_alert = (
             f"🔥 *LEAD QUENTE QUALIFICADO!* 🔥\n\n{briefing}\n\n"
-            f"Enviando para você agora mesmo. Por favor, responda com *ok* para confirmar que recebeu."
+            f"Enviando para você agora. Responda com *ok* para confirmar que recebeu."
         )
 
         try:
