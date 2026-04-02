@@ -1,24 +1,39 @@
+"""
+buffer_manager.py — Gerenciador de buffer de mensagens com debouncing de 25s
+Correções aplicadas:
+- Sem alterações de lógica (estava correto), apenas melhorias de robustez
+"""
 import asyncio
 import logging
 from typing import Dict, Any, List, Optional, Callable
 
-# Configuração de logging simples
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("MessageBuffer")
 
+
 class MessageBufferManager:
     """
-    Gerenciador de buffers de mensagens para evitar respostas fragmentadas da IA.
-    Implementa debouncing de 25-30s e suporte a múltiplos ciclos de processamento.
+    Agrupa mensagens do mesmo número por 25s antes de processar,
+    evitando respostas fragmentadas quando o cliente manda várias mensagens seguidas.
+    Suporta múltiplos ciclos: mensagens que chegam durante o processamento
+    são guardadas e disparadas em novo ciclo ao final.
     """
-    def __init__(self, process_callback: Callable):
+
+    def __init__(self, process_callback: Callable) -> None:
         self.buffers: Dict[str, Dict[str, Any]] = {}
         self.process_callback = process_callback
-        # estados possíveis para cada phone: 'idle', 'waiting', 'processing'
 
-    async def handle_incoming_message(self, phone: str, message: str, sender_name: str, is_audio: bool = False, audio_url: Optional[str] = None):
+    async def handle_incoming_message(
+        self,
+        phone: str,
+        message: str,
+        sender_name: str,
+        is_audio: bool = False,
+        audio_url: Optional[str] = None
+    ) -> None:
         """
-        Entrada principal para novas mensagens de webhook.
+        Entrada principal para novas mensagens vindas do webhook.
+        Estados possíveis: 'idle', 'waiting', 'processing'
         """
         if phone not in self.buffers:
             self.buffers[phone] = {
@@ -29,85 +44,72 @@ class MessageBufferManager:
                 "task": None,
                 "status": "idle"
             }
-        
+
         buf = self.buffers[phone]
-        
-        # 1. Adicionar conteúdo ao buffer (mesmo se estiver processando)
+
+        # Acumula conteúdo independente do estado atual
         if message:
             buf["messages"].append(message.strip())
         if audio_url:
             buf["audio_urls"].append(audio_url)
             buf["is_audio"] = True
-        
-        logger.info(f"📩 [BUFFER] Mensagem adicionada para {phone}. Total: {len(buf['messages'])} msgs.")
 
-        # 2. Se já estiver processando a IA, apenas guardamos e retornamos.
-        # O ciclo atual verificará o buffer ao finalizar.
+        logger.info(f"📩 [BUFFER] Mensagem adicionada para {phone}. Total no buffer: {len(buf['messages'])} msgs.")
+
+        # Se a IA já está respondendo, apenas guardamos — o ciclo atual vai relançar
         if buf["status"] == "processing":
-            logger.info(f"⏳ [BUFFER] Usuário {phone} em processamento. Mensagem armazenada para o próximo ciclo.")
+            logger.info(f"⏳ [BUFFER] {phone} em processamento. Mensagem guardada para próximo ciclo.")
             return
 
-        # 3. Se estiver em 'waiting' (timer rodando), cancelamos o timer anterior para resetar os 25s
+        # Se já havia um timer rodando, reseta os 25s (nova mensagem chegou)
         if buf["task"] and not buf["task"].done():
             buf["task"].cancel()
-            logger.info(f"re-timer resetado para {phone} (nova mensagem chegou)")
-        
-        # 4. Iniciar/Reiniciar o timer de espera (Debouncing)
+            logger.info(f"🔄 [BUFFER] Timer resetado para {phone}.")
+
         buf["status"] = "waiting"
         buf["task"] = asyncio.create_task(self._wait_and_trigger(phone))
 
-    async def _wait_and_trigger(self, phone: str):
-        """
-        Aguarda o intervalo de silêncio do usuário antes de disparar o processamento.
-        """
+    async def _wait_and_trigger(self, phone: str) -> None:
         try:
-            # Tempo sugerido entre 25 a 30 segundos
             await asyncio.sleep(25)
             await self._run_processing_cycle(phone)
         except asyncio.CancelledError:
-            # Timer foi resetado por uma nova mensagem
-            pass
+            pass  # Timer cancelado por nova mensagem — comportamento esperado
         except Exception as e:
             logger.error(f"❌ Erro no timer do buffer para {phone}: {e}")
 
-    async def _run_processing_cycle(self, phone: str):
-        """
-        Executa o processamento da IA com o conteúdo consolidado.
-        """
+    async def _run_processing_cycle(self, phone: str) -> None:
         buf = self.buffers[phone]
-        
-        # Marcar como processando para bloquear novos timers
         buf["status"] = "processing"
-        
-        # Captura o estado atual do buffer para processamento
+
+        # Captura snapshot do buffer atual e limpa imediatamente
+        # para que mensagens que chegarem durante o processamento
+        # sejam acumuladas no próximo ciclo
         consolidated_text = "\n".join(buf["messages"])
         current_audio_urls = list(buf["audio_urls"])
         current_is_audio = buf["is_audio"]
         sender_name = buf["sender_name"]
-        
-        # LIMPAR o buffer IMEDIATAMENTE para que novas mensagens durante a resposta da IA
-        # sejam capturadas em um novo buffer limpo.
+
         buf["messages"] = []
         buf["audio_urls"] = []
         buf["is_audio"] = False
-        
-        logger.info(f"🚀 [BUFFER] Processamento iniciado para {phone} (IA respondendo...)")
-        
+
+        logger.info(f"🚀 [BUFFER] Iniciando processamento para {phone}...")
+
         try:
-            # Chama a lógica original da Raquel (process_message)
             await self.process_callback(
-                phone, 
-                consolidated_text, 
-                sender_name, 
-                is_audio=current_is_audio, 
+                phone,
+                consolidated_text,
+                sender_name,
+                is_audio=current_is_audio,
                 audio_urls=current_audio_urls
             )
         except Exception as e:
-            logger.error(f"❌ [BUFFER] Erro durante o processamento da IA para {phone}: {e}")
+            logger.error(f"❌ [BUFFER] Erro durante processamento para {phone}: {e}")
         finally:
             logger.info(f"✅ [BUFFER] Processamento finalizado para {phone}.")
-            
-            # Verificação Pós-Processamento: Chegaram novas mensagens enquanto a IA falava?
+
+            # Se chegaram novas mensagens enquanto a IA respondia, dispara novo ciclo
             if buf["messages"] or buf["audio_urls"]:
                 logger.info(f"🔄 [BUFFER] Novo ciclo detectado para {phone}. Reiniciando timer.")
                 buf["status"] = "waiting"
