@@ -4,6 +4,9 @@ import { leads, conversations, users, properties, launches, bestLeadsRanking, ai
 import { eq, and, asc, sql, desc } from "drizzle-orm";
 import { sendWhatsAppMessage } from "@/lib/zapi";
 import { notifyBrokerByWhatsApp } from "./notify";
+import fs from "fs";
+import path from "path";
+import os from "os";
 
 const getOpenAI = () => {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -16,9 +19,22 @@ const getOpenAI = () => {
 interface ProcessMessageParams {
     phone: string;
     message: string;
+    audioUrl?: string; // Optional audio URL from Z-API
 }
 
-export async function processLeadMessage({ phone, message }: ProcessMessageParams) {
+export async function processLeadMessage({ phone, message, audioUrl }: ProcessMessageParams) {
+    // 0. Handle Audio Transcription if needed
+    if (audioUrl && !message) {
+        try {
+            const transcription = await transcribeAudio(audioUrl);
+            message = transcription;
+        } catch (err) {
+            console.error("Audio transcription error:", err);
+            // If transcription fails, we might still proceed if there's a text message,
+            // but if it's only audio, we can't do much.
+            if (!message) return;
+        }
+    }
     // 1. Find the lead by phone number
     // We need to normalize the phone or search for contains
     const lead = await db.query.leads.findFirst({
@@ -97,19 +113,19 @@ Use estes exemplos reais do seu histórico para manter o padrão de excelência:
 ${rankingText}
 
 DIRETRIZES:
-- VOCÊ É A RAQUEL — CONSULTORA IMOBILIÁRIA ESPECIALISTA.
+- VOCÊ É A RAQUEL — ASSISTENTE DO CORRETOR ${broker.name}.
 - Seu objetivo não é apenas triagem, é gerar valor e qualificar profundamente o cliente ${lead.name}.
 - **BREVIDADE (MÁXIMO 2-3 FRASES)**: Suas respostas devem ser curtas e diretas, típicas de WhatsApp. Evite parágrafos longos. Seja objetiva para não cansar o cliente.
 - **SEM EMOJIS**: É terminantemente PROIBIDO o uso de emojis. Mesmo que o cliente ou o histórico contenham emojis, VOCÊ não deve usar nenhum.
-- **TOM CONSULTIVO**: Você é autoridade no setor. Dê dicas baseadas no que o cliente disser (ex: se ele quer morar perto de um local específico em uma cidade, mencione as vantagens da infraestrutura local).
+- **TOM CONSULTIVO**: Você é autoridade no setor. Dê dicas baseadas no que o cliente disser.
 - **ORDEM OBRIGATÓRIA**: 
   1. Objetivo e Perfil (Moradia ou investimento? Casa ou Apartamento?).
-  2. Localização e Proximidade (Onde quer morar? **DICA MESTRE**: Se for mudança por trabalho/estudo e não conhecer a cidade, PERGUNTE o local de trabalho/estudo para sugerir bairros próximos).
+  2. Localização e Proximidade (Onde quer morar?).
   3. Composição Familiar (Mora sozinho ou com família? Tem filhos?).
   4. Preferências (Quartos/suítes, vagas de garagem, lazer).
   5. Prazo de mudança.
   6. **INVESTIMENTO/VALOR (ÚLTIMA PERGUNTA)**.
-- Se perguntada se é humana, diga que é a assistente do ${broker.name}.
+- Se perguntada se é humana, diga que é a assistente do ${broker.name}. PROIBIDO usar o termo "consultora" — use "assistente".
 - Quando o cliente estiver qualificado e aquecido, use [LEAD_AQUECIDO].
 
 ${broker.dailyFocus ? `[ATENÇÃO! FOCO DE VENDAS DE HOJE]: ${broker.dailyFocus}. Introduza este tema se fizer sentido no contexto.` : ""}
@@ -133,6 +149,7 @@ LANÇAMENTOS: ${JSON.stringify(brokerLaunches.map(l => ({ name: l.name, from: l.
     // 7. Call GPT-4o
     const completion = await getOpenAI().chat.completions.create({
         model: "gpt-4o",
+        temperature: 0, // Precisão total, sem emojis
         messages: [
             { role: "system", content: systemPrompt },
             ...history.map(h => ({
@@ -301,4 +318,32 @@ ${broker.presentation ? `[INSTRUCÕES DO CORRETOR]: ${broker.presentation}` : ""
     // Send via Z-API
     const res = await sendWhatsAppMessage({ phone: lead.phone, message: reply });
     return res;
+}
+
+/**
+ * Audio Transcription using OpenAI Whisper
+ */
+async function transcribeAudio(url: string): Promise<string> {
+    const openai = getOpenAI();
+    const tempPath = path.join(os.tmpdir(), `audio-${Date.now()}.ogg`);
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Failed to download audio");
+
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        fs.writeFileSync(tempPath, buffer);
+
+        const transcription = await openai.audio.transcriptions.create({
+            file: fs.createReadStream(tempPath),
+            model: "whisper-1",
+        });
+
+        return transcription.text;
+    } finally {
+        if (fs.existsSync(tempPath)) {
+            fs.unlinkSync(tempPath);
+        }
+    }
 }

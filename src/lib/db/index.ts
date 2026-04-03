@@ -4,7 +4,8 @@ import * as schema from './schema';
 
 const connectionString = process.env.DATABASE_URL!;
 
-// For edge environments (Vercel Edge Functions), use a different client if needed.
-// But for typical Server Actions, postgres-js works fine.
-const client = postgres(connectionString);
+// Em ambiente serverless (Vercel), cada função tem vida curta.
+// max: 1 evita esgotar o pool de conexões do Supabase.
+const client = postgres(connectionString, { max: 1 });
+
 export const db = drizzle(client, { schema });

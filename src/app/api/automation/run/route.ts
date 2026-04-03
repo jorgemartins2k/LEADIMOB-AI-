@@ -4,50 +4,48 @@ import { users } from "@/lib/db/schema";
 import { processUserAutomation } from "@/lib/actions/leads";
 
 /**
- * background automation endpoint.
- * can be triggered by a CRON job (e.g. Vercel Cron)
+ * Endpoint de automação em background — disparado pelo Vercel Cron a cada 10 minutos.
+ * Segurança: verificação via CRON_SECRET (variável de ambiente, nunca hardcoded).
  */
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const key = searchParams.get("key");
 
-    // Basic security check (Optional: define CRON_SECRET in .env)
-    if (process.env.CRON_SECRET && key !== process.env.CRON_SECRET) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Verificação de segurança via CRON_SECRET no ambiente
+    const cronSecret = process.env.CRON_SECRET;
+    if (cronSecret && key !== cronSecret) {
+        return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
     }
 
     try {
-        console.log("[Automation] Starting background process...");
+        console.log("[Automation] Iniciando varredura de leads...");
 
-        // 1. Get all users
         const allUsers = await db.select().from(users);
-
         const results = [];
 
-        // 2. Process each user
         for (const user of allUsers) {
             try {
                 const result = await processUserAutomation(user.id);
-                if (result.success && result.contacted! > 0) {
+                if (result.success && (result.contacted ?? 0) > 0) {
                     results.push({
                         userName: user.name,
-                        contacted: result.contacted
+                        contacted: result.contacted,
                     });
                 }
             } catch (userErr) {
-                console.error(`[Automation] Error processing user ${user.id}:`, userErr);
+                console.error(`[Automation] Erro ao processar usuário ${user.id}:`, userErr);
             }
         }
 
-        console.log(`[Automation] Finished. Processed ${results.length} active sessions.`);
+        console.log(`[Automation] Finalizado. ${results.length} sessões ativas.`);
 
         return NextResponse.json({
             success: true,
             sessions_active: results.length,
-            details: results
+            details: results,
         });
     } catch (error: any) {
-        console.error("[Automation] Critical Error:", error);
+        console.error("[Automation] Erro crítico:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

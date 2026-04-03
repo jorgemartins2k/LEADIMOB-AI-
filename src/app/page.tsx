@@ -1,3 +1,4 @@
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/landing/navbar";
 import { Hero } from "@/components/landing/hero";
@@ -9,8 +10,7 @@ import { FinalCTA } from "@/components/landing/final-cta";
 import { Footer } from "@/components/landing/footer";
 
 export default async function Home() {
-  // Temporary bypass for auth during debug to isolate server-side exception
-  const userId = null;
+  const { userId } = await auth();
 
   if (userId) {
     redirect("/dashboard");

@@ -177,6 +177,11 @@ export async function processUserAutomation(userId: string) {
                 .set({ status: "active", updatedAt: new Date() })
                 .where(eq(leads.id, lead.id));
             successCount++;
+
+            // Anti-spam delay: 90 seconds between leads
+            if (successCount < pendingLeads.length) {
+                await new Promise(resolve => setTimeout(resolve, 90000));
+            }
         } catch (err) {
             console.error(`Erro ao processar lead ${lead.id} do usuário ${userId}:`, err);
         }
